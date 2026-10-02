@@ -3,8 +3,8 @@ create extension if not exists "pgcrypto";
 
 -- bang luu lich su giao dich vnpay
 create table if not exists payment_transactions (
-    txn_id uuid primary key default gen_random_uuid(),
-    order_code varchar(50) not null,
+    txn_id uuid primary key default gen_random_uuid(), -- ma dinh danh duy nhat
+    order_code varchar(50) not null, -- ma lenh sua chua cua xe
     vnp_txn_ref varchar(100) unique not null,
     vnp_bank_code varchar(20),
     amount numeric(15,2) not null default 2808000.00,

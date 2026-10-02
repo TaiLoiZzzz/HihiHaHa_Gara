@@ -26,7 +26,8 @@
     "neo4j-driver": "^6.2.0",
     "nodemailer": "^10.0.13",
     "pg": "^8.23.1",
-    "socket.io": "^4.8.4"
+    "socket.io": "^4.8.4",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "jest": "^30.5.2",
