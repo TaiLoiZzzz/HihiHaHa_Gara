@@ -1,24 +1,19 @@
--- =============================================================================
--- SCRIPT KHỞI TẠO CSD TÀI CHÍNH POSTGRESQL (HIHIHAHA_AUTO)
--- Bước 31 -> 34: Kích hoạt pgcrypto extension & Bảng payment_transactions
--- =============================================================================
+-- tao extension uuid
+create extension if not exists "pgcrypto";
 
--- Bước 32: Kích hoạt tiện ích mở rộng pgcrypto để tự động sinh UUID
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+-- bang luu lich su giao dich vnpay
+create table if not exists payment_transactions (
+    txn_id uuid primary key default gen_random_uuid(),
+    order_code varchar(50) not null,
+    vnp_txn_ref varchar(100) unique not null,
+    vnp_bank_code varchar(20),
+    amount numeric(15,2) not null default 2808000.00,
+    status varchar(20) not null default 'PENDING',
+    payment_link_expires_at timestamptz not null,
+    created_at timestamptz default now(),
+    completed_at timestamptz,
 
--- Bước 33 & 34: Tạo bảng payment_transactions kèm ràng buộc toàn vẹn dữ liệu
-CREATE TABLE IF NOT EXISTS payment_transactions (
-    txn_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_code VARCHAR(50) NOT NULL,
-    vnp_txn_ref VARCHAR(100) UNIQUE NOT NULL,
-    vnp_bank_code VARCHAR(20),
-    amount NUMERIC(15,2) NOT NULL DEFAULT 2808000.00,
-    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-    payment_link_expires_at TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    completed_at TIMESTAMPTZ,
-
-    -- Bước 34: Ràng buộc toàn vẹn giá trị tiền tệ hợp lệ (> 0) và trạng thái Enum
-    CONSTRAINT chk_payment_amount CHECK (amount > 0),
-    CONSTRAINT chk_payment_status CHECK (status IN ('PENDING', 'SUCCESS', 'FAILED', 'PAYMENT_EXPIRED'))
+    -- check tien > 0 va trang thai hop le
+    constraint chk_payment_amount check (amount > 0),
+    constraint chk_payment_status check (status in ('PENDING', 'SUCCESS', 'FAILED', 'PAYMENT_EXPIRED'))
 );

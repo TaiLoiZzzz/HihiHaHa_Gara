@@ -30,8 +30,8 @@ services:
     container_name: hihihaha_neo4j
     restart: always
     ports:
-      - "17474:7474" # Host 17474 -> Container 7474 (Tránh Hyper-V port exclusion 7429-7528)
-      - "17687:7687" # Host 17687 -> Container 7687 (Tránh Hyper-V port exclusion 7629-7728)
+      - "17474:7474" # map port 17474 tranh hyper-v windows
+      - "17687:7687" # map port 17687 tranh hyper-v windows
     environment:
       NEO4J_AUTH: neo4j/neo4j123456
     volumes:
