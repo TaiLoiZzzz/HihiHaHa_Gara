@@ -17,7 +17,7 @@ services:
     container_name: hihihaha_postgres
     restart: always
     ports:
-      - "5432:5432"
+      - "5433:5432" # map port 5433 (tranh trùng port 5432 cua local postgres)
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
