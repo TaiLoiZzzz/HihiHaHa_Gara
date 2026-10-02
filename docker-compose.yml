@@ -37,7 +37,18 @@ services:
     volumes:
       - neo4j_data:/data
 
+  redis:
+    image: redis:7.2-alpine
+    container_name: hihihaha_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
 volumes:
   mongo_data:
   pg_data:
   neo4j_data:
+  redis_data:
