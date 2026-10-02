@@ -12,5 +12,19 @@ services:
     environment:
       MONGO_INITDB_DATABASE: hihihaha_db
 
+  postgres:
+    image: postgres:16-alpine
+    container_name: hihihaha_postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: hihihaha_db
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
 volumes:
   mongo_data:
+  pg_data:
