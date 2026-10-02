@@ -25,6 +25,19 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
 
+  neo4j:
+    image: neo4j:5-community
+    container_name: hihihaha_neo4j
+    restart: always
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/neo4j123456
+    volumes:
+      - neo4j_data:/data
+
 volumes:
   mongo_data:
   pg_data:
+  neo4j_data:
