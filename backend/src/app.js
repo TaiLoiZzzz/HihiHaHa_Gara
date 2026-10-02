@@ -7,6 +7,7 @@ require('dotenv').config();
 const logger = require('./utils/logger');
 const { sendSuccess } = require('./utils/response');
 const { errorHandler } = require('./middlewares/errorHandler');
+const routes = require('./routes');
 
 const app = express();
 
@@ -42,7 +43,10 @@ app.get('/health', (req, res) => {
   );
 });
 
-// 6. global error handling middleware
+// 6. dang ky router chinh cho RESTful API v1
+app.use('/api/v1', routes);
+
+// 7. global error handling middleware
 app.use(errorHandler);
 
 module.exports = app;

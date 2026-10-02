@@ -13,6 +13,13 @@ const WorkOrderSchema = new mongoose.Schema(
       enum: ['DRAFT', 'ESTIMATED', 'APPROVED', 'IN_PROGRESS', 'COMPLETED', 'PAID', 'CANCELLED'],
       default: 'DRAFT',
     },
+    assigned_technicians: [
+      {
+        technician_id: { type: String, required: true },
+        technician_name: { type: String },
+        assigned_at: { type: Date, default: Date.now },
+      },
+    ],
     estimate: {
       subtotal_labor: { type: Number, default: 0 },
       subtotal_parts: { type: Number, default: 0 },
