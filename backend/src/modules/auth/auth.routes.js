@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { requestOtpController } = require('./controllers/auth.controller');
+const { requestOtpController, verifyOtpController } = require('./controllers/auth.controller');
 const { otpRateLimiter } = require('../../middlewares/otpRateLimiter');
 const { sendSuccess } = require('../../utils/response');
 
@@ -10,5 +10,8 @@ router.get('/health', (req, res) => {
 
 // endpoint yeu cau gui otp qua gmail (uc-01)
 router.post('/request-otp', otpRateLimiter, requestOtpController);
+
+// endpoint xac thuc otp va cap token jwt (uc-01)
+router.post('/verify-otp', verifyOtpController);
 
 module.exports = router;
