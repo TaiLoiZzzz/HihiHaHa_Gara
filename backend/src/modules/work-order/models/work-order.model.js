@@ -10,7 +10,21 @@ const WorkOrderSchema = new mongoose.Schema(
     vehicle_model: { type: String, required: true },
     current_status: {
       type: String,
-      enum: ['DRAFT', 'ESTIMATED', 'APPROVED', 'IN_PROGRESS', 'COMPLETED', 'PAID', 'CANCELLED'],
+      enum: [
+        'DRAFT',
+        'INSPECTION',
+        'QUOTE_SENT',
+        'QUOTE_APPROVED',
+        'APPROVED',
+        'WAITING_PARTS',
+        'IN_PROGRESS',
+        'QUALITY_CHECK',
+        'COMPLETED',
+        'PAYMENT_PENDING',
+        'PAID',
+        'DELIVERED',
+        'CANCELLED',
+      ],
       default: 'DRAFT',
     },
     assigned_technicians: [
@@ -21,6 +35,12 @@ const WorkOrderSchema = new mongoose.Schema(
       },
     ],
     estimate: {
+      approval_status: {
+        type: String,
+        enum: ['PENDING_CUSTOMER', 'APPROVED', 'REJECTED'],
+        default: 'PENDING_CUSTOMER',
+      },
+      approved_at: { type: Date },
       subtotal_labor: { type: Number, default: 0 },
       subtotal_parts: { type: Number, default: 0 },
       pretax_amount: { type: Number, default: 0 },
