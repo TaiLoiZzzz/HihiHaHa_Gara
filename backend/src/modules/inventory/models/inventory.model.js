@@ -10,6 +10,7 @@ const InventoryItemSchema = new mongoose.Schema(
     cost_price: { type: Number, required: true },
     retail_price: { type: Number, required: true },
     stock_quantity: { type: Number, required: true, default: 0 },
+    allocated_quantity: { type: Number, default: 0 },
     min_threshold: { type: Number, default: 2 },
     location_rack: { type: String, required: true },
     is_active: { type: Boolean, default: true },
