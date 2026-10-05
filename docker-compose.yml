@@ -42,7 +42,7 @@ services:
     container_name: hihihaha_redis
     restart: always
     ports:
-      - "6379:6379"
+      - "16379:6379" # map port 16379 tranh hyper-v windows cong 6379
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
