@@ -6,11 +6,20 @@ const {
   createPaymentUrlController,
   vnpayIpnController,
   vnpayReturnController,
+  confirmPaymentController,
 } = require('./controllers/payment.controller');
 
 router.get('/health', (req, res) => {
   return sendSuccess(res, { module: 'payment' }, 'Phân hệ Thanh toán VNPay & Outbox (Payment) đang hoạt động');
 });
+
+// xac nhan thanh toan truc tiep (VietQR / Ngan hang)
+router.post(
+  '/confirm',
+  verifyToken,
+  authorizeRoles(ROLES.CUSTOMER, ROLES.SERVICE_ADVISOR, ROLES.WORKSHOP_MANAGER, ROLES.OWNER),
+  confirmPaymentController
+);
 
 // khoi tao URL thanh toan VietQR VNPay (Danh cho Khach hang, Co van, Quan doc, Chu gara)
 router.post(

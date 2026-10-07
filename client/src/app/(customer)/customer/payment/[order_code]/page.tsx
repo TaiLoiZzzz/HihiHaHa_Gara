@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { QrCode, CreditCard, ShieldCheck, Clock, CheckCircle2, ArrowLeft, RefreshCw, ExternalLink, Loader2 } from "lucide-react";
 import { formatCurrencyVND } from "@/lib/utils";
 import { LiquidGlassButton } from "@/components/ui/liquid-glass-button";
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function CustomerPaymentPage({ params }: Props) {
+  const router = useRouter();
   const orderCode = params.order_code || "WO-20261001-0089";
 
   const [loading, setLoading] = useState(false);
@@ -38,7 +40,7 @@ export default function CustomerPaymentPage({ params }: Props) {
           if (wo.license_plate) {
             setPlateNumber(wo.license_plate);
           }
-          if (wo.payment_status === "PAID") {
+          if (wo.payment_status === "PAID" || wo.current_status === "PAID") {
             setPaid(true);
           }
         }
@@ -70,14 +72,25 @@ export default function CustomerPaymentPage({ params }: Props) {
     }
   };
 
-  // Mô phỏng quẹt thanh toán thành công
-  const handleSimulatePayment = () => {
+  // Xác nhận đã chuyển khoản qua VietQR & gọi Backend API thật
+  const handleConfirmPayment = async () => {
     setLoading(true);
-    setTimeout(() => {
-      setPaid(true);
+    try {
+      const res = await api.confirmPayment(orderCode, "VIETQR", "MB");
+      if (res.success) {
+        setPaid(true);
+        toast.success(`Thanh toán ${formatCurrencyVND(totalAmount)} thành công! Giao dịch đã lưu PostgreSQL và trừ kho MongoDB!`);
+        setTimeout(() => {
+          router.push("/customer");
+        }, 1500);
+      } else {
+        toast.error("Không thể ghi nhận giao dịch: " + ((res as any).message || "Lỗi máy chủ"));
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Lỗi kết nối cổng thanh toán");
+    } finally {
       setLoading(false);
-      toast.success(`Thanh toán ${formatCurrencyVND(totalAmount)} thành công! Outbox Worker đã trừ kho vĩnh viễn và xuất hóa đơn VAT!`);
-    }, 1200);
+    }
   };
 
   return (
@@ -179,7 +192,7 @@ export default function CustomerPaymentPage({ params }: Props) {
           </button>
 
           <button
-            onClick={handleSimulatePayment}
+            onClick={handleConfirmPayment}
             disabled={loading || paid}
             className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs uppercase tracking-wider transition shadow-amber-glow flex items-center justify-center gap-2 disabled:opacity-50"
           >
@@ -189,11 +202,17 @@ export default function CustomerPaymentPage({ params }: Props) {
         </div>
 
         {paid && (
-          <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-medium space-y-1 animate-in fade-in">
+          <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-medium space-y-2 animate-in fade-in">
             <div className="font-bold flex items-center justify-center gap-1.5 text-sm">
               <CheckCircle2 className="w-4 h-4" /> GIAO DỊCH ĐÃ GHI SỔ THÀNH CÔNG VÀO POSTGRESQL!
             </div>
-            <p>Phiếu thu điện tử đã gửi về SMS/Email của quý khách. Xe đã sẵn sàng bàn giao!</p>
+            <p>Hệ thống đang tự động chuyển về Hồ Sơ Xe của Quý Khách...</p>
+            <Link
+              href="/customer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition"
+            >
+              Về Trang Quản Lý Xe →
+            </Link>
           </div>
         )}
 

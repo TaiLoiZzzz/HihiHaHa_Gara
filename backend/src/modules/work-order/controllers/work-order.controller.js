@@ -210,7 +210,8 @@ const updateWorkOrderStatusController = async (req, res, next) => {
     }
 
     const currentStatus = workOrder.current_status;
-    if (!ALLOWED_TRANSITIONS[currentStatus]?.includes(next_status)) {
+    const isManagerOrOwner = req.user?.role === 'WORKSHOP_MANAGER' || req.user?.role === 'OWNER';
+    if (!isManagerOrOwner && !ALLOWED_TRANSITIONS[currentStatus]?.includes(next_status)) {
       return next(
         new AppError(
           `Không thể chuyển trạng thái Lệnh sửa chữa từ [${currentStatus}] sang [${next_status}]`,
@@ -267,6 +268,9 @@ const updateProgressController = async (req, res, next) => {
     }
 
     const progressNote = note || `Thi công công đoạn [${stage_name}] hoàn thành ${percent_complete || 100}%`;
+    if (percent_complete !== undefined) {
+      workOrder.progress_percent = Number(percent_complete);
+    }
     workOrder.workflow_timeline.push({
       status: workOrder.current_status,
       updated_by: req.user?.phone_number || 'TECHNICIAN',

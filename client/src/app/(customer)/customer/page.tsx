@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Car, Award, Calendar, FileText, ChevronRight, ShieldCheck, Clock, ArrowRight, Loader2 } from "lucide-react";
+import { Car, Award, Calendar, FileText, ChevronRight, ShieldCheck, Clock, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 import { formatCurrencyVND } from "@/lib/utils";
 import { LiquidGlassButton } from "@/components/ui/liquid-glass-button";
 import { api } from "@/lib/api";
@@ -33,101 +33,154 @@ export default function CustomerDashboardPage() {
   const customerName = order?.customer_name || "Minh Thảo";
   const totalAmount = order?.estimate?.total_amount || 2808000;
   const orderCode = order?.order_code || "WO-20261001-0089";
+  const isPaid = order?.payment_status === "PAID" || order?.current_status === "PAID";
 
   return (
     <div className="space-y-8 font-sans pb-16">
       
       {/* Header Profile Xe & Hạng VIP */}
-      <div className="p-8 rounded-3xl bg-white dark:bg-brand-cardDark border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
           <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center font-bold">
             <Car className="w-8 h-8" />
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100">
+              <h1 className="text-2xl font-black text-slate-900">
                 {vehicleModel}
               </h1>
-              <span className="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700">
+              <span className="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-slate-100 text-slate-800 border border-slate-300">
                 {plateNumber}
               </span>
             </div>
-            <div className="flex items-center gap-4 text-xs text-zinc-500">
-              <span>Chủ sở hữu: <strong>{customerName}</strong></span>
+            <div className="flex items-center gap-4 text-xs text-slate-500">
+              <span>Chủ sở hữu: <strong className="text-slate-800">{customerName}</strong></span>
               <span>•</span>
               <span>Số khung VIN: <span className="font-mono">VN123456789</span></span>
               <span>•</span>
-              <span>Hồ sơ: <strong className="text-emerald-500">Đã đồng bộ MongoDB</strong></span>
+              <span>Trạng thái xe: <strong className="text-emerald-600">{isPaid ? "Đã Quyết Toán Xong" : "Đang Bảo Dưỡng"}</strong></span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30">
-          <Award className="w-8 h-8 text-amber-500" />
+        <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-amber-50 border border-amber-200">
+          <Award className="w-8 h-8 text-amber-600" />
           <div>
-            <div className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400">Hạng Thành Viên</div>
-            <div className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100">VIP GOLD (Ưu đãi 5% Công)</div>
+            <div className="text-[10px] uppercase font-bold text-amber-700">Hạng Thành Viên</div>
+            <div className="text-sm font-extrabold text-slate-900">VIP GOLD (Ưu đãi 5% Công)</div>
           </div>
         </div>
       </div>
 
-      {/* Banner Lệnh Sửa Chữa Đang Chờ Phê Duyệt (Active WorkOrder) */}
-      <div className="p-8 rounded-3xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-2 border-amber-500/40 shadow-amber-subtle flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 text-xs font-mono font-bold rounded-full bg-amber-500 text-zinc-950">
-              {order?.current_status === "QUOTE_SENT" ? "CẦN DUYỆT BÁO GIÁ" : "ĐANG XỬ LÝ"}
-            </span>
-            <span className="text-xs font-mono font-bold text-zinc-500">
-              Mã: {orderCode}
-            </span>
-          </div>
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-            Báo Giá Bảo Dưỡng 40.000km & Thay Má Phanh Trước
-          </h2>
-          <p className="text-xs text-zinc-600 dark:text-zinc-400">
-            Cố vấn dịch vụ Quang Tùng đã gửi báo giá nhúng VAT 8%. Tổng chi phí dự toán: <strong className="text-amber-600 dark:text-amber-400 font-mono text-sm">{formatCurrencyVND(totalAmount)}</strong>.
-          </p>
-        </div>
-
-        <Link href={`/customer/orders/${orderCode}`}>
-          <LiquidGlassButton size="md">
-            Xem & Ký Duyệt Báo Giá
-            <ArrowRight className="w-4 h-4 ml-1 text-zinc-950" />
-          </LiquidGlassButton>
-        </Link>
-      </div>
-
-      {/* Sổ Bảo Dưỡng Điện Tử (Electronic Maintenance Ledger) */}
-      <div className="p-8 rounded-3xl bg-white dark:bg-brand-cardDark border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-              Sổ Bảo Dưỡng Trọn Đời (Gắn Liền Theo Xe)
-            </h3>
-            <p className="text-xs text-zinc-500">
-              Lịch sử các lần làm dịch vụ tại trung tâm, có thể chuyển nhượng toàn vẹn khi bán xe.
+      {/* Banner Trạng Thái Lệnh Sửa Chữa Hiện Tại */}
+      {isPaid ? (
+        <div className="p-8 rounded-3xl bg-emerald-50/80 border-2 border-emerald-300 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 text-xs font-mono font-bold rounded-full bg-emerald-600 text-white flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5" /> ĐÃ THANH TOÁN THÀNH CÔNG
+              </span>
+              <span className="text-xs font-mono font-bold text-slate-500">
+                Mã: {orderCode}
+              </span>
+            </div>
+            <h2 className="text-xl font-black text-slate-900">
+              Lệnh #{orderCode} Đã Quyết Toán & Sẵn Sàng Bàn Giao Xe
+            </h2>
+            <p className="text-xs text-slate-600 font-medium">
+              Quý khách đã thanh toán toàn bộ chi phí {formatCurrencyVND(totalAmount)} qua VietQR MB Bank. Xe đã hoàn tất kiểm định an toàn và chuyển vào lịch sử bảo dưỡng.
             </p>
           </div>
-          <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
+
+          <Link href={`/customer/orders/${orderCode}`}>
+            <button className="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-amber-400 font-black text-xs uppercase tracking-wider transition shadow-md flex items-center gap-2">
+              Xem Chi Tiết Biên Lai
+              <ArrowRight className="w-4 h-4 text-amber-400" />
+            </button>
+          </Link>
+        </div>
+      ) : (
+        <div className="p-8 rounded-3xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-2 border-amber-500/40 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 text-xs font-mono font-bold rounded-full bg-amber-500 text-slate-950">
+                {order?.current_status === "QUOTE_SENT" ? "CẦN DUYỆT BÁO GIÁ" : "CHỜ THANH TOÁN"}
+              </span>
+              <span className="text-xs font-mono font-bold text-slate-500">
+                Mã: {orderCode}
+              </span>
+            </div>
+            <h2 className="text-xl font-bold text-slate-900">
+              Báo Giá Bảo Dưỡng 40.000km & Thay Má Phanh Trước
+            </h2>
+            <p className="text-xs text-slate-600">
+              Cố vấn dịch vụ Quang Tùng đã gửi báo giá nhúng VAT 8%. Tổng chi phí dự toán: <strong className="text-amber-600 font-mono text-sm">{formatCurrencyVND(totalAmount)}</strong>.
+            </p>
+          </div>
+
+          <Link href={`/customer/orders/${orderCode}`}>
+            <button className="px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider transition shadow-md shadow-amber-500/20 active:scale-95 flex items-center gap-2">
+              Xem & Ký Duyệt Báo Giá
+              <ArrowRight className="w-4 h-4 ml-1 text-slate-950" />
+            </button>
+          </Link>
+        </div>
+      )}
+
+      {/* Sổ Bảo Dưỡng Điện Tử (Electronic Maintenance Ledger) */}
+      <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-black text-slate-900">
+              Sổ Bảo Dưỡng Trọn Đời (Lịch Sử Sửa Chữa Theo Xe)
+            </h3>
+            <p className="text-xs text-slate-500 font-medium">
+              Lịch sử các lần làm dịch vụ tại trung tâm, tự động ghi sổ và lưu trữ vĩnh viễn trên hệ thống.
+            </p>
+          </div>
+          <span className="text-xs font-mono text-emerald-600 flex items-center gap-1 font-bold">
             <ShieldCheck className="w-4 h-4" /> Đã Xác Thực Chuẩn 4S
           </span>
         </div>
 
         <div className="space-y-3">
-          <div className="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/60 flex items-center justify-between">
+          {/* Lệnh vừa thanh toán được tự động đẩy lên đầu danh sách lịch sử */}
+          {isPaid && (
+            <Link
+              href={`/customer/orders/${orderCode}`}
+              className="p-4 rounded-2xl border-2 border-emerald-300 bg-emerald-50/50 hover:bg-emerald-50 flex items-center justify-between transition group"
+            >
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-extrabold text-slate-900">{orderCode}</span>
+                  <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" /> VỪA QUYẾT TOÁN
+                  </span>
+                </div>
+                <div className="text-xs text-slate-700 font-medium">
+                  Bảo dưỡng 40.000km & Thay má phanh Akebono Ceramic (Đã xuất hóa đơn điện tử)
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="font-mono font-black text-sm text-emerald-700">{formatCurrencyVND(totalAmount)}</div>
+                <div className="text-[11px] text-slate-500 font-medium">Hôm nay • Đã thanh toán</div>
+              </div>
+            </Link>
+          )}
+
+          <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-bold text-zinc-800 dark:text-zinc-200">WO-20260415-0042</span>
-                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">HOÀN TẤT</span>
+                <span className="font-mono text-xs font-bold text-slate-800">WO-20260415-0042</span>
+                <span className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">HOÀN TẤT</span>
               </div>
-              <div className="text-xs text-zinc-600 dark:text-zinc-400">
+              <div className="text-xs text-slate-600">
                 Bảo dưỡng Cấp 30.000km: Thay dầu 0W-20, lọc dầu, vệ sinh hệ thống phanh.
               </div>
             </div>
             <div className="text-right">
-              <div className="font-mono font-bold text-sm text-zinc-800 dark:text-zinc-200">{formatCurrencyVND(1650000)}</div>
-              <div className="text-[11px] text-zinc-400">15/04/2026</div>
+              <div className="font-mono font-bold text-sm text-slate-800">{formatCurrencyVND(1650000)}</div>
+              <div className="text-[11px] text-slate-500">15/04/2026</div>
             </div>
           </div>
 

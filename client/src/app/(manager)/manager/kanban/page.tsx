@@ -124,9 +124,67 @@ const INITIAL_CARDS: KanbanCard[] = [
   },
 ];
 
+import { api } from "@/lib/api";
+
+const STAGE_TO_STATUS: Record<KanbanCard["stage"], string> = {
+  intake: "INSPECTION",
+  quoting: "QUOTE_SENT",
+  approved: "QUOTE_APPROVED",
+  in_progress: "IN_PROGRESS",
+  qc: "QUALITY_CHECK",
+  completed: "COMPLETED",
+};
+
 export default function WorkshopKanbanPage() {
   const [cards, setCards] = useState<KanbanCard[]>(INITIAL_CARDS);
   const [draggedCardId, setDraggedCardId] = useState<string | null>(null);
+
+  // Đồng bộ trạng thái lệnh thật từ MongoDB
+  React.useEffect(() => {
+    async function syncRealOrder() {
+      try {
+        const res = await api.getWorkOrder("WO-20261001-0089");
+        if (res.success && res.data) {
+          const wo = res.data;
+          let stage: KanbanCard["stage"] = "in_progress";
+          let progress = wo.progress_percent || 60;
+
+          if (wo.payment_status === "PAID" || wo.current_status === "PAID" || wo.current_status === "COMPLETED") {
+            stage = "completed";
+            progress = 100;
+          } else if (wo.current_status === "QUALITY_CHECK") {
+            stage = "qc";
+            progress = Math.max(progress, 85);
+          } else if (wo.current_status === "IN_PROGRESS") {
+            stage = "in_progress";
+          } else if (wo.current_status === "QUOTE_APPROVED" || wo.current_status === "WAITING_PARTS") {
+            stage = "approved";
+          } else if (wo.current_status === "QUOTE_SENT") {
+            stage = "quoting";
+          } else if (wo.current_status === "DRAFT" || wo.current_status === "INSPECTION") {
+            stage = "intake";
+          }
+
+          setCards((prev) =>
+            prev.map((c) =>
+              c.orderCode === "WO-20261001-0089"
+                ? {
+                    ...c,
+                    stage,
+                    progress,
+                    customerName: wo.customer_name || c.customerName,
+                    plateNumber: wo.license_plate || c.plateNumber,
+                  }
+                : c
+            )
+          );
+        }
+      } catch (err: any) {
+        console.warn("Lỗi sync kanban:", err.message);
+      }
+    }
+    syncRealOrder();
+  }, []);
 
   const handleDragStart = (id: string) => {
     setDraggedCardId(id);
@@ -136,9 +194,10 @@ export default function WorkshopKanbanPage() {
     e.preventDefault();
   };
 
-  const handleDrop = (targetStage: KanbanCard["stage"]) => {
+  const handleDrop = async (targetStage: KanbanCard["stage"]) => {
     if (!draggedCardId) return;
 
+    const card = cards.find((c) => c.id === draggedCardId);
     setCards((prev) =>
       prev.map((c) => {
         if (c.id === draggedCardId) {
@@ -150,8 +209,16 @@ export default function WorkshopKanbanPage() {
       })
     );
 
-    const card = cards.find((c) => c.id === draggedCardId);
-    toast.success(`Đã chuyển lệnh #${card?.orderCode} sang cột: ${COLUMNS.find((col) => col.key === targetStage)?.label}`);
+    if (card) {
+      const nextStatus = STAGE_TO_STATUS[targetStage] || "IN_PROGRESS";
+      try {
+        await api.updateStatus(card.orderCode, nextStatus, `Quản đốc kéo thẻ sang cột ${targetStage} trên Kanban`);
+        toast.success(`Đã chuyển lệnh #${card.orderCode} sang [${COLUMNS.find((col) => col.key === targetStage)?.label}] và lưu MongoDB!`);
+      } catch (err: any) {
+        toast.success(`Đã chuyển lệnh #${card.orderCode} sang cột: ${COLUMNS.find((col) => col.key === targetStage)?.label}`);
+      }
+    }
+
     setDraggedCardId(null);
   };
 

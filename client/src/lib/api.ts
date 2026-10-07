@@ -206,12 +206,31 @@ export const api = {
       body: JSON.stringify({ order_code: orderCode, bank_code: bankCode }),
     }),
 
+  // 7.1. Xác nhận thanh toán VietQR / Ngân hàng chính thức (Ghi sổ PG & Trừ kho Mongo)
+  confirmPayment: (orderCode: string, paymentMethod = "VIETQR", bankCode = "MB") =>
+    fetchApi<{ success: boolean; data: any }>(`/payments/confirm`, {
+      method: "POST",
+      roleFallback: "CUSTOMER",
+      body: JSON.stringify({ order_code: orderCode, payment_method: paymentMethod, bank_code: bankCode }),
+    }),
+
   // 8. Cập nhật tiến độ & ảnh nghiệm thu của thợ
-  updateProgress: (orderCode: string, payload: { stage?: string; note?: string; photo_url?: string; caption?: string }) =>
+  updateProgress: (
+    orderCode: string,
+    payload: { stage_name?: string; percent_complete?: number; note?: string; photo_urls?: any[] }
+  ) =>
     fetchApi<{ success: boolean; data: any }>(`/work-orders/${orderCode}/progress`, {
       method: "POST",
       roleFallback: "TECHNICIAN",
       body: JSON.stringify(payload),
+    }),
+
+  // 8.1. Chuyển trạng thái quy trình Lệnh sửa chữa (State Machine Guard)
+  updateStatus: (orderCode: string, next_status: string, note?: string) =>
+    fetchApi<{ success: boolean; data: any }>(`/work-orders/${orderCode}/status`, {
+      method: "PATCH",
+      roleFallback: "WORKSHOP_MANAGER",
+      body: JSON.stringify({ next_status, note }),
     }),
 
   // 9. Chẩn đoán AI Graph-RAG Gemini

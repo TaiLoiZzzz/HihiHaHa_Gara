@@ -32,6 +32,7 @@ const WorkOrderSchema = new mongoose.Schema(
       enum: ['UNPAID', 'PENDING', 'PAID'],
       default: 'UNPAID',
     },
+    progress_percent: { type: Number, default: 0 },
     paid_at: { type: Date },
     assigned_technicians: [
       {

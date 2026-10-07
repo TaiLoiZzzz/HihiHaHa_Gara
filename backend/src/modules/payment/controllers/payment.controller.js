@@ -202,8 +202,99 @@ const vnpayReturnController = async (req, res, next) => {
   }
 };
 
+// Controller xac nhan thanh toan truc tiep (VietQR hoac chuyen khoan ngan hang MB Bank)
+const confirmPaymentController = async (req, res, next) => {
+  try {
+    const { order_code, payment_method = 'VIETQR', bank_code = 'MB' } = req.body;
+
+    if (!order_code) {
+      return next(new AppError('Vui lòng cung cấp mã Lệnh sửa chữa order_code', 400, 'BAD_REQUEST'));
+    }
+
+    const workOrder = await WorkOrder.findOne({ order_code });
+    if (!workOrder) {
+      return next(new AppError(`Không tìm thấy Lệnh sửa chữa [${order_code}]`, 404, 'WORK_ORDER_NOT_FOUND'));
+    }
+
+    const amount = workOrder.estimate?.total_amount || 0;
+    const now = new Date();
+
+    // 1. Cap nhat WorkOrder trong MongoDB
+    workOrder.payment_status = 'PAID';
+    workOrder.current_status = 'PAID';
+    workOrder.paid_at = now;
+    workOrder.workflow_timeline.push({
+      status: 'PAID',
+      updated_by: req.user?.phone_number || 'CUSTOMER',
+      updated_at: now,
+      note: `Xác nhận thanh toán ${amount.toLocaleString('vi-VN')} đ thành công qua ${payment_method} (${bank_code} Bank 0797526990)`,
+    });
+    await workOrder.save();
+
+    // 2. Ghi nhan PostgreSQL ACID transaction
+    try {
+      const vnp_TxnRef = `${order_code}_${Date.now()}`;
+      await pgPool.query(
+        `INSERT INTO payment_transactions (order_code, vnp_txn_ref, amount, status, vnp_bank_code, completed_at)
+         VALUES ($1, $2, $3, 'SUCCESS', $4, NOW())`,
+        [order_code, vnp_TxnRef, amount, bank_code]
+      );
+    } catch (pgErr) {
+      console.warn('PG Transaction Log Error:', pgErr.message);
+    }
+
+    // 3. Tru kho vat ly MongoDB va xoa khoa giu cho Redis
+    try {
+      const InventoryItem = require('../../inventory/models/inventory.model');
+      const { redis } = require('../../../config/redis');
+      if (workOrder.estimate?.items) {
+        for (const item of workOrder.estimate.items) {
+          if (item.type === 'PART' && item.part_code && item.selected) {
+            const reqQty = Number(item.quantity) || 1;
+            await InventoryItem.updateOne(
+              { part_code: item.part_code },
+              { $inc: { stock_quantity: -reqQty, allocated_quantity: -reqQty } }
+            ).catch(() => {});
+            await redis.del(`hold:${order_code}:${item.part_code}`).catch(() => {});
+            await redis.del(`lock:payment:${order_code}`).catch(() => {});
+          }
+        }
+      }
+    } catch (invErr) {
+      console.warn('Inventory deduction error:', invErr.message);
+    }
+
+    // 4. Phat tin hieu Realtime Socket.io neu co
+    const io = req.app.get('socketio');
+    if (io) {
+      io.emit('PAYMENT_COMPLETED_EVENT', {
+        order_code,
+        amount,
+        paid_at: now,
+        customer_name: workOrder.customer_name,
+        license_plate: workOrder.license_plate,
+      });
+    }
+
+    return sendSuccess(
+      res,
+      {
+        order_code,
+        payment_status: 'PAID',
+        current_status: 'PAID',
+        paid_at: now,
+        amount,
+      },
+      'Xác nhận thanh toán và quyết toán hóa đơn điện tử thành công!'
+    );
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createPaymentUrlController,
   vnpayIpnController,
   vnpayReturnController,
+  confirmPaymentController,
 };

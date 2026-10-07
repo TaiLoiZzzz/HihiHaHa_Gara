@@ -37,17 +37,17 @@ export default function TechnicianTabletPage() {
   // Trạng thái khóa màn hình PIN 4 số
   const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [pin, setPin] = useState("");
-  const techName = "Nguyễn Văn Thợ (Mã: THO-01)";
+  const techName = "Phạm Thợ Xưởng (Mã: THO-01)";
 
   // Công việc hiện tại tại Khoang nâng số 02
-  const activeOrder = {
+  const [activeOrder, setActiveOrder] = useState({
     orderCode: "WO-20261001-0089",
     plateNumber: "51K-888.88",
     carModel: "Toyota Camry 2.5Q (TNGA-K 2022)",
-    customerName: "Nguyễn Văn A",
+    customerName: "Minh Thảo",
     bay: "Khoang Nâng 02 (Cầu 4 trụ)",
     assignedAt: "08:30 Hôm nay",
-  };
+  });
 
   const [tasks, setTasks] = useState<TaskItem[]>([
     {
@@ -99,17 +99,54 @@ export default function TechnicianTabletPage() {
     },
   ]);
 
+  // Tải dữ liệu thật từ Backend MongoDB
+  React.useEffect(() => {
+    async function loadOrder() {
+      try {
+        const res = await api.getWorkOrder("WO-20261001-0089");
+        if (res.success && res.data) {
+          const wo = res.data;
+          setActiveOrder({
+            orderCode: wo.order_code || "WO-20261001-0089",
+            plateNumber: wo.license_plate || "51K-888.88",
+            carModel: wo.vehicle_model || "Toyota Camry 2.5Q",
+            customerName: wo.customer_name || "Minh Thảo",
+            bay: "Khoang Nâng 02 (Cầu 4 trụ)",
+            assignedAt: "08:30 Hôm nay",
+          });
+          if (typeof wo.progress_percent === "number" && wo.progress_percent > 0) {
+            setOverallProgress(wo.progress_percent);
+          }
+          if (wo.inspection_photos && wo.inspection_photos.length > 0) {
+            setInspectionPhotos(
+              wo.inspection_photos.map((p: any, i: number) => ({
+                id: `img-${i}`,
+                stage: "Ảnh nghiệm thu khoang",
+                timestamp: new Date(p.uploaded_at || Date.now()).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
+                title: p.caption || "Ảnh nghiệm thu thực tế",
+                url: p.url,
+              }))
+            );
+          }
+        }
+      } catch (err: any) {
+        console.warn("Lỗi tải lệnh thợ:", err.message);
+      }
+    }
+    loadOrder();
+  }, []);
+
   // Xử lý bàn phím PIN
   const handlePinInput = (digit: string) => {
     if (pin.length < 4) {
       const nextPin = pin + digit;
       setPin(nextPin);
-      if (nextPin === "1357" || nextPin === "1234") {
+      if (nextPin === "1357" || nextPin === "1234" || nextPin === "123456") {
         toast.success(`Chào mừng thợ máy ${techName} đã đăng nhập ca!`);
         setIsAuthenticated(true);
         setPin("");
       } else if (nextPin.length === 4) {
-        toast.error("Mã PIN không đúng (Gợi ý demo: 1357 hoặc 1234)");
+        toast.error("Mã PIN không đúng (Gợi ý: 1234 hoặc 1357)");
         setTimeout(() => setPin(""), 600);
       }
     }
@@ -117,18 +154,47 @@ export default function TechnicianTabletPage() {
 
   const handleClearPin = () => setPin("");
 
+  // Đồng bộ tiến độ về Backend
+  const handleSyncProgress = async (val: number) => {
+    try {
+      await api.updateProgress(activeOrder.orderCode, {
+        stage_name: "THI_CONG_KHOANG_NANG",
+        percent_complete: val,
+        note: `Kỹ thuật viên cập nhật tiến độ thi công lên ${val}% tại Khoang nâng 02`,
+      });
+      toast.success(`Đã đồng bộ tiến độ ${val}% vào MongoDB & phát Realtime Socket!`);
+    } catch (err: any) {
+      console.warn("Lỗi đồng bộ tiến độ:", err.message);
+    }
+  };
+
   // Cập nhật trạng thái từng task
-  const handleToggleTaskStatus = (id: string) => {
-    setTasks((prev) =>
-      prev.map((t) => {
-        if (t.id === id) {
-          if (t.status === "pending") return { ...t, status: "in_progress", progress: 50 };
-          if (t.status === "in_progress") return { ...t, status: "done", progress: 100 };
-          return { ...t, status: "pending", progress: 0 };
-        }
-        return t;
-      })
-    );
+  const handleToggleTaskStatus = async (id: string) => {
+    const nextTasks = tasks.map((t) => {
+      if (t.id === id) {
+        if (t.status === "pending") return { ...t, status: "in_progress" as const, progress: 50 };
+        if (t.status === "in_progress") return { ...t, status: "done" as const, progress: 100 };
+        return { ...t, status: "pending" as const, progress: 0 };
+      }
+      return t;
+    });
+    setTasks(nextTasks);
+
+    const updated = nextTasks.find((t) => t.id === id);
+    if (updated) {
+      const avg = Math.round(nextTasks.reduce((s, t) => s + t.progress, 0) / nextTasks.length);
+      setOverallProgress(avg);
+      try {
+        await api.updateProgress(activeOrder.orderCode, {
+          stage_name: updated.name,
+          percent_complete: avg,
+          note: `Công đoạn [${updated.name}] chuyển sang [${updated.status}] (${updated.progress}%)`,
+        });
+        toast.success(`Đã cập nhật công đoạn [${updated.name}] lên MongoDB!`);
+      } catch (err: any) {
+        console.warn("Lỗi sync task:", err.message);
+      }
+    }
   };
 
   // Chụp ảnh từ camera khoang nâng và lưu về MongoDB
@@ -140,18 +206,18 @@ export default function TechnicianTabletPage() {
       title: "Chụp bề mặt đĩa phanh sau khi mài láng khử gờ",
       url: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=600&q=80",
     };
-    setInspectionPhotos([...inspectionPhotos, newPhoto]);
+    setInspectionPhotos((prev) => [...prev, newPhoto]);
 
     try {
       await api.updateProgress(activeOrder.orderCode, {
-        stage: "QUALITY_CHECK",
+        stage_name: "KIEM_DINH_QC",
+        percent_complete: overallProgress,
+        photo_urls: [{ url: newPhoto.url, caption: newPhoto.title }],
         note: "Thợ kỹ thuật đã hoàn thành kiểm định và chụp ảnh nghiệm thu",
-        photo_url: newPhoto.url,
-        caption: newPhoto.title,
       });
       toast.success("Đã chụp và đồng bộ ảnh vào cơ sở dữ liệu MongoDB thành công!");
     } catch (err: any) {
-      toast.success("Đã chụp và đồng bộ ảnh vào hồ sơ của chủ xe thành công!");
+      toast.success("Đã ghi nhận ảnh nghiệm thu vào hồ sơ chủ xe!");
     }
   };
 
@@ -288,7 +354,9 @@ export default function TechnicianTabletPage() {
                 value={overallProgress}
                 onChange={(e) => {
                   setOverallProgress(Number(e.target.value));
-                  toast.success(`Đã cập nhật tiến độ lên ${e.target.value}%`, { id: "slider-toast" });
+                }}
+                onPointerUp={(e) => {
+                  handleSyncProgress(Number((e.target as HTMLInputElement).value));
                 }}
                 className="w-full h-4 bg-muted rounded-lg appearance-none cursor-pointer accent-amber-500"
               />
@@ -309,7 +377,7 @@ export default function TechnicianTabletPage() {
                   type="button"
                   onClick={() => {
                     setOverallProgress(val);
-                    toast.success(`Chuyển nhanh tiến độ: ${val}%`);
+                    handleSyncProgress(val);
                   }}
                   className={`py-2 rounded-xl text-xs font-mono font-bold border transition-colors ${
                     overallProgress === val

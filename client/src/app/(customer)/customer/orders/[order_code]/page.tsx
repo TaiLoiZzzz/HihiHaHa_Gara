@@ -139,38 +139,46 @@ export default function WorkOrderDetailPage({ params }: Props) {
   const plateNumber = orderData?.license_plate || "51K-888.88";
   const vehicleModel = orderData?.vehicle_model || "Toyota Camry 2.5Q";
   const customerName = orderData?.customer_name || "Minh Thảo";
+  const isPaid = orderData?.payment_status === "PAID" || orderData?.current_status === "PAID";
 
   return (
     <div className="space-y-8 font-sans pb-16">
       
       {/* Top Banner Lệnh Sửa Chữa */}
-      <div className="p-8 rounded-3xl bg-white dark:bg-brand-cardDark border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 font-mono">
+            <h1 className="text-2xl font-black text-slate-900 font-mono">
               {orderCode}
             </h1>
-            <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full ${
-              approved
-                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
-                : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+            <span className={`px-3 py-1 text-xs font-bold rounded-full ${
+              isPaid
+                ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                : approved
+                ? "bg-blue-100 text-blue-800 border border-blue-300"
+                : "bg-amber-100 text-amber-800 border border-amber-300"
             }`}>
-              {approved ? "KHÁCH ĐÃ PHÊ DUYỆT" : "CHỜ PHÊ DUYỆT (QUOTE_SENT)"}
+              {isPaid ? "ĐÃ THANH TOÁN (PAID)" : approved ? "KHÁCH ĐÃ PHÊ DUYỆT" : "CHỜ PHÊ DUYỆT (QUOTE_SENT)"}
             </span>
           </div>
-          <p className="text-xs text-zinc-500">
-            Phương tiện: <strong>{vehicleModel}</strong> • Biển số: <strong className="font-mono">{plateNumber}</strong> • Chủ xe: <strong>{customerName}</strong>
+          <p className="text-xs text-slate-600 font-medium">
+            Phương tiện: <strong className="text-slate-900">{vehicleModel}</strong> • Biển số: <strong className="font-mono text-slate-900">{plateNumber}</strong> • Chủ xe: <strong className="text-slate-900">{customerName}</strong>
           </p>
         </div>
 
-        {approved && (
+        {isPaid ? (
+          <div className="px-5 py-2.5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-800 font-extrabold text-xs flex items-center gap-2 shadow-xs">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>ĐÃ THANH TOÁN ({formatCurrencyVND(totalAmount)})</span>
+          </div>
+        ) : approved ? (
           <Link href={`/customer/payment/${orderCode}`}>
-            <LiquidGlassButton size="md" variant="primary">
-              <CreditCard className="w-4 h-4 text-zinc-950" />
+            <button className="px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider transition shadow-md shadow-amber-500/20 active:scale-95 flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-slate-950" />
               Thanh Toán Ngay ({formatCurrencyVND(totalAmount)})
-            </LiquidGlassButton>
+            </button>
           </Link>
-        )}
+        ) : null}
       </div>
 
       {/* Bảng Báo Giá Động Từng Phần (Granular Approval) */}
