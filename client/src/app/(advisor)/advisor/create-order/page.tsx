@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { formatVND } from "@/lib/utils";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
 import { GraphRagAiModal } from "@/components/technician/graph-rag-ai-modal";
 
 interface OrderItem {
@@ -35,17 +36,29 @@ interface OrderItem {
 
 export default function CreateOrderPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-  // Form states
+  // Form states - Mặc định dữ liệu thực tế
   const [plateNumber, setPlateNumber] = useState("51K-888.88");
-  const [customerName, setCustomerName] = useState("Nguyễn Văn A");
-  const [phone, setPhone] = useState("0908888888");
+  const [customerName, setCustomerName] = useState("Minh Thảo");
+  const [phone, setPhone] = useState("0912345678");
   const [carModel, setCarModel] = useState("Toyota Camry 2.5Q (2022)");
   const [odo, setOdo] = useState("42500");
   const [fuelLevel, setFuelLevel] = useState("65");
   const [customerRequests, setCustomerRequests] = useState(
-    "Bảo dưỡng cấp 40.000km, phanh có tiếng kêu nhẹ khi rà gấp, thay dầu tổng hợp cao cấp."
+    "Bảo dưỡng định kỳ 40.000km, kiểm tra phanh trước phát tiếng kêu, thay dầu nhớt và lọc nhớt chính hãng."
   );
+
+  // Tự động nhận diện chủ xe khi nhập biển số
+  const handlePlateChange = (plate: string) => {
+    const upper = plate.toUpperCase();
+    setPlateNumber(upper);
+    if (upper.includes("51K-888.88") || upper.includes("88888")) {
+      setCustomerName("Minh Thảo");
+      setPhone("0912345678");
+      setCarModel("Toyota Camry 2.5Q (2022)");
+    }
+  };
 
   // Initial estimate items
   const [items, setItems] = useState<OrderItem[]>([
@@ -120,21 +133,42 @@ export default function CreateOrderPage() {
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!plateNumber || !customerName || !phone) {
       toast.error("Vui lòng điền đầy đủ thông tin bắt buộc!");
       return;
     }
 
-    const newOrderCode = `WO-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(
-      1000 + Math.random() * 9000
-    )}`;
+    setLoading(true);
+    try {
+      const res = await api.createWorkOrder({
+        license_plate: plateNumber,
+        customer_phone: phone,
+        customer_name: customerName,
+        vehicle_model: carModel,
+        items: items.map((it) => ({
+          name: it.name,
+          part_code: it.code,
+          type: it.type === "labor" ? "LABOR" : "PART",
+          quantity: it.quantity,
+          unit_price: it.unitPrice,
+        })),
+      });
 
-    toast.success(`Tạo thành công Lệnh Sửa Chữa #${newOrderCode}!`);
-    setTimeout(() => {
-      router.push("/advisor/work-orders");
-    }, 1200);
+      if (res.success && res.data) {
+        toast.success(`Khởi tạo thành công Lệnh Sửa Chữa #${res.data.order_code}!`);
+        setTimeout(() => {
+          router.push("/advisor/work-orders");
+        }, 800);
+      } else {
+        toast.error("Không thể lưu Lệnh sửa chữa lên hệ thống.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Lỗi lưu dữ liệu Lệnh sửa chữa vào MongoDB.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -180,7 +214,7 @@ export default function CreateOrderPage() {
                     type="text"
                     required
                     value={plateNumber}
-                    onChange={(e) => setPlateNumber(e.target.value.toUpperCase())}
+                    onChange={(e) => handlePlateChange(e.target.value)}
                     className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm font-mono font-bold tracking-wider placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 shadow-xs transition"
                     placeholder="VD: 51K-888.88"
                   />
@@ -453,10 +487,11 @@ export default function CreateOrderPage() {
 
             <button
               type="submit"
-              className="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm shadow-md shadow-amber-500/25 transition-all flex items-center justify-center gap-2 active:scale-95"
+              disabled={loading}
+              className="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm shadow-md shadow-amber-500/25 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
-              Tạo Lệnh Sửa Chữa (Work Order)
+              {loading ? "Đang Khởi Tạo..." : "Tạo Lệnh Sửa Chữa (Work Order)"}
             </button>
           </div>
         </div>

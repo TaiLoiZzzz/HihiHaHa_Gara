@@ -115,15 +115,34 @@ const updateEstimateItemsController = async (req, res, next) => {
   }
 };
 
-// truy van danh sach lenh theo xe / sdt
+// truy van danh sach lenh theo xe / sdt hoac toan bo lenh cho nhan vien
 const getCustomerWorkOrdersController = async (req, res, next) => {
   try {
-    const license_plate = req.user?.license_plate || req.query.license_plate;
-    const phone_number = req.user?.phone_number || req.query.phone_number;
-
+    const isCustomer = req.user?.role === 'CUSTOMER';
     const query = {};
-    if (license_plate) query.license_plate = license_plate.trim().toUpperCase();
-    if (phone_number) query.customer_phone = phone_number.trim();
+
+    if (isCustomer) {
+      const license_plate = req.user?.license_plate || req.query.license_plate;
+      const phone_number = req.user?.phone_number || req.query.phone_number;
+      if (license_plate && phone_number) {
+        query.$or = [
+          { license_plate: license_plate.trim().toUpperCase() },
+          { customer_phone: phone_number.trim() },
+        ];
+      } else if (license_plate) {
+        query.license_plate = license_plate.trim().toUpperCase();
+      } else if (phone_number) {
+        query.customer_phone = phone_number.trim();
+      }
+    } else {
+      // Nhan vien (Advisor, Manager, Technician, Owner) neu co query param thi loc, khong thi lay tat ca
+      if (req.query.license_plate) {
+        query.license_plate = req.query.license_plate.trim().toUpperCase();
+      }
+      if (req.query.customer_phone) {
+        query.customer_phone = req.query.customer_phone.trim();
+      }
+    }
 
     const workOrders = await WorkOrder.find(query).sort({ createdAt: -1 });
 

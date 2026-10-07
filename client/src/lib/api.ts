@@ -137,12 +137,12 @@ export const api = {
     return data;
   },
 
-  // 2. Yêu cầu mã OTP cho khách hàng
-  requestOtp: async (phone_number: string, license_plate: string) => {
+  // 2. Yêu cầu mã OTP cho khách hàng (hỗ trợ nhập email trực tiếp)
+  requestOtp: async (phone_number: string, license_plate: string, email?: string) => {
     const res = await fetch(`${API_BASE_URL}/auth/request-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone_number, license_plate }),
+      body: JSON.stringify({ phone_number, license_plate, email }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -178,6 +178,28 @@ export const api = {
   getMyWorkOrders: () =>
     fetchApi<{ success: boolean; data: any[] }>(`/work-orders/my-orders`, {
       roleFallback: "SERVICE_ADVISOR",
+    }),
+
+  // 5.1. Khởi tạo Lệnh sửa chữa mới lên MongoDB
+  createWorkOrder: (payload: {
+    license_plate: string;
+    customer_phone: string;
+    customer_name?: string;
+    vehicle_model?: string;
+    items?: any[];
+  }) =>
+    fetchApi<{ success: boolean; data: any }>(`/work-orders`, {
+      method: "POST",
+      roleFallback: "SERVICE_ADVISOR",
+      body: JSON.stringify(payload),
+    }),
+
+  // 5.2. Cập nhật bảng báo giá dịch vụ của Lệnh sửa chữa
+  updateEstimate: (orderCode: string, items: any[]) =>
+    fetchApi<{ success: boolean; data: any }>(`/work-orders/${orderCode}/estimate`, {
+      method: "PUT",
+      roleFallback: "SERVICE_ADVISOR",
+      body: JSON.stringify({ items }),
     }),
 
   // 6. Lấy kho phụ tùng OEM có hỗ trợ phân trang & tìm kiếm

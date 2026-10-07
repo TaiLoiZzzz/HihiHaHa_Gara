@@ -79,7 +79,7 @@ export default function TechnicianTabletPage() {
   // Overall slider %
   const [overallProgress, setOverallProgress] = useState(60);
 
-  // Ảnh chụp nghiệm thu (Before & After)
+  // Ảnh chụp nghiệm thu (Before & After) - Dùng file ảnh nội bộ sắc nét, không bị phụ thuộc mạng ngoài
   const [inspectionPhotos, setInspectionPhotos] = useState<
     { id: string; stage: string; timestamp: string; title: string; url: string }[]
   >([
@@ -88,14 +88,14 @@ export default function TechnicianTabletPage() {
       stage: "Trước thi công",
       timestamp: "09:15",
       title: "Má phanh mòn sát ngưỡng cảm biến kim loại (còn 2.5mm)",
-      url: "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=600&q=80",
+      url: "/inspection-sample.jpg",
     },
     {
       id: "img-2",
       stage: "Sau nghiệm thu",
       timestamp: "10:45",
       title: "Đã lắp má phanh Akebono mới & tra mỡ chịu nhiệt chống rít",
-      url: "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=600&q=80",
+      url: "/gara-team.png",
     },
   ]);
 
@@ -204,7 +204,7 @@ export default function TechnicianTabletPage() {
       stage: "Ảnh nghiệm thu bổ sung",
       timestamp: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
       title: "Chụp bề mặt đĩa phanh sau khi mài láng khử gờ",
-      url: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=600&q=80",
+      url: "/inspection-sample.jpg",
     };
     setInspectionPhotos((prev) => [...prev, newPhoto]);
 
@@ -492,13 +492,14 @@ export default function TechnicianTabletPage() {
             <div className="space-y-4 pt-2">
               {inspectionPhotos.map((photo) => (
                 <div key={photo.id} className="rounded-xl border overflow-hidden bg-background">
-                  <div className="relative h-44 w-full bg-zinc-900">
-                    <Image
+                  <div className="relative h-44 w-full bg-slate-100 dark:bg-zinc-800">
+                    <img
                       src={photo.url}
                       alt={photo.title}
-                      fill
-                      className="object-cover"
-                      unoptimized
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = "/inspection-sample.jpg";
+                      }}
                     />
                     <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-black/70 text-white backdrop-blur-sm">
                       {photo.stage} • {photo.timestamp}

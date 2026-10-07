@@ -49,7 +49,7 @@ const INITIAL_CARDS: KanbanCard[] = [
     orderCode: "WO-20261001-0089",
     plateNumber: "51K-888.88",
     carModel: "Toyota Camry 2.5Q",
-    customerName: "Nguyễn Văn A",
+    customerName: "Minh Thảo",
     technician: "Nguyễn Văn Thợ (THO-01)",
     bay: "Khoang nâng 02",
     progress: 60,
@@ -143,41 +143,88 @@ export default function WorkshopKanbanPage() {
   React.useEffect(() => {
     async function syncRealOrder() {
       try {
-        const res = await api.getWorkOrder("WO-20261001-0089");
-        if (res.success && res.data) {
-          const wo = res.data;
-          let stage: KanbanCard["stage"] = "in_progress";
-          let progress = wo.progress_percent || 60;
+        const resList = await api.getMyWorkOrders();
+        if (resList.success && Array.isArray(resList.data) && resList.data.length > 0) {
+          const mappedCards = resList.data.map((wo: any, idx: number) => {
+            let stage: KanbanCard["stage"] = "in_progress";
+            let progress = typeof wo.progress_percent === "number" ? wo.progress_percent : 0;
 
-          if (wo.payment_status === "PAID" || wo.current_status === "PAID" || wo.current_status === "COMPLETED") {
-            stage = "completed";
-            progress = 100;
-          } else if (wo.current_status === "QUALITY_CHECK") {
-            stage = "qc";
-            progress = Math.max(progress, 85);
-          } else if (wo.current_status === "IN_PROGRESS") {
-            stage = "in_progress";
-          } else if (wo.current_status === "QUOTE_APPROVED" || wo.current_status === "WAITING_PARTS") {
-            stage = "approved";
-          } else if (wo.current_status === "QUOTE_SENT") {
-            stage = "quoting";
-          } else if (wo.current_status === "DRAFT" || wo.current_status === "INSPECTION") {
-            stage = "intake";
-          }
+            if (wo.payment_status === "PAID" || wo.current_status === "PAID" || wo.current_status === "COMPLETED") {
+              stage = "completed";
+              progress = 100;
+            } else if (wo.current_status === "QUALITY_CHECK") {
+              stage = "qc";
+              progress = Math.max(progress, 85);
+            } else if (wo.current_status === "IN_PROGRESS") {
+              stage = "in_progress";
+              progress = progress || 50;
+            } else if (wo.current_status === "QUOTE_APPROVED" || wo.current_status === "WAITING_PARTS") {
+              stage = "approved";
+              progress = 30;
+            } else if (wo.current_status === "QUOTE_SENT") {
+              stage = "quoting";
+              progress = 20;
+            } else {
+              stage = "intake";
+              progress = 10;
+            }
 
-          setCards((prev) =>
-            prev.map((c) =>
-              c.orderCode === "WO-20261001-0089"
-                ? {
-                    ...c,
-                    stage,
-                    progress,
-                    customerName: wo.customer_name || c.customerName,
-                    plateNumber: wo.license_plate || c.plateNumber,
-                  }
-                : c
-            )
+            return {
+              id: `db-card-${wo.order_code || idx}`,
+              orderCode: wo.order_code,
+              plateNumber: wo.license_plate || "51K-888.88",
+              carModel: wo.vehicle_model || "Toyota Camry 2.5Q",
+              customerName: wo.customer_name || "Minh Thảo",
+              technician: wo.assigned_technician?.full_name || "Nguyễn Văn Thợ (THO-01)",
+              bay: "Khoang Nâng 02",
+              progress,
+              stage,
+              estimatedTime: "Hôm nay",
+              priority: (wo.priority || "normal") as "normal" | "urgent",
+            };
+          });
+
+          const extraCards = INITIAL_CARDS.filter(
+            (c) => !mappedCards.some((mc: any) => mc.orderCode === c.orderCode)
           );
+          setCards([...mappedCards, ...extraCards]);
+        } else {
+          const res = await api.getWorkOrder("WO-20261001-0089");
+          if (res.success && res.data) {
+            const wo = res.data;
+            let stage: KanbanCard["stage"] = "in_progress";
+            let progress = wo.progress_percent || 60;
+
+            if (wo.payment_status === "PAID" || wo.current_status === "PAID" || wo.current_status === "COMPLETED") {
+              stage = "completed";
+              progress = 100;
+            } else if (wo.current_status === "QUALITY_CHECK") {
+              stage = "qc";
+              progress = Math.max(progress, 85);
+            } else if (wo.current_status === "IN_PROGRESS") {
+              stage = "in_progress";
+            } else if (wo.current_status === "QUOTE_APPROVED" || wo.current_status === "WAITING_PARTS") {
+              stage = "approved";
+            } else if (wo.current_status === "QUOTE_SENT") {
+              stage = "quoting";
+            } else if (wo.current_status === "DRAFT" || wo.current_status === "INSPECTION") {
+              stage = "intake";
+            }
+
+            setCards((prev) =>
+              prev.map((c) =>
+                c.orderCode === "WO-20261001-0089"
+                  ? {
+                      ...c,
+                      stage,
+                      progress,
+                      customerName: wo.customer_name || c.customerName,
+                      plateNumber: wo.license_plate || c.plateNumber,
+                    }
+                  : c
+              )
+            );
+          }
         }
       } catch (err: any) {
         console.warn("Lỗi sync kanban:", err.message);

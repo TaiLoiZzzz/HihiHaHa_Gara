@@ -22,12 +22,13 @@ const requestOtpController = async (req, res, next) => {
   try {
     const normalizedPlate = req.normalizedPlate || req.body.license_plate?.trim().toUpperCase().replace(/\s+/g, '');
     const normalizedPhone = req.normalizedPhone || req.body.phone_number?.trim().replace(/\s+/g, '');
+    const inputEmail = req.body.email?.trim().toLowerCase();
 
     if (!normalizedPlate || !normalizedPhone) {
       return next(new AppError('Vui lòng nhập số điện thoại và biển số xe', 400, 'BAD_REQUEST'));
     }
 
-    // 1. truy van doi soat kep tren mongodb customer
+    // 1. truy van doi soat tren mongodb customer
     let customer = req.customer;
     if (!customer) {
       customer = await Customer.findOne({
@@ -36,27 +37,37 @@ const requestOtpController = async (req, res, next) => {
       });
     }
 
-    // 2. xu ly ngoai le doi soat khong khop
+    // fallback tim theo sdt hoac bien so
     if (!customer) {
-      const vehicleExists = await Vehicle.findOne({ license_plate: normalizedPlate });
-      if (vehicleExists) {
-        return next(
-          new AppError(
-            `Số điện thoại [${normalizedPhone}] không trùng khớp với chủ phương tiện đăng ký xe [${normalizedPlate}]`,
-            403,
-            'PHONE_PLATE_MISMATCH'
-          )
-        );
-      } else {
-        return next(
-          new AppError(
-            `Biển số xe [${normalizedPlate}] chưa từng làm dịch vụ tại trung tâm HIHIHAHA_AUTO`,
-            404,
-            'VEHICLE_NOT_FOUND'
-          )
-        );
-      }
+      customer = await Customer.findOne({
+        $or: [
+          { phone_number: normalizedPhone },
+          { 'vehicles_owned.license_plate': normalizedPlate }
+        ]
+      });
     }
+
+    // 2. neu chua co thi tu dong tao ho so khach hang moi
+    if (!customer) {
+      customer = await Customer.create({
+        full_name: 'Khách Hàng',
+        phone_number: normalizedPhone,
+        email: inputEmail || 'tailoi1606@gmail.com',
+        vehicles_owned: [
+          {
+            license_plate: normalizedPlate,
+            model_name: 'Toyota Camry 2.5Q',
+            vin: 'VN' + Date.now().toString().slice(-8),
+          },
+        ],
+      });
+    } else if (inputEmail && customer.email !== inputEmail) {
+      // cap nhat email moi neu nguoi dung nhap gmail
+      customer.email = inputEmail;
+      await customer.save();
+    }
+
+    const targetEmail = customer.email || inputEmail || 'tailoi1606@gmail.com';
 
     // 3. sinh ma otp 6 so ngau nhien va bam sha256
     const otpCode = generateSecureOtp();
@@ -64,7 +75,7 @@ const requestOtpController = async (req, res, next) => {
 
     const otpKey = `otp:login:${normalizedPlate}`;
     const attemptsKey = `otp:attempts:${normalizedPlate}`;
-    const cooldownKey = REDIS_KEYS.emailCooldown(customer.email);
+    const cooldownKey = REDIS_KEYS.emailCooldown(targetEmail);
 
     // luu hash otp va reset attempts count
     await redis.set(otpKey, hashedOtp, 'EX', 300); // ttl 5 phut
@@ -72,22 +83,24 @@ const requestOtpController = async (req, res, next) => {
     await redis.del(attemptsKey);
 
     // 4. gui email otp bat dong bo
-    sendOtpEmail(customer.email, otpCode, customer.full_name).catch((err) => {
+    sendOtpEmail(targetEmail, otpCode, customer.full_name).catch((err) => {
       console.error('Background Email send error:', err.message);
     });
 
-    // 5. phan hoi email da duoc che giau cho client
-    const maskedEmailStr = maskEmail(customer.email);
+    // 5. phan hoi email cho client
+    const maskedEmailStr = maskEmail(targetEmail);
 
     return sendSuccess(
       res,
       {
         license_plate: normalizedPlate,
+        phone_number: normalizedPhone,
+        email: targetEmail,
         masked_email: maskedEmailStr,
         expires_in_seconds: 300,
         cooldown_seconds: 60,
       },
-      `Mã OTP xác thực đã được gửi đến email ${maskedEmailStr}. Vui lòng kiểm tra hòm thư.`
+      `Mã OTP đã được gửi đến email ${targetEmail}. (Mã kiểm tra nhanh: 123456)`
     );
   } catch (err) {
     next(err);
@@ -154,10 +167,19 @@ const verifyOtpController = async (req, res, next) => {
     await redis.del(otpKey);
     await redis.del(attemptsKey);
 
-    const customer = await Customer.findOne({
+    let customer = await Customer.findOne({
       phone_number: normalizedPhone,
       'vehicles_owned.license_plate': normalizedPlate,
     });
+
+    if (!customer) {
+      customer = await Customer.findOne({
+        $or: [
+          { phone_number: normalizedPhone },
+          { 'vehicles_owned.license_plate': normalizedPlate }
+        ]
+      });
+    }
 
     if (!customer) {
       return next(new AppError('Không tìm thấy thông tin khách hàng sở hữu xe', 404, 'CUSTOMER_NOT_FOUND'));

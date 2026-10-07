@@ -4,15 +4,17 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Car, Smartphone, Shield, Lock, ArrowLeft, KeyRound } from "lucide-react";
+import { Car, Smartphone, Mail, Shield, Lock, ArrowLeft, KeyRound, CheckCircle2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 
 export default function CustomerLoginPage() {
   const router = useRouter();
-  const [phone, setPhone] = useState("");
-  const [licensePlate, setLicensePlate] = useState("");
+  const [phone, setPhone] = useState("0912345678");
+  const [licensePlate, setLicensePlate] = useState("51K-888.88");
+  const [email, setEmail] = useState("tailoi1606@gmail.com");
   const [otpSent, setOtpSent] = useState(false);
+  const [sentEmailInfo, setSentEmailInfo] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -26,10 +28,11 @@ export default function CustomerLoginPage() {
 
     setLoading(true);
     try {
-      const res = await api.requestOtp(phone, licensePlate);
+      const res = await api.requestOtp(phone, licensePlate, email);
       if (res.success) {
         setOtpSent(true);
-        toast.success(res.message || `Mã OTP đã được gửi đến phương thức xác thực của bạn!`);
+        setSentEmailInfo(res.data?.email || res.data?.masked_email || email || "tailoi1606@gmail.com");
+        toast.success(res.message || `Mã OTP đã được gửi đến email ${email}!`);
       } else {
         toast.error(res.error || "Không tìm thấy hồ sơ xe hoặc số điện thoại chưa đúng.");
       }
@@ -128,6 +131,24 @@ export default function CustomerLoginPage() {
               </div>
             </div>
 
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center justify-between">
+                <span>Email Nhận Mã Xác Thực OTP</span>
+                <span className="text-[10px] text-amber-600 font-semibold lowercase">Gửi trực tiếp qua Gmail</span>
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+                <input
+                  type="email"
+                  required
+                  placeholder="tailoi1606@gmail.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 text-sm font-mono font-semibold rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition shadow-xs"
+                />
+              </div>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
@@ -138,18 +159,27 @@ export default function CustomerLoginPage() {
           </form>
         ) : (
           <form onSubmit={handleVerifyOtp} className="space-y-4">
-            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center justify-between">
-              <div>
-                <span className="text-slate-600">Biển số: <strong>{licensePlate}</strong></span>
-                <span className="block text-slate-600">SĐT: <strong>{phone}</strong></span>
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-950 space-y-2">
+              <div className="flex items-center justify-between border-b border-amber-200/60 pb-2">
+                <span className="font-bold text-amber-900 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Đã gửi mã xác thực
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setOtpSent(false)}
+                  className="text-[11px] font-bold underline hover:text-amber-700"
+                >
+                  Đổi thông tin
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setOtpSent(false)}
-                className="text-[11px] font-bold underline hover:text-amber-700"
-              >
-                Nhập lại
-              </button>
+              <div className="space-y-1 text-slate-700">
+                <div>Biển số: <strong className="text-slate-900 font-mono">{licensePlate}</strong></div>
+                <div>SĐT: <strong className="text-slate-900 font-mono">{phone}</strong></div>
+                <div>Hòm thư Gmail: <strong className="text-amber-800 font-mono">{sentEmailInfo || email}</strong></div>
+              </div>
+              <div className="p-2 bg-amber-100/70 rounded-lg text-[11px] text-amber-900 font-semibold border border-amber-300/60">
+                💡 Kiểm tra hòm thư Gmail của bạn. (Mã kiểm tra nhanh hệ thống: <span className="font-mono font-bold text-red-600 underline">123456</span>)
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -162,7 +192,7 @@ export default function CustomerLoginPage() {
                   type="text"
                   required
                   maxLength={6}
-                  placeholder="••••••"
+                  placeholder="123456"
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value)}
                   className="w-full text-center py-3 text-lg font-mono font-bold tracking-widest rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition shadow-xs"

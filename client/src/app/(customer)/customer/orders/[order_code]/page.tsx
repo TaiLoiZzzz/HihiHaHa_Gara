@@ -340,13 +340,14 @@ export default function WorkOrderDetailPage({ params }: Props) {
             {photos.length > 0 ? (
               photos.map((p, idx) => (
                 <div key={idx} className="space-y-2">
-                  <div className="relative aspect-video rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-900">
-                    <Image
+                  <div className="relative aspect-video rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-800">
+                    <img
                       src={p.url}
                       alt={p.caption || "Ảnh nghiệm thu"}
-                      fill
-                      className="object-cover"
-                      unoptimized
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = "/inspection-sample.jpg";
+                      }}
                     />
                   </div>
                   <p className="text-[11px] text-zinc-600 dark:text-zinc-400 font-medium">

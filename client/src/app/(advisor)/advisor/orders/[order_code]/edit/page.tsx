@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { formatVND } from "@/lib/utils";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
 import { GraphRagAiModal } from "@/components/technician/graph-rag-ai-modal";
 
 interface EstimateItem {
@@ -48,6 +49,8 @@ export default function EditOrderEstimatePage() {
   const params = useParams();
   const router = useRouter();
   const orderCode = (params.order_code as string) || "WO-20261001-0089";
+  const [orderData, setOrderData] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
 
   // State báo giá hiện tại của WO-20261001-0089 (Khớp giá 2,808,000 VND từ backend/báo cáo)
   const [items, setItems] = useState<EstimateItem[]>([
@@ -84,6 +87,33 @@ export default function EditOrderEstimatePage() {
       unitPrice: 200000,
     },
   ]);
+
+  // Nạp dữ liệu thật từ MongoDB
+  React.useEffect(() => {
+    async function loadData() {
+      try {
+        const res = await api.getWorkOrder(orderCode);
+        if (res.success && res.data) {
+          setOrderData(res.data);
+          if (res.data.estimate?.items && res.data.estimate.items.length > 0) {
+            setItems(
+              res.data.estimate.items.map((it: any, idx: number) => ({
+                id: `item-${idx}`,
+                name: it.name,
+                code: it.part_code || `PART-${idx}`,
+                type: it.type === "LABOR" ? "labor" : "part",
+                quantity: it.quantity || 1,
+                unitPrice: it.unit_price || 0,
+              }))
+            );
+          }
+        }
+      } catch (err: any) {
+        console.warn("Lỗi load work order:", err.message);
+      }
+    }
+    loadData();
+  }, [orderCode]);
 
   // Neo4j Cypher Tra cứu phụ tùng dùng chung
   const [cypherQuery, setCypherQuery] = useState(
@@ -184,12 +214,34 @@ export default function EditOrderEstimatePage() {
     }, 600);
   };
 
-  const handleSaveOrder = () => {
-    toast.success(`Đã lưu cập nhật báo giá Lệnh #${orderCode}! (Tổng: ${formatVND(grandTotal)})`);
-    setTimeout(() => {
-      router.push("/advisor/work-orders");
-    }, 1000);
+  const handleSaveOrder = async () => {
+    setSaving(true);
+    try {
+      await api.updateEstimate(
+        orderCode,
+        items.map((it) => ({
+          name: it.name,
+          part_code: it.code,
+          type: it.type === "labor" ? "LABOR" : "PART",
+          quantity: it.quantity,
+          unit_price: it.unitPrice,
+        }))
+      );
+      toast.success(`Đã lưu cập nhật bảng báo giá Lệnh #${orderCode} vào cơ sở dữ liệu!`);
+      setTimeout(() => {
+        router.push("/advisor/work-orders");
+      }, 800);
+    } catch (err: any) {
+      toast.error(err.message || "Lỗi lưu bảng báo giá.");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const plateNumber = orderData?.license_plate || "51K-888.88";
+  const carModel = orderData?.vehicle_model || "Toyota Camry 2.5Q";
+  const customerName = orderData?.customer_name || "Minh Thảo";
+  const customerPhone = orderData?.customer_phone || "0912345678";
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-16 font-sans">
@@ -204,12 +256,12 @@ export default function EditOrderEstimatePage() {
           </Link>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">Chỉnh Sửa Báo Giá #{orderCode}</h1>
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
-              Đang tiếp nhận
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+              {orderData?.current_status || "Chờ duyệt"}
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-600 mt-1">
-            Xe: Toyota Camry 2.5Q (Biển số: 51K-888.88) • Chủ xe: Nguyễn Văn A (0908888888)
+            Xe: {carModel} (Biển số: {plateNumber}) • Chủ xe: {customerName} ({customerPhone})
           </p>
         </div>
 
@@ -217,9 +269,10 @@ export default function EditOrderEstimatePage() {
           <GraphRagAiModal />
           <button
             onClick={handleSaveOrder}
-            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm transition-all shadow-md shadow-amber-500/20 flex items-center gap-2 active:scale-95"
+            disabled={saving}
+            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm transition-all shadow-md shadow-amber-500/20 flex items-center gap-2 active:scale-95 disabled:opacity-50"
           >
-            <Save className="w-4 h-4" /> Lưu & Cập Nhật
+            <Save className="w-4 h-4" /> {saving ? "Đang lưu..." : "Lưu & Cập Nhật Báo Giá"}
           </button>
         </div>
       </div>

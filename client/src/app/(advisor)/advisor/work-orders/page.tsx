@@ -20,6 +20,41 @@ interface OrderItemDisplay {
   created_at: string;
 }
 
+function getStatusInfo(status: string, payment_status?: string) {
+  if (payment_status === "PAID" || status === "PAID") {
+    return {
+      text: "Đã thanh toán (Hoàn tất)",
+      color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30",
+    };
+  }
+  switch (status) {
+    case "DELIVERED":
+      return { text: "Đã giao xe cho khách", color: "bg-emerald-500/10 text-emerald-700 border-emerald-500/40" };
+    case "COMPLETED":
+      return { text: "Đã xong sửa chữa (Chờ thanh toán)", color: "bg-blue-500/10 text-blue-600 border-blue-500/30" };
+    case "QUALITY_CHECK":
+      return { text: "Kiểm tra chất lượng (QC)", color: "bg-orange-500/10 text-orange-600 border-orange-500/30" };
+    case "IN_PROGRESS":
+      return { text: "Đang thi công cầu nâng", color: "bg-cyan-500/10 text-cyan-600 border-cyan-500/30" };
+    case "WAITING_PARTS":
+      return { text: "Chờ xuất kho phụ tùng", color: "bg-indigo-500/10 text-indigo-600 border-indigo-500/30" };
+    case "QUOTE_APPROVED":
+      return { text: "Khách đã duyệt báo giá", color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" };
+    case "QUOTE_SENT":
+      return { text: "Đã gửi báo giá (Chờ khách duyệt)", color: "bg-amber-500/10 text-amber-600 border-amber-500/30" };
+    case "INSPECTION":
+    case "DIAGNOSING":
+      return { text: "Đang giám định kỹ thuật", color: "bg-purple-500/10 text-purple-600 border-purple-500/30" };
+    case "DRAFT":
+    case "RECEIVED":
+      return { text: "Tiếp nhận xe mới", color: "bg-slate-500/10 text-slate-700 border-slate-500/30" };
+    case "CANCELLED":
+      return { text: "Đã hủy lệnh", color: "bg-rose-500/10 text-rose-600 border-rose-500/30" };
+    default:
+      return { text: status || "Đang xử lý", color: "bg-amber-500/10 text-amber-600 border-amber-500/30" };
+  }
+}
+
 export default function AdvisorWorkOrdersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [orders, setOrders] = useState<OrderItemDisplay[]>([]);
@@ -31,24 +66,28 @@ export default function AdvisorWorkOrdersPage() {
       // Truy vấn lệnh từ Backend API
       const res = await api.getMyWorkOrders();
       if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-        const mapped = res.data.map((wo: any) => ({
-          order_code: wo.order_code,
-          plate: wo.license_plate || "51K-888.88",
-          car: wo.vehicle_model || "Toyota Camry 2.5Q",
-          customer: wo.customer_name || "Minh Thảo",
-          status: wo.current_status,
-          statusText: wo.current_status === "QUOTE_SENT" ? "Đã gửi báo giá (Chờ khách duyệt)" : wo.current_status,
-          statusColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30",
-          totalAmount: wo.estimate?.total_amount || 2808000,
-          advisor: "Cố Vấn Dịch Vụ",
-          created_at: new Date(wo.createdAt || Date.now()).toLocaleDateString("vi-VN"),
-        }));
+        const mapped = res.data.map((wo: any) => {
+          const st = getStatusInfo(wo.current_status, wo.payment_status);
+          return {
+            order_code: wo.order_code,
+            plate: wo.license_plate || "51K-888.88",
+            car: wo.vehicle_model || "Toyota Camry 2.5Q",
+            customer: wo.customer_name || "Minh Thảo",
+            status: wo.current_status,
+            statusText: st.text,
+            statusColor: st.color,
+            totalAmount: wo.estimate?.total_amount || 2808000,
+            advisor: "Cố Vấn Dịch Vụ",
+            created_at: new Date(wo.createdAt || Date.now()).toLocaleDateString("vi-VN"),
+          };
+        });
         setOrders(mapped);
       } else {
         // Nạp lệnh WO-20261001-0089 chuẩn từ database
         const single = await api.getWorkOrder("WO-20261001-0089");
         if (single.success && single.data) {
           const wo = single.data;
+          const st = getStatusInfo(wo.current_status, wo.payment_status);
           setOrders([
             {
               order_code: wo.order_code,
@@ -56,8 +95,8 @@ export default function AdvisorWorkOrdersPage() {
               car: wo.vehicle_model,
               customer: wo.customer_name,
               status: wo.current_status,
-              statusText: "Đã gửi báo giá (Chờ khách duyệt)",
-              statusColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30",
+              statusText: st.text,
+              statusColor: st.color,
               totalAmount: wo.estimate?.total_amount || 2808000,
               advisor: "Quang Tùng",
               created_at: new Date(wo.createdAt).toLocaleDateString("vi-VN"),
