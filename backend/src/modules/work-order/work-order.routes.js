@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { sendSuccess } = require('../../utils/response');
 const { verifyToken, authorizeRoles, ROLES } = require('../../middlewares/authJwt');
+const { checkTechnicianAssignment } = require('../../middlewares/checkTechnicianAssignment');
 const {
   createWorkOrderController,
   getWorkOrderDetailsController,
@@ -9,6 +10,7 @@ const {
   getCustomerWorkOrdersController,
   customerApproveEstimateController,
   updateWorkOrderStatusController,
+  updateProgressController,
 } = require('./controllers/work-order.controller');
 
 router.get('/health', (req, res) => {
@@ -51,6 +53,15 @@ router.patch(
   verifyToken,
   authorizeRoles(ROLES.SERVICE_ADVISOR, ROLES.WORKSHOP_MANAGER, ROLES.TECHNICIAN, ROLES.OWNER),
   updateWorkOrderStatusController
+);
+
+// ky thuat vien cap nhat tien do & anh nghiem thu thi cong khoang xuong (UC-04)
+router.post(
+  '/:order_code/progress',
+  verifyToken,
+  authorizeRoles(ROLES.TECHNICIAN, ROLES.WORKSHOP_MANAGER, ROLES.SERVICE_ADVISOR, ROLES.OWNER),
+  checkTechnicianAssignment,
+  updateProgressController
 );
 
 module.exports = router;

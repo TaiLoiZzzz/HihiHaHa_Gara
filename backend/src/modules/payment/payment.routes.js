@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { sendSuccess } = require('../../utils/response');
-const { verifyToken } = require('../../middlewares/authJwt');
+const { verifyToken, authorizeRoles, ROLES } = require('../../middlewares/authJwt');
 const {
   createPaymentUrlController,
   vnpayIpnController,
@@ -12,8 +12,13 @@ router.get('/health', (req, res) => {
   return sendSuccess(res, { module: 'payment' }, 'Phân hệ Thanh toán VNPay & Outbox (Payment) đang hoạt động');
 });
 
-// khoi tao URL thanh toan VietQR VNPay
-router.post('/create-payment-url', verifyToken, createPaymentUrlController);
+// khoi tao URL thanh toan VietQR VNPay (Danh cho Khach hang, Co van, Quan doc, Chu gara)
+router.post(
+  '/create-payment-url',
+  verifyToken,
+  authorizeRoles(ROLES.CUSTOMER, ROLES.SERVICE_ADVISOR, ROLES.WORKSHOP_MANAGER, ROLES.OWNER),
+  createPaymentUrlController
+);
 
 // IPN Webhook tu vnpay sandbox (Server-to-Server)
 router.get('/vnpay_ipn', vnpayIpnController);

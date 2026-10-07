@@ -1,218 +1,172 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HIHIHAHA AUTO - API Test Client (Trắng Đen Tối Giản)</title>
+  <title>HIHIHAHA AUTO - Visual Test Suite (WorkOrder, Auth & VNPay Payment)</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Space Grotesk', sans-serif;
-      background-color: #ffffff;
-      color: #000000;
-    }
-    .mono { font-family: 'JetBrains Mono', monospace; }
-    .bw-border { border: 2px solid #000000; }
-    .bw-card { background: #ffffff; border: 2px solid #000000; box-shadow: 4px 4px 0px #000000; }
-    .bw-btn {
-      background: #ffffff;
-      color: #000000;
-      border: 2px solid #000000;
-      box-shadow: 3px 3px 0px #000000;
-      transition: all 0.15s ease;
-      font-weight: 700;
-    }
-    .bw-btn:hover {
-      transform: translate(-1px, -1px);
-      box-shadow: 5px 5px 0px #000000;
-      background: #f4f4f5;
-    }
-    .bw-btn:active {
-      transform: translate(2px, 2px);
-      box-shadow: 1px 1px 0px #000000;
-    }
-    .bw-btn-black {
-      background: #000000;
-      color: #ffffff;
-      border: 2px solid #000000;
-      box-shadow: 3px 3px 0px #666666;
-    }
-    .bw-btn-black:hover {
-      background: #18181b;
-      box-shadow: 5px 5px 0px #000000;
-    }
-    .tab-btn.active {
-      background: #000000;
-      color: #ffffff;
-    }
-    input, select, textarea {
-      background: #ffffff;
-      color: #000000;
-      border: 2px solid #000000;
-      outline: none;
-    }
-    input:focus, select:focus, textarea:focus {
-      box-shadow: 0 0 0 2px #000000;
-    }
+    body { font-family: 'Outfit', sans-serif; background: #090d16; color: #f8fafc; }
+    .glass-card { background: rgba(17, 24, 39, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glow-btn { transition: all 0.3s ease; box-shadow: 0 0 15px rgba(56, 189, 248, 0.25); }
+    .glow-btn:hover { box-shadow: 0 0 25px rgba(56, 189, 248, 0.5); transform: translateY(-1px); }
+    .glow-success { box-shadow: 0 0 15px rgba(16, 185, 129, 0.25); }
+    .glow-success:hover { box-shadow: 0 0 25px rgba(16, 185, 129, 0.5); }
+    .tab-btn.active { background: #0284c7; color: #ffffff; border-color: #38bdf8; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between p-4 md:p-8">
 
-  <!-- Header Header Trắng Đen Tối Giản -->
-  <header class="max-w-7xl mx-auto w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b-4 border-black mb-6">
+  <!-- Header & System Status Bar -->
+  <header class="max-w-7xl mx-auto w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4 py-4 border-b border-slate-800 mb-8">
     <div class="flex items-center gap-3">
-      <div class="w-12 h-12 bg-black text-white flex items-center justify-center text-2xl font-black border-2 border-black shadow-[3px_3px_0px_#888]">
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center font-bold text-white text-2xl shadow-lg shadow-sky-500/20">
         🚗
       </div>
       <div>
-        <h1 class="text-2xl font-black tracking-tight uppercase">HIHIHAHA_AUTO GARA</h1>
-        <p class="text-xs font-bold text-zinc-600">BỘ CÔNG CỤ KIỂM THỬ TẤT CẢ PHÂN HỆ RESTful API (TEST SUITE TRẮNG ĐEN)</p>
+        <h1 class="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-sky-400 via-indigo-300 to-emerald-400 tracking-tight">
+          HIHIHAHA_AUTO
+        </h1>
+        <p class="text-xs text-slate-400 font-medium">Báo Giá Động, Lệnh Sửa Chữa & Thanh Toán VNPay Test Suite</p>
       </div>
     </div>
-
-    <div class="flex flex-wrap items-center gap-3">
-      <button onclick="checkHealth()" class="bw-btn px-4 py-2 text-xs uppercase tracking-wider">
-        🔍 HEALTHCHECK API
+    
+    <div class="flex flex-wrap items-center gap-2">
+      <button onclick="checkHealth()" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 transition flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        🔍 Healthcheck
       </button>
-      <span id="token-status" class="px-3 py-2 text-xs mono font-bold bg-zinc-100 border-2 border-black shadow-[2px_2px_0px_#000]">
-        🔒 CHƯA ĐĂNG NHẬP
+      <span id="token-status" class="px-3 py-1.5 rounded-xl text-xs font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20">
+        🔒 Chưa Đăng Nhập
       </span>
     </div>
   </header>
 
-  <!-- Nút Chọn Tài Khoản Test Nhanh (Pre-configured Test Accounts) -->
-  <section class="max-w-7xl mx-auto w-full mb-6 p-4 bw-card">
-    <div class="text-xs font-black uppercase mb-3 flex items-center gap-2">
-      <span>🔑 BẢNG TÀI KHOẢN TEST SẴN (BẤM 1-CLICK ĐỂ ĐĂNG NHẬP TỰ ĐỘNG):</span>
+  <!-- Real Test Accounts Cheat-Sheet Bar -->
+  <div class="max-w-7xl mx-auto w-full mb-6 p-4 glass-card rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+    <div class="text-xs font-bold text-slate-300 flex items-center gap-2">
+      <span>👤 TÀI KHOẢN THẬT HỆ THỐNG (CLICK ĐỂ TỰ ĐỘNG ĐĂNG NHẬP THẬT VIA API):</span>
     </div>
-    
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs font-medium">
-      <button onclick="simulatedLogin('CUSTOMER')" class="bw-btn p-2.5 text-left flex flex-col justify-between">
-        <span class="font-black text-xs">👤 1. Khách Hàng</span>
-        <span class="mono text-[10px] text-zinc-600">0912345678</span>
-        <span class="mono text-[9px] font-bold text-black">CUSTOMER</span>
+    <div class="flex flex-wrap gap-2">
+      <button onclick="loginWithRole('SERVICE_ADVISOR')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 transition">
+        👔 1. Cố Vấn (0988888801 / 123456)
       </button>
-      
-      <button onclick="simulatedLogin('SERVICE_ADVISOR')" class="bw-btn p-2.5 text-left flex flex-col justify-between">
-        <span class="font-black text-xs">👔 2. Cố Vấn</span>
-        <span class="mono text-[10px] text-zinc-600">0988888888</span>
-        <span class="mono text-[9px] font-bold text-black">SERVICE_ADVISOR</span>
+      <button onclick="loginWithRole('WORKSHOP_MANAGER')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 transition">
+        🔧 2. Quản Đốc (0988888802 / 123456)
       </button>
-      
-      <button onclick="simulatedLogin('WORKSHOP_MANAGER')" class="bw-btn p-2.5 text-left flex flex-col justify-between">
-        <span class="font-black text-xs">🔧 3. Quản Đốc</span>
-        <span class="mono text-[10px] text-zinc-600">0977777777</span>
-        <span class="mono text-[9px] font-bold text-black">WORKSHOP_MANAGER</span>
+      <button onclick="loginWithRole('TECHNICIAN')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition">
+        🛠️ 3. Thợ Xưởng (0988888803 / 123456)
       </button>
-      
-      <button onclick="simulatedLogin('TECHNICIAN')" class="bw-btn p-2.5 text-left flex flex-col justify-between">
-        <span class="font-black text-xs">🛠️ 4. Thợ Xưởng</span>
-        <span class="mono text-[10px] text-zinc-600">0966666666</span>
-        <span class="mono text-[9px] font-bold text-black">TECHNICIAN</span>
+      <button onclick="loginWithRole('OWNER')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 transition">
+        👑 4. Chủ Gara (0988888800 / 123456)
       </button>
-      
-      <button onclick="simulatedLogin('WAREHOUSE_KEEPER')" class="bw-btn p-2.5 text-left flex flex-col justify-between">
-        <span class="font-black text-xs">📦 5. Thủ Kho</span>
-        <span class="mono text-[10px] text-zinc-600">0955555555</span>
-        <span class="mono text-[9px] font-bold text-black">WAREHOUSE_KEEPER</span>
-      </button>
-      
-      <button onclick="simulatedLogin('OWNER')" class="bw-btn p-2.5 text-left flex flex-col justify-between">
-        <span class="font-black text-xs">👑 6. Giám Đốc</span>
-        <span class="mono text-[10px] text-zinc-600">0944444444</span>
-        <span class="mono text-[9px] font-bold text-black">OWNER</span>
+      <button onclick="loginWithRole('CUSTOMER')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 transition">
+        🔑 5. Khách Hàng (0912345678)
       </button>
     </div>
-  </section>
+  </div>
 
-  <!-- Grid Main Layout -->
-  <main class="max-w-7xl mx-auto w-full grid lg:grid-cols-12 gap-6 mb-8 flex-1">
+  <!-- Main Grid Layout -->
+  <main class="max-w-7xl mx-auto w-full grid lg:grid-cols-12 gap-8 mb-8 flex-1">
 
-    <!-- Left Box: Control Forms (7 Columns) -->
+    <!-- Left Controls (7 Columns) -->
     <div class="lg:col-span-7 flex flex-col gap-6">
 
-      <!-- Navigation Tabs Bar -->
-      <div class="flex flex-wrap gap-2 border-b-2 border-black pb-2">
-        <button onclick="switchTab('tab-workorder')" id="tab-btn-workorder" class="tab-btn active bw-btn px-3.5 py-2 text-xs">
-          📋 1. WorkOrder (Phân hệ 3.3)
+      <!-- Tabs Navigation -->
+      <div class="flex gap-2 p-1.5 rounded-xl bg-slate-900/90 border border-slate-800">
+        <button onclick="switchTab('tab-workorder')" id="tab-btn-workorder" class="tab-btn active flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition border border-transparent">
+          📋 1. WorkOrder (3.3)
         </button>
-        <button onclick="switchTab('tab-inventory')" id="tab-btn-inventory" class="tab-btn bw-btn px-3.5 py-2 text-xs">
-          📦 2. Kho & Redlock (Phân hệ 3.4)
+        <button onclick="switchTab('tab-vnpay')" id="tab-btn-vnpay" class="tab-btn flex-1 py-2.5 px-3 rounded-lg text-xs font-bold text-slate-400 transition border border-transparent">
+          💳 2. VNPay & VietQR (3.5)
         </button>
-        <button onclick="switchTab('tab-payment')" id="tab-btn-payment" class="tab-btn bw-btn px-3.5 py-2 text-xs">
-          💳 3. VNPay & Outbox (Phân hệ 3.5 & 3.6)
+        <button onclick="switchTab('tab-auth')" id="tab-btn-auth" class="tab-btn flex-1 py-2.5 px-3 rounded-lg text-xs font-bold text-slate-400 transition border border-transparent">
+          🔐 3. OTP Gmail
         </button>
-        <button onclick="switchTab('tab-auth')" id="tab-btn-auth" class="tab-btn bw-btn px-3.5 py-2 text-xs">
-          🔐 4. OTP Gmail (UC-01)
-        </button>
-        <button onclick="switchTab('tab-graph')" id="tab-btn-graph" class="tab-btn bw-btn px-3.5 py-2 text-xs">
-          🌐 5. Neo4j Graph Search
+        <button onclick="switchTab('tab-graph')" id="tab-btn-graph" class="tab-btn flex-1 py-2.5 px-3 rounded-lg text-xs font-bold text-slate-400 transition border border-transparent">
+          🌐 4. Neo4j Graph
         </button>
       </div>
 
-      <!-- TAB 1: WORKORDER & DYNAMIC ESTIMATE (3.3) -->
-      <div id="tab-workorder" class="bw-card p-5 space-y-5">
-        <div class="flex justify-between items-center border-b-2 border-black pb-2">
-          <h2 class="font-black text-sm uppercase">📋 Phân Hệ Lệnh Sửa Chữa & Báo Giá Động (UC-02)</h2>
-          <span class="mono text-[10px] font-bold bg-zinc-200 px-2 py-0.5 border border-black">POST/GET/PUT/PATCH</span>
+      <!-- TAB 1: WORK ORDER FULL TEST (STEPS 96 - 105) -->
+      <div id="tab-workorder" class="glass-card rounded-2xl p-6 shadow-2xl space-y-6">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h2 class="text-base font-bold text-sky-400 flex items-center gap-2">
+            <span>🛠️</span> Phân Hệ Lệnh Sửa Chữa & Báo Giá (UC-02)
+          </h2>
+          <span class="text-xs px-2.5 py-0.5 rounded bg-sky-500/10 text-sky-300 font-mono">POST/GET/PUT/PATCH</span>
         </div>
 
-        <!-- 1. POST Create WorkOrder -->
-        <div class="p-4 border-2 border-black space-y-3 bg-zinc-50">
-          <h3 class="text-xs font-black uppercase">1. Tạo Lệnh Mới & Nhúng Báo Giá (POST /api/v1/work-orders)</h3>
+        <!-- 1. POST /api/v1/work-orders (Create WorkOrder) -->
+        <div class="space-y-4 p-4 rounded-xl bg-slate-900/50 border border-slate-800">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-sky-300 uppercase tracking-wider">1. POST /work-orders (Tạo Lệnh & Nhúng Báo Giá)</h3>
+            <span class="text-[10px] text-slate-400 font-mono">Roles: ADVISOR, MANAGER, OWNER</span>
+          </div>
+          
           <div class="grid grid-cols-2 gap-3 text-xs">
             <div>
-              <label class="block font-bold mb-1">BIỂN SỐ XE (*)</label>
-              <input type="text" id="wo_plate" value="51K-888.88" class="w-full p-2 font-mono uppercase">
+              <label class="block text-slate-400 mb-1">BIỂN SỐ XE (*)</label>
+              <input type="text" id="wo_plate" value="51K-888.88" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 font-mono text-white">
             </div>
             <div>
-              <label class="block font-bold mb-1">SĐT KHÁCH (*)</label>
-              <input type="text" id="wo_phone" value="0912345678" class="w-full p-2 font-mono">
+              <label class="block text-slate-400 mb-1">SĐT KHÁCH HÀNG (*)</label>
+              <input type="text" id="wo_phone" value="0912345678" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 font-mono text-white">
             </div>
             <div>
-              <label class="block font-bold mb-1">TÊN KHÁCH HÀNG</label>
-              <input type="text" id="wo_name" value="Minh Thảo" class="w-full p-2">
+              <label class="block text-slate-400 mb-1">TÊN KHÁCH HÀNG</label>
+              <input type="text" id="wo_name" value="Minh Thảo" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white">
             </div>
             <div>
-              <label class="block font-bold mb-1">DÒNG XE</label>
-              <input type="text" id="wo_model" value="Toyota Camry 2.5Q" class="w-full p-2">
+              <label class="block text-slate-400 mb-1">DÒNG XE</label>
+              <input type="text" id="wo_model" value="Toyota Camry 2.5Q" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white">
             </div>
           </div>
-          <button onclick="createWorkOrder()" class="bw-btn-black w-full py-2.5 text-xs">
-            ➕ Gửi Request POST /api/v1/work-orders (Tạo Lệnh WO-YYYYMMDD-XXXX)
+
+          <button onclick="createWorkOrder()" class="w-full py-2.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-bold rounded-xl text-xs transition">
+            ➕ 1. Gửi Request POST /api/v1/work-orders (Tạo Lệnh Mới)
           </button>
         </div>
 
-        <!-- 2. GET Order Details -->
-        <div class="p-4 border-2 border-black space-y-3 bg-zinc-50">
-          <h3 class="text-xs font-black uppercase">2. Tra Cứu Lệnh Sửa Chữa</h3>
+        <!-- 2. GET /api/v1/work-orders/:order_code (View Details) & GET /my-orders -->
+        <div class="space-y-3 p-4 rounded-xl bg-slate-900/50 border border-slate-800">
+          <h3 class="text-xs font-bold text-sky-300 uppercase tracking-wider">2. GET Tra Cứu Lệnh Sửa Chữa</h3>
           <div class="flex gap-2">
-            <input type="text" id="wo_code_input" value="WO-20261001-0089" placeholder="WO-YYYYMMDD-XXXX" class="flex-1 p-2 mono text-xs">
-            <button onclick="getWorkOrderDetails()" class="bw-btn px-4 text-xs">🔍 Tra Cứu Lệnh</button>
-            <button onclick="getMyWorkOrders()" class="bw-btn px-4 text-xs">📚 Lệnh Của Tôi</button>
+            <input type="text" id="wo_code_input" value="WO-20261001-0089" placeholder="WO-YYYYMMDD-XXXX" 
+                   class="flex-1 px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono text-xs">
+            <button onclick="getWorkOrderDetails()" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-lg text-xs transition">
+              🔍 GET /:order_code
+            </button>
+            <button onclick="getMyWorkOrders()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-xs transition">
+              📚 GET /my-orders
+            </button>
           </div>
         </div>
 
-        <!-- 3. PUT Update Estimate -->
-        <div class="p-4 border-2 border-black space-y-2 bg-zinc-50">
-          <h3 class="text-xs font-black uppercase">3. Cố Vấn Cập Nhật Báo Giá (PUT /:order_code/estimate)</h3>
-          <p class="text-[11px] text-zinc-600 font-medium">Bổ sung phụ tùng má phanh + lọc gió + công thay (Tự động tính VAT 8%)</p>
-          <button onclick="updateWorkOrderEstimate()" class="bw-btn w-full py-2 text-xs">📝 Gửi Request Cập Nhật Báo Giá</button>
+        <!-- 3. PUT /api/v1/work-orders/:order_code/estimate (Update Estimate) -->
+        <div class="space-y-3 p-4 rounded-xl bg-slate-900/50 border border-slate-800">
+          <h3 class="text-xs font-bold text-sky-300 uppercase tracking-wider">3. PUT /:order_code/estimate (Cố Vấn Cập Nhật Báo Giá)</h3>
+          <p class="text-[11px] text-slate-400">Cập nhật danh mục phụ tùng & tiền công mẫu (Tính VAT 8% tự động)</p>
+          <button onclick="updateWorkOrderEstimate()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition">
+            📝 Gửi Request PUT /:order_code/estimate (Cập Nhật Báo Giá)
+          </button>
         </div>
 
-        <!-- 4. POST Customer Approve -->
-        <div class="p-4 border-2 border-black space-y-2 bg-zinc-50">
-          <h3 class="text-xs font-black uppercase">4. Khách Hàng Duyệt Báo Giá (POST /:order_code/approve-estimate)</h3>
-          <p class="text-[11px] text-zinc-600 font-medium">Chốt các mục dịch vụ (Kích hoạt khóa kho Redlock & phát tin hiệu WebSocket)</p>
-          <button onclick="approveWorkOrderEstimate()" class="bw-btn-black w-full py-2.5 text-xs">✍️ Ký Duyệt Báo Giá Điện Tử</button>
+        <!-- 4. POST /api/v1/work-orders/:order_code/approve-estimate (Customer Approve) -->
+        <div class="space-y-3 p-4 rounded-xl bg-slate-900/50 border border-slate-800">
+          <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">4. POST /:order_code/approve-estimate (Khách Duyệt Báo Giá)</h3>
+          <p class="text-[11px] text-slate-400">Khách hàng duyệt mục má phanh `04465-06100` và tiền công `LABOR-01` (Kích hoạt khóa Redlock & WebSocket signal)</p>
+          <button onclick="approveWorkOrderEstimate()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition glow-success">
+            ✍️ Gửi Request POST /:order_code/approve-estimate (Ký Duyệt Báo Giá)
+          </button>
         </div>
 
-        <!-- 5. PATCH Update Status -->
-        <div class="p-4 border-2 border-black space-y-3 bg-zinc-50">
-          <h3 class="text-xs font-black uppercase">5. Chuyển Trạng Thái Lệnh An Toàn (PATCH /:order_code/status)</h3>
+        <!-- 5. PATCH /api/v1/work-orders/:order_code/status (Update Status via State Machine Guard) -->
+        <div class="space-y-3 p-4 rounded-xl bg-slate-900/50 border border-slate-800">
+          <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider">5. PATCH /:order_code/status (Chuyển Trạng Thái Theo Guard)</h3>
           <div class="flex gap-2">
-            <select id="next_status_select" class="flex-1 p-2 text-xs mono font-bold">
+            <select id="next_status_select" class="flex-1 px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-xs">
               <option value="INSPECTION">INSPECTION (Giám định khám xe)</option>
               <option value="QUOTE_SENT">QUOTE_SENT (Đã phát hành báo giá)</option>
               <option value="QUOTE_APPROVED">QUOTE_APPROVED (Khách đã duyệt giá)</option>
@@ -223,157 +177,210 @@
               <option value="PAYMENT_PENDING">PAYMENT_PENDING (Chờ thanh toán)</option>
               <option value="PAID">PAID (Đã thanh toán)</option>
               <option value="DELIVERED">DELIVERED (Bàn giao xe)</option>
-              <option value="CANCELLED">CANCELLED (Hủy lệnh & Hoàn kho)</option>
+              <option value="CANCELLED">CANCELLED (Hủy lệnh)</option>
             </select>
-            <button onclick="updateWorkOrderStatus()" class="bw-btn px-4 text-xs">🔄 Chuyển Trạng Thái</button>
+            <button onclick="updateWorkOrderStatus()" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-xs transition">
+              🔄 PATCH /status
+            </button>
           </div>
         </div>
+
       </div>
 
-      <!-- TAB 2: INVENTORY & REDLOCK MUTEX (3.4) -->
-      <div id="tab-inventory" class="bw-card p-5 space-y-5 hidden">
-        <div class="flex justify-between items-center border-b-2 border-black pb-2">
-          <h2 class="font-black text-sm uppercase">📦 Phân Hệ Đặt Trước Kho & Redis Redlock Mutex (UC-05)</h2>
-          <span class="mono text-[10px] font-bold bg-zinc-200 px-2 py-0.5 border border-black">POST/GET/PUT/DELETE</span>
+      <!-- TAB 2: VNPAY SANDBOX & VIETQR PAYMENT (UC-03 / STEPS 116 - 128) -->
+      <div id="tab-vnpay" class="glass-card rounded-2xl p-6 shadow-2xl space-y-6 hidden">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h2 class="text-base font-bold text-emerald-400 flex items-center gap-2">
+            <span>💳</span> Thanh Toán VNPay Sandbox & Transactional Outbox (UC-03)
+          </h2>
+          <span class="text-xs px-2.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 font-mono">POST/GET /payments/*</span>
         </div>
 
-        <!-- Stock Adjustment -->
-        <div class="p-4 border-2 border-black space-y-3 bg-zinc-50">
-          <h3 class="text-xs font-black uppercase">1. Lập Phiếu Kiểm Kê Tồn Kho Đầu Tháng (POST /api/v1/inventory/adjustments)</h3>
+        <!-- 1. Generate VNPay URL -->
+        <div class="space-y-4 p-4 rounded-xl bg-slate-900/50 border border-slate-800">
+          <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider">1. POST /payments/create-payment-url (Tạo Link Thanh Toán VietQR VNPay)</h3>
+          
           <div class="grid grid-cols-2 gap-3 text-xs">
             <div>
-              <label class="block font-bold mb-1">MÃ PHỤ TÙNG (*)</label>
-              <input type="text" id="adj_part_code" value="04465-06100" class="w-full p-2 mono">
+              <label class="block text-slate-400 mb-1">MÃ LỆNH SỬA CHỮA (*)</label>
+              <input type="text" id="vnp_order_code" value="WO-20261001-0089" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 font-mono text-white">
             </div>
             <div>
-              <label class="block font-bold mb-1">SỐ LƯỢNG THỰC TẾ (Q_actual) (*)</label>
-              <input type="number" id="adj_actual_qty" value="15" class="w-full p-2 mono">
+              <label class="block text-slate-400 mb-1">NGÂN HÀNG TEST (*)</label>
+              <select id="vnp_bank_code" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs font-mono">
+                <option value="NCB" selected>NCB (Ngân Hàng Thử Nghiệm Sandbox)</option>
+                <option value="VNPAYQR">VNPAYQR (Mã VietQR)</option>
+                <option value="VIETCOMBANK">Vietcombank</option>
+                <option value="MBBANK">MBBank</option>
+              </select>
             </div>
           </div>
-          <button onclick="createStockAdjustment()" class="bw-btn-black w-full py-2.5 text-xs">
-            📋 Lập Phiếu Kiểm Kê (ST-YYYYMMDD-XX)
+
+          <button onclick="createVnPayUrl()" class="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold rounded-xl text-xs transition glow-success">
+            ⚡ 1. Tạo Link Thanh Toán & Ghi PostgreSQL Pending Transaction
           </button>
         </div>
 
-        <!-- Inventory List -->
-        <div class="p-4 border-2 border-black space-y-3 bg-zinc-50">
-          <h3 class="text-xs font-black uppercase">2. Xem Danh Mục Tồn Kho Vị Trí Kệ (GET /api/v1/inventory)</h3>
-          <button onclick="getInventoryList()" class="bw-btn w-full py-2 text-xs">
-            🔍 Tải Danh Sách Tồn Kho Vật Lý & Đã Cấp Phát
-          </button>
-        </div>
-      </div>
+        <!-- Display Generated Payment Link & Gateway Trigger -->
+        <div id="vnp-result-box" class="hidden p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-emerald-300">🔗 VNPay Sandbox Payment Gateway URL:</span>
+            <span id="vnp-txn-ref-tag" class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-400"></span>
+          </div>
 
-      <!-- TAB 3: VNPAY SANDBOX & OUTBOX (3.5 & 3.6) -->
-      <div id="tab-payment" class="bw-card p-5 space-y-5 hidden">
-        <div class="flex justify-between items-center border-b-2 border-black pb-2">
-          <h2 class="font-black text-sm uppercase">💳 Phân Hệ Thanh Toán VNPay VietQR & Outbox Worker (UC-03)</h2>
-          <span class="mono text-[10px] font-bold bg-zinc-200 px-2 py-0.5 border border-black">POST/GET</span>
-        </div>
+          <!-- Mã QR Code Trực Quan -->
+          <div class="flex flex-col items-center justify-center p-4 bg-slate-950 border border-emerald-500/30 rounded-xl shadow-xl my-2">
+            <div class="bg-white p-3 rounded-xl shadow-inner">
+              <img id="vnp-qr-img" src="" alt="Mã QR VNPay VietQR" class="w-44 h-44 object-contain">
+            </div>
+            <p class="text-xs font-bold text-emerald-400 mt-2 flex items-center gap-1">
+              <span>📲</span> Mã QR VietQR / VNPay Sandbox (Quét qua app ngân hàng / VNPay)
+            </p>
+          </div>
 
-        <!-- Create Payment URL -->
-        <div class="p-4 border-2 border-black space-y-3 bg-zinc-50">
-          <h3 class="text-xs font-black uppercase">1. Khởi Tạo Liên Kết Thanh Toán (POST /api/v1/payments/create-payment-url)</h3>
-          <p class="text-[11px] text-zinc-600 font-medium">Tạo link VietQR + Khóa Idempotency 10 phút + Ghi PostgreSQL Transaction PENDING</p>
           <div class="flex gap-2">
-            <input type="text" id="pay_order_code" value="WO-20261001-0089" class="flex-1 p-2 mono text-xs">
-            <button onclick="createPaymentUrl()" class="bw-btn-black px-4 text-xs">💳 Tạo URL VNPay</button>
+            <a id="vnp-redirect-btn" href="#" target="_blank" class="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs text-center transition flex items-center justify-center gap-2">
+              <span>💳</span> Mở Trực Tiếp Trang Cổng Thanh Toán VNPay Sandbox
+            </a>
+          </div>
+
+          <!-- Card Test Info Hint -->
+          <div class="p-3 rounded-lg bg-slate-950 text-[11px] space-y-1 text-slate-300 font-mono">
+            <div class="font-bold text-emerald-400 mb-1">💳 THÔNG TIN THẺ TEST NCB SANDBOX VNPAY:</div>
+            <div>• Số thẻ test: <span class="text-white font-bold">9704198526191432198</span></div>
+            <div>• Tên chủ thẻ: <span class="text-white font-bold">NGUYEN VAN A</span></div>
+            <div>• Ngày phát hành: <span class="text-white font-bold">07/15</span></div>
+            <div>• Mã OTP test: <span class="text-white font-bold">123456</span></div>
           </div>
         </div>
 
-        <!-- Simulate IPN Webhook -->
-        <div class="p-4 border-2 border-black space-y-3 bg-zinc-50">
-          <h3 class="text-xs font-black uppercase">2. Giả Lập Bắn Webhook IPN VNPay (GET /api/v1/payments/vnpay_ipn)</h3>
-          <p class="text-[11px] text-zinc-600 font-medium">Bắt đầu PostgreSQL ACID Transaction: Cập nhật SUCCESS & Chèn Outbox Event PENDING</p>
-          <button onclick="simulateVnPayIpn()" class="bw-btn w-full py-2.5 text-xs">
-            ⚡ Giả Lập Bắn IPN (Confirm Success RspCode 00)
+        <!-- 2. Simulate IPN Webhook -->
+        <div class="space-y-3 p-4 rounded-xl bg-slate-900/50 border border-slate-800">
+          <h3 class="text-xs font-bold text-sky-300 uppercase tracking-wider">2. GET /payments/vnpay_ipn (Giả Lập Bắn IPN Webhook Server-to-Server)</h3>
+          <p class="text-[11px] text-slate-400">Giả lập VNPay gửi Webhook IPN xác nhận thanh toán thành công ($RspCode=00$) $\rightarrow$ Ghi sự kiện vào bảng PostgreSQL `outbox_events` (PENDING) $\rightarrow$ Outbox Worker ngầm tự động thức dậy trừ tồn kho MongoDB và chuyển trạng thái Lệnh sang `PAID`!</p>
+          <button onclick="simulateVnPayIpn()" class="w-full py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs transition">
+            🔔 2. Bắn Webhook IPN (Xác Nhận Tiền Về PostgreSQL ACID & Outbox)
           </button>
         </div>
       </div>
 
-      <!-- TAB 4: OTP GMAIL AUTH (UC-01) -->
-      <div id="tab-auth" class="bw-card p-5 space-y-4 hidden">
-        <div class="flex justify-between items-center border-b-2 border-black pb-2">
-          <h2 class="font-black text-sm uppercase">🔐 Phân Hệ Xác Thực Kép OTP Gmail (UC-01)</h2>
+      <!-- TAB 3: AUTHENTICATION REAL LOGIN CENTER -->
+      <div id="tab-auth" class="glass-card rounded-2xl p-6 shadow-2xl space-y-6 hidden">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h2 class="text-base font-bold text-sky-400 flex items-center gap-2">
+            <span>🛡️</span> Trung Tâm Đăng Nhập Xác Thực Hợp Lệ (Auth Center)
+          </h2>
+          <span class="text-xs px-2.5 py-0.5 rounded bg-sky-500/10 text-sky-300 font-mono">POST /auth/staff-login | /verify-otp</span>
         </div>
 
-        <div class="grid grid-cols-2 gap-3 text-xs">
-          <div>
-            <label class="block font-bold mb-1">BIỂN SỐ XE (*)</label>
-            <input type="text" id="license_plate" value="51K-888.88" class="w-full p-2 mono uppercase">
+        <!-- Form 1: Đăng nhập Nhân viên (Staff Login) -->
+        <div class="space-y-4 p-4 rounded-xl bg-slate-900/50 border border-slate-800">
+          <h3 class="text-xs font-bold text-indigo-300 uppercase tracking-wider">1. Đăng Nhập Nhân Viên Gara (SĐT & Mật Khẩu)</h3>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="block text-slate-400 mb-1">SỐ ĐIỆN THOẠI (*)</label>
+              <input type="text" id="staff_phone" value="0988888801" class="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">MẬT KHẨU (*)</label>
+              <input type="password" id="staff_password" value="123456" class="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono">
+            </div>
           </div>
-          <div>
-            <label class="block font-bold mb-1">SỐ ĐIỆN THOẠI (*)</label>
-            <input type="text" id="phone_number" value="0912345678" class="w-full p-2 mono">
-          </div>
+          <button onclick="staffLogin()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition glow-btn">
+            🔑 Đăng Nhập Nhân Viên (Cấp JWT Token Ký Mã Hóa Thực Tế)
+          </button>
         </div>
-        <button onclick="requestOtp()" class="bw-btn w-full py-2 text-xs">📩 1. Gửi Mã OTP Qua Gmail</button>
 
-        <div class="pt-3 border-t-2 border-black space-y-2">
-          <label class="block text-xs font-bold">NHẬP MÃ OTP 6 SỐ (*)</label>
-          <input type="text" id="otp_code" maxlength="6" placeholder="000000" class="w-full p-2 text-center text-xl font-bold mono">
-          <button onclick="verifyOtp()" class="bw-btn-black w-full py-2.5 text-xs">⚡ 2. Xác Thực OTP & Đăng Nhập</button>
+        <!-- Form 2: Đăng nhập Khách hàng OTP Gmail (UC-01) -->
+        <div class="space-y-4 p-4 rounded-xl bg-slate-900/50 border border-slate-800">
+          <h3 class="text-xs font-bold text-sky-300 uppercase tracking-wider">2. Khách Hàng Đăng Nhập Qua Mã OTP Gmail (UC-01)</h3>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="block text-slate-400 mb-1">BIỂN SỐ XE (*)</label>
+              <input type="text" id="license_plate" value="51K-888.88" class="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono uppercase">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">SỐ ĐIỆN THOẠI (*)</label>
+              <input type="text" id="phone_number" value="0912345678" class="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono">
+            </div>
+          </div>
+          <button onclick="requestOtp()" class="w-full py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-lg text-xs transition">
+            📩 Gửi Mã OTP qua Gmail (Xác thực 2 yếu tố)
+          </button>
+
+          <div class="space-y-2 pt-2 border-t border-slate-800">
+            <label class="block text-xs font-semibold text-emerald-400">NHẬP MÃ OTP 6 CHỮ SỐ (*)</label>
+            <input type="text" id="otp_code" maxlength="6" placeholder="000000" class="w-full px-4 py-2 rounded-lg bg-slate-950 border border-emerald-500/40 text-emerald-400 font-mono text-center text-xl font-bold tracking-widest">
+            <button onclick="verifyOtp()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition glow-success">
+              ⚡ Xác Thực OTP & Đăng Nhập Khách Hàng
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- TAB 5: NEO4J GRAPH -->
-      <div id="tab-graph" class="bw-card p-5 space-y-4 hidden">
-        <div class="flex justify-between items-center border-b-2 border-black pb-2">
-          <h2 class="font-black text-sm uppercase">🌐 Neo4j Graph Search (Phụ Tùng Tương Thích Khung Gầm)</h2>
+      <!-- TAB 4: NEO4J GRAPH SEARCH -->
+      <div id="tab-graph" class="glass-card rounded-2xl p-6 shadow-2xl space-y-6 hidden">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h2 class="text-base font-bold text-indigo-400 flex items-center gap-2">
+            <span>🌐</span> Neo4j Graph Search (Phụ Tùng Dùng Chung)
+          </h2>
         </div>
 
-        <div class="space-y-2">
-          <label class="block text-xs font-bold">MÃ PHỤ TÙNG (PART CODE)</label>
+        <div class="space-y-3">
+          <label class="block text-xs font-semibold text-slate-400">MÃ PHỤ TÙNG (PART CODE)</label>
           <div class="flex gap-2">
-            <input type="text" id="part_code_input" value="04465-06100" class="flex-1 p-2 mono text-xs">
-            <button onclick="searchGraphParts()" class="bw-btn-black px-4 text-xs">⚡ Tra Cứu Neo4j</button>
+            <input type="text" id="part_code_input" value="04465-06100" class="flex-1 px-3.5 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono text-xs">
+            <button onclick="searchGraphParts()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-xs transition">
+              ⚡ Tra Cứu Graph Cypher
+            </button>
           </div>
         </div>
       </div>
 
     </div>
 
-    <!-- Right Box: Console Terminal Log (5 Columns) -->
-    <div class="lg:col-span-5 flex flex-col bw-card p-5">
-      <div class="flex justify-between items-center pb-2 border-b-2 border-black mb-3">
-        <span class="text-xs font-black uppercase flex items-center gap-2">
-          💻 RESPONSE JSON TERMINAL OUTPUT
+    <!-- Right Console Output (5 Columns) -->
+    <div class="lg:col-span-5 flex flex-col glass-card rounded-2xl p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-3">
+        <span class="text-xs font-bold text-slate-200 flex items-center gap-2">
+          <span>💻</span> Realtime Response Output Log
         </span>
-        <button onclick="clearConsole()" class="text-[11px] font-bold underline">Xóa Log</button>
+        <button onclick="clearConsole()" class="text-xs text-slate-500 hover:text-slate-300 font-mono">Clear Log</button>
       </div>
 
-      <!-- User Active Badge -->
-      <div id="user-badge" class="mb-3 p-3 border-2 border-black bg-zinc-100 text-xs space-y-1">
-        <div class="font-black flex justify-between">
-          <span id="badge-name">Chưa Chọn Tài Khoản</span>
-          <span id="badge-role" class="mono px-1.5 py-0.5 bg-black text-white text-[10px]">NO_ROLE</span>
+      <!-- Active User Profile Display -->
+      <div id="user-badge" class="mb-4 p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/25 text-xs space-y-1">
+        <div class="font-bold text-indigo-300 flex justify-between">
+          <span id="badge-name">Chưa Đăng Nhập</span>
+          <span id="badge-role" class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono text-[10px]">NO_ROLE</span>
         </div>
-        <div class="text-[11px] font-medium">SĐT: <span id="badge-phone" class="mono font-bold">0912345678</span> | Biển xe: <span id="badge-plate" class="mono font-bold">51K-888.88</span></div>
+        <div class="text-slate-400 text-[11px]">Xe: <span id="badge-plate" class="text-white font-mono">51K-888.88</span> | SĐT: <span id="badge-phone" class="text-white">0912345678</span></div>
       </div>
 
-      <!-- Response Pre Terminal -->
-      <pre id="log-output" class="flex-1 bg-black text-green-400 p-4 font-mono text-[11px] overflow-y-auto max-h-[580px] border-2 border-black leading-relaxed">
-// Hệ thống sẵn sàng kết nối API Server http://localhost:5000/api/v1...
-// Chọn 1 tài khoản test ở trên hoặc bấm các nút ở cột bên trái để thử nghiệm API.
+      <!-- JSON Log Window -->
+      <pre id="log-output" class="flex-1 bg-slate-950 p-4 rounded-xl text-[11px] font-mono text-emerald-400 overflow-y-auto max-h-[560px] border border-slate-900 leading-relaxed">
+// Ready to test backend endpoints on http://localhost:5000/api/v1...
+// Select quick login or use forms on the left to fire REST API requests.
       </pre>
     </div>
 
   </main>
 
   <!-- Footer -->
-  <footer class="max-w-7xl mx-auto w-full text-center py-4 border-t-2 border-black text-xs font-bold text-zinc-600 uppercase tracking-wider">
-    HIHIHAHA_AUTO Garage Management System • Minimalist High-Contrast Test Dashboard 2026
+  <footer class="max-w-7xl mx-auto w-full text-center py-4 border-t border-slate-900 text-xs text-slate-500">
+    HIHIHAHA_AUTO Garage Management System • Polyglot Persistence API Test Suite
   </footer>
 
   <script>
     const API_BASE = 'http://localhost:5000/api/v1';
     let jwtToken = '';
     let currentRole = '';
+    let lastVnpTxnRef = '';
 
     function log(title, data, isError = false) {
       const output = document.getElementById('log-output');
       const timestamp = new Date().toLocaleTimeString();
-      const statusTag = isError ? '❌ FAIL' : '✅ SUCCESS';
+      const statusTag = isError ? '❌ ERROR' : '✅ SUCCESS';
       const logContent = `[${timestamp}] ${statusTag} - ${title}\n` + JSON.stringify(data, null, 2) + '\n\n';
       output.innerText = logContent + output.innerText;
     }
@@ -383,45 +390,87 @@
     }
 
     function switchTab(tabId) {
-      document.querySelectorAll('#tab-workorder, #tab-inventory, #tab-payment, #tab-auth, #tab-graph').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('#tab-auth, #tab-workorder, #tab-vnpay, #tab-graph').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       
       document.getElementById(tabId).classList.remove('hidden');
       if (tabId === 'tab-workorder') document.getElementById('tab-btn-workorder').classList.add('active');
-      if (tabId === 'tab-inventory') document.getElementById('tab-btn-inventory').classList.add('active');
-      if (tabId === 'tab-payment') document.getElementById('tab-btn-payment').classList.add('active');
+      if (tabId === 'tab-vnpay') document.getElementById('tab-btn-vnpay').classList.add('active');
       if (tabId === 'tab-auth') document.getElementById('tab-btn-auth').classList.add('active');
       if (tabId === 'tab-graph') document.getElementById('tab-btn-graph').classList.add('active');
     }
 
-    function simulatedLogin(role) {
-      currentRole = role;
+    // Hàm đăng nhập thật bằng SĐT & Mật Khẩu
+    async function staffLogin(phone, password) {
+      const phoneInput = phone || document.getElementById('staff_phone').value.trim();
+      const passInput = password || document.getElementById('staff_password').value.trim();
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/staff-login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone_number: phoneInput, password: passInput })
+        });
+        const data = await res.json();
+        
+        if (res.ok && data.data?.accessToken) {
+          jwtToken = data.data.accessToken;
+          currentRole = data.data.user.role;
+          
+          document.getElementById('token-status').innerText = `🔑 Role: ${currentRole}`;
+          document.getElementById('token-status').className = 'px-3 py-1.5 rounded-xl text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+
+          document.getElementById('badge-name').innerText = data.data.user.full_name;
+          document.getElementById('badge-role').innerText = currentRole;
+          document.getElementById('badge-role').className = 'px-2 py-0.5 rounded font-mono text-[10px] ' + 
+            (currentRole === 'CUSTOMER' ? 'bg-sky-500/20 text-sky-300' : 'bg-emerald-500/20 text-emerald-300');
+
+          log(`Staff Login Success [${currentRole}]`, { token: jwtToken.substring(0, 35) + '...', user: data.data.user });
+        } else {
+          log('Staff Login Failed', data, true);
+        }
+      } catch (err) {
+        log('Staff Login Error', { error: err.message }, true);
+      }
+    }
+
+    // Helper đăng nhập nhanh các tài khoản thật đã seed
+    async function loginWithRole(role) {
       const rolePhones = {
-        CUSTOMER: '0912345678',
-        SERVICE_ADVISOR: '0988888888',
-        WORKSHOP_MANAGER: '0977777777',
-        TECHNICIAN: '0966666666',
-        WAREHOUSE_KEEPER: '0955555555',
-        OWNER: '0944444444'
+        'SERVICE_ADVISOR': '0988888801',
+        'WORKSHOP_MANAGER': '0988888802',
+        'TECHNICIAN': '0988888803',
+        'OWNER': '0988888800',
+        'CUSTOMER': '0912345678'
       };
-
-      const payload = {
-        userId: '6ac095cc5ece5baa78506e49',
-        phone_number: rolePhones[role] || '0912345678',
-        license_plate: '51K-888.88',
-        role: role
-      };
-
-      const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-      const body = btoa(JSON.stringify({ ...payload, exp: Math.floor(Date.now() / 1000) + 7200 }));
-      jwtToken = `${header}.${body}.MOCK_SIGNATURE`;
-
-      document.getElementById('token-status').innerText = `🔑 ROLE: ${role}`;
-      document.getElementById('badge-name').innerText = role === 'CUSTOMER' ? 'Minh Thảo (Khách Hàng)' : `Nhân Viên (${role})`;
-      document.getElementById('badge-role').innerText = role;
-      document.getElementById('badge-phone').innerText = payload.phone_number;
-
-      log(`Simulated 1-Click Login: ${role}`, { role, phone: payload.phone_number, token: jwtToken.substring(0, 30) + '...' });
+      
+      const phone = rolePhones[role];
+      if (role === 'CUSTOMER') {
+        // Dev login for customer
+        try {
+          const res = await fetch(`${API_BASE}/auth/dev-login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: 'CUSTOMER', phone_number: '0912345678' })
+          });
+          const data = await res.json();
+          if (res.ok && data.data?.accessToken) {
+            jwtToken = data.data.accessToken;
+            currentRole = 'CUSTOMER';
+            document.getElementById('token-status').innerText = '🔑 Role: CUSTOMER';
+            document.getElementById('token-status').className = 'px-3 py-1.5 rounded-xl text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+            document.getElementById('badge-name').innerText = data.data.user.full_name;
+            document.getElementById('badge-role').innerText = 'CUSTOMER';
+            log('Real Login as CUSTOMER', { token: jwtToken.substring(0, 35) + '...', user: data.data.user });
+          }
+        } catch (err) {
+          log('Login Error', { error: err.message }, true);
+        }
+      } else {
+        document.getElementById('staff_phone').value = phone;
+        document.getElementById('staff_password').value = '123456';
+        await staffLogin(phone, '123456');
+      }
     }
 
     async function checkHealth() {
@@ -450,14 +499,18 @@
       try {
         const res = await fetch(`${API_BASE}/work-orders`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwtToken}` },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${jwtToken}`
+          },
           body: JSON.stringify(payload)
         });
         const data = await res.json();
         log('POST /api/v1/work-orders', data, !res.ok);
+
         if (res.ok && data.data?.order_code) {
           document.getElementById('wo_code_input').value = data.data.order_code;
-          document.getElementById('pay_order_code').value = data.data.order_code;
+          document.getElementById('vnp_order_code').value = data.data.order_code;
         }
       } catch (err) {
         log('POST /api/v1/work-orders Error', { error: err.message }, true);
@@ -473,7 +526,7 @@
         const data = await res.json();
         log(`GET /api/v1/work-orders/${orderCode}`, data, !res.ok);
       } catch (err) {
-        log('GET Details Error', { error: err.message }, true);
+        log('GET WorkOrder Details Error', { error: err.message }, true);
       }
     }
 
@@ -485,7 +538,7 @@
         const data = await res.json();
         log('GET /api/v1/work-orders/my-orders', data, !res.ok);
       } catch (err) {
-        log('GET My Orders Error', { error: err.message }, true);
+        log('GET My WorkOrders Error', { error: err.message }, true);
       }
     }
 
@@ -494,14 +547,18 @@
       const payload = {
         items: [
           { part_code: '04465-06100', name: 'Bộ má phanh trước Toyota Camry', type: 'PART', quantity: 1, unit_price: 1850000 },
-          { part_code: 'LABOR-01', name: 'Công thay má phanh', type: 'LABOR', quantity: 1, unit_price: 450000 }
+          { part_code: 'LABOR-01', name: 'Công thay má phanh & láng đĩa', type: 'LABOR', quantity: 1, unit_price: 450000 },
+          { part_code: 'FILTER-01', name: 'Lọc gió động cơ Camry', type: 'PART', quantity: 1, unit_price: 350000 }
         ]
       };
 
       try {
         const res = await fetch(`${API_BASE}/work-orders/${orderCode}/estimate`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwtToken}` },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${jwtToken}`
+          },
           body: JSON.stringify(payload)
         });
         const data = await res.json();
@@ -513,30 +570,41 @@
 
     async function approveWorkOrderEstimate() {
       const orderCode = document.getElementById('wo_code_input').value.trim();
-      const payload = { selected_item_codes: ['04465-06100', 'LABOR-01'] };
+      const payload = {
+        selected_item_codes: ['04465-06100', 'LABOR-01']
+      };
 
       try {
         const res = await fetch(`${API_BASE}/work-orders/${orderCode}/approve-estimate`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwtToken}` },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${jwtToken}`
+          },
           body: JSON.stringify(payload)
         });
         const data = await res.json();
         log(`POST /api/v1/work-orders/${orderCode}/approve-estimate`, data, !res.ok);
       } catch (err) {
-        log('Approve Estimate Error', { error: err.message }, true);
+        log('POST Approve Estimate Error', { error: err.message }, true);
       }
     }
 
     async function updateWorkOrderStatus() {
       const orderCode = document.getElementById('wo_code_input').value.trim();
       const nextStatus = document.getElementById('next_status_select').value;
-      const payload = { next_status: nextStatus, note: `Chuyển trạng thái sang ${nextStatus}` };
+      const payload = {
+        next_status: nextStatus,
+        note: `Chuyển trạng thái sang ${nextStatus} từ test UI client`
+      };
 
       try {
         const res = await fetch(`${API_BASE}/work-orders/${orderCode}/status`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwtToken}` },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${jwtToken}`
+          },
           body: JSON.stringify(payload)
         });
         const data = await res.json();
@@ -546,63 +614,58 @@
       }
     }
 
-    async function createStockAdjustment() {
-      const payload = {
-        part_code: document.getElementById('adj_part_code').value.trim(),
-        actual_quantity: Number(document.getElementById('adj_actual_qty').value),
-        reason_category: 'KIỂM_KÊ_ĐẦU_THÁNG',
-        note: 'Điều chỉnh kiểm kê tồn kho từ Web FE'
-      };
+    // -------------------------------------------------------------
+    // VNPAY PAYMENT & OUTBOX FUNCTIONS (SECTION 3.5)
+    // -------------------------------------------------------------
+    async function createVnPayUrl() {
+      const orderCode = document.getElementById('vnp_order_code').value.trim();
+      const bankCode = document.getElementById('vnp_bank_code').value;
 
-      try {
-        const res = await fetch(`${API_BASE}/inventory/adjustments`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwtToken}` },
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        log('POST /api/v1/inventory/adjustments', data, !res.ok);
-      } catch (err) {
-        log('Adjustment Error', { error: err.message }, true);
-      }
-    }
-
-    async function getInventoryList() {
-      try {
-        const res = await fetch(`${API_BASE}/inventory`, {
-          headers: { 'Authorization': `Bearer ${jwtToken}` }
-        });
-        const data = await res.json();
-        log('GET /api/v1/inventory', data, !res.ok);
-      } catch (err) {
-        log('Get Inventory Error', { error: err.message }, true);
-      }
-    }
-
-    async function createPaymentUrl() {
-      const orderCode = document.getElementById('pay_order_code').value.trim();
       try {
         const res = await fetch(`${API_BASE}/payments/create-payment-url`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwtToken}` },
-          body: JSON.stringify({ order_code: orderCode, bank_code: 'NCB' })
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${jwtToken}`
+          },
+          body: JSON.stringify({ order_code: orderCode, bank_code: bankCode })
         });
         const data = await res.json();
         log('POST /api/v1/payments/create-payment-url', data, !res.ok);
+
+        if (res.ok && data.data?.payment_url) {
+          lastVnpTxnRef = data.data.vnp_txn_ref;
+          document.getElementById('vnp-result-box').classList.remove('hidden');
+          document.getElementById('vnp-redirect-btn').href = data.data.payment_url;
+          document.getElementById('vnp-txn-ref-tag').innerText = `TxnRef: ${data.data.vnp_txn_ref}`;
+          
+          // Tạo hình ảnh Mã QR Code thực tế bằng VietQR / QRServer API
+          const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(data.data.payment_url)}`;
+          document.getElementById('vnp-qr-img').src = qrApiUrl;
+        }
       } catch (err) {
-        log('Create Payment URL Error', { error: err.message }, true);
+        log('POST create-payment-url Error', { error: err.message }, true);
       }
     }
 
     async function simulateVnPayIpn() {
-      const orderCode = document.getElementById('pay_order_code').value.trim();
-      const mockTxnRef = `${orderCode}_1791377187384`;
+      if (!lastVnpTxnRef) {
+        alert('Vui lòng bấm nút 1 (Tạo Link Thanh Toán) trước khi bắn IPN Webhook!');
+        return;
+      }
+
+      // simulate IPN Webhook GET request to server
       try {
-        const res = await fetch(`${API_BASE}/payments/vnpay_ipn?vnp_Amount=280800000&vnp_BankCode=NCB&vnp_ResponseCode=00&vnp_TxnRef=${mockTxnRef}`);
+        // we call a script or directly hit endpoint with test query
+        const orderCode = document.getElementById('vnp_order_code').value.trim();
+        log('Simulating IPN Webhook Trigger', { vnp_TxnRef: lastVnpTxnRef, order_code: orderCode });
+        
+        // Let's call node script or endpoint
+        const res = await fetch(`${API_BASE}/payments/vnpay_ipn?vnp_Amount=280800000&vnp_BankCode=NCB&vnp_BankTranNo=VNP14043789&vnp_CardType=ATM&vnp_OrderInfo=Thanh+toan+lenh+sua+chua+${orderCode}&vnp_PayDate=20261007153000&vnp_ResponseCode=00&vnp_TmnCode=TESTTMN01&vnp_TransactionNo=14043789&vnp_TransactionStatus=00&vnp_TxnRef=${lastVnpTxnRef}&vnp_SecureHash=MOCK`);
         const data = await res.json();
-        log('GET /api/v1/payments/vnpay_ipn', data, !res.ok);
+        log('GET /api/v1/payments/vnpay_ipn (IPN Response)', data, !res.ok);
       } catch (err) {
-        log('IPN Error', { error: err.message }, true);
+        log('IPN Webhook Error', { error: err.message }, true);
       }
     }
 
@@ -639,10 +702,14 @@
 
         if (res.ok && data.data?.accessToken) {
           jwtToken = data.data.accessToken;
-          document.getElementById('token-status').innerText = '🔑 JWT VERIFIED';
+          document.getElementById('token-status').innerText = '🔑 JWT Real Authenticated';
+          document.getElementById('token-status').className = 'px-3 py-1.5 rounded-xl text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+
           const u = data.data.user;
           document.getElementById('badge-name').innerText = u.full_name;
           document.getElementById('badge-role').innerText = u.role;
+          document.getElementById('badge-plate').innerText = u.license_plate;
+          document.getElementById('badge-phone').innerText = u.phone_number;
         }
       } catch (err) {
         log('POST /auth/verify-otp Error', { error: err.message }, true);
@@ -660,8 +727,8 @@
       }
     }
 
-    // Auto login as Service Advisor by default
-    simulatedLogin('SERVICE_ADVISOR');
+    // Tự động đăng nhập bằng tài khoản Cố Vấn Dịch Vụ thật khi tải trang
+    loginWithRole('SERVICE_ADVISOR');
   </script>
 </body>
 </html>

@@ -9,7 +9,7 @@ const checkTechnicianAssignment = async (req, res, next) => {
       return next();
     }
 
-    const orderCode = req.params.orderCode || req.params.id || req.body.order_code;
+    const orderCode = req.params.order_code || req.params.orderCode || req.params.id || req.body.order_code;
 
     if (!orderCode) {
       return next(new AppError('Vui lòng cung cấp mã lệnh sửa chữa (order_code) trong request', 400, 'BAD_REQUEST'));

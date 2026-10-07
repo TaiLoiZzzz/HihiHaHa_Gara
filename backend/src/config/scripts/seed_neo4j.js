@@ -14,42 +14,69 @@ const seedNeo4jData = async () => {
     await runCypher('CREATE CONSTRAINT part_code_unique IF NOT EXISTS FOR (p:Part) REQUIRE p.code IS UNIQUE');
     await runCypher('CREATE CONSTRAINT vehicle_name_unique IF NOT EXISTS FOR (v:VehicleModel) REQUIRE v.name IS UNIQUE');
 
-    console.log('🌐 [Neo4j Seed] Inserting nodes and relationships...');
+    console.log('🌐 [Neo4j Seed] Inserting nodes and relationships for Multi-Vehicle Shared Platforms...');
 
     const cypherSeedQuery = `
-      // 1. tao khung gam dung chung tnga-k
-      CREATE (p:Platform {code: "TNGA-K", manufacturer: "Toyota Group"})
+      // 1. TẠO CÁC KHUNG GẦM DÙNG CHUNG (SHARED PLATFORMS)
+      CREATE (p1:Platform {code: "TNGA-K", manufacturer: "Toyota Group"})
+      CREATE (p2:Platform {code: "GLOBAL-C", manufacturer: "Suzuki / Toyota"})
+      CREATE (p3:Platform {code: "N3-PLATFORM", manufacturer: "Hyundai-Kia Group"})
 
-      // 2. tao dong co 2ar-fe
-      CREATE (e:Engine {code: "2AR-FE", displacement: "2.5L", fuel: "Gasoline"})
+      // 2. TẠO DÒNG ĐỘNG CƠ DÙNG CHUNG
+      CREATE (e1:Engine {code: "2AR-FE", displacement: "2.5L", fuel: "Gasoline"})
+      CREATE (e2:Engine {code: "K15B", displacement: "1.5L", fuel: "Gasoline"})
+      CREATE (e3:Engine {code: "Smartstream-2.5", displacement: "2.5L", fuel: "Gasoline"})
 
-      // 3. tao dong xe camry va lexus
+      // 3. TẠO CÁC DÒNG XE THỰC TẾ
       CREATE (camry:VehicleModel {name: "Toyota Camry 2.5Q", year_from: 2018, year_to: 2024})
       CREATE (lexus:VehicleModel {name: "Lexus ES250", year_from: 2019, year_to: 2024})
+      CREATE (rav4:VehicleModel {name: "Toyota RAV4 2.5", year_from: 2019, year_to: 2024})
+      CREATE (xpander:VehicleModel {name: "Mitsubishi Xpander", year_from: 2020, year_to: 2024})
+      CREATE (santafe:VehicleModel {name: "Hyundai SantaFe 2.5", year_from: 2021, year_to: 2024})
+      CREATE (sorento:VehicleModel {name: "Kia Sorento 2.5", year_from: 2021, year_to: 2024})
 
-      // lien ket xe voi khung gam va dong co
-      CREATE (camry)-[:USES_PLATFORM]->(p)
-      CREATE (lexus)-[:USES_PLATFORM]->(p)
-      CREATE (camry)-[:EQUIPPED_WITH]->(e)
-      CREATE (lexus)-[:EQUIPPED_WITH]->(e)
+      // LIÊN KẾT XE VỚI KHUNG GẦM VÀ ĐỘNG CƠ
+      CREATE (camry)-[:USES_PLATFORM]->(p1)
+      CREATE (lexus)-[:USES_PLATFORM]->(p1)
+      CREATE (rav4)-[:USES_PLATFORM]->(p1)
+      CREATE (xpander)-[:USES_PLATFORM]->(p2)
+      CREATE (santafe)-[:USES_PLATFORM]->(p3)
+      CREATE (sorento)-[:USES_PLATFORM]->(p3)
 
-      // 4. tao cum chi tiet cum phanh truoc
-      CREATE (sub:Subsystem {name: "Front Caliper Assembly", category: "Brake"})
+      CREATE (camry)-[:EQUIPPED_WITH]->(e1)
+      CREATE (lexus)-[:EQUIPPED_WITH]->(e1)
+      CREATE (santafe)-[:EQUIPPED_WITH]->(e3)
+      CREATE (sorento)-[:EQUIPPED_WITH]->(e3)
 
-      // 5. tao phu tung ma phanh camry va lexus
-      CREATE (partCamry:Part {code: "04465-06100", name: "Bộ má phanh trước Camry", price: 1850000})
-      CREATE (partLexus:Part {code: "04465-33480", name: "Bộ má phanh trước Lexus", price: 2950000})
+      // 4. TẠO CỤM BỘ PHẬN CHI TIẾT (SUBSYSTEMS)
+      CREATE (subBrake:Subsystem {name: "Front Caliper Assembly", category: "Brake"})
+      CREATE (subFilter:Subsystem {name: "Air Filtration Subsystem", category: "Filtration"})
+      CREATE (subIgnition:Subsystem {name: "Ignition System", category: "Engine"})
 
-      // thiet lap quan he lap rap da tang n-hops
-      CREATE (partCamry)-[:FITS_SUB_ASSEMBLY]->(sub)
-      CREATE (partLexus)-[:FITS_SUB_ASSEMBLY]->(sub)
-      CREATE (sub)-[:MOUNTED_ON_PLATFORM]->(p)
+      CREATE (subBrake)-[:MOUNTED_ON_PLATFORM]->(p1)
+      CREATE (subBrake)-[:MOUNTED_ON_PLATFORM]->(p3)
+      CREATE (subFilter)-[:MOUNTED_ON_PLATFORM]->(p1)
+      CREATE (subIgnition)-[:MOUNTED_ON_PLATFORM]->(p1)
+
+      // 5. TẠO PHỤ TÙNG THAY THẾ CHUNG & TƯƠNG THÍCH
+      CREATE (part1:Part {code: "04465-06100", name: "Bộ má phanh trước Toyota Camry", price: 1850000})
+      CREATE (part2:Part {code: "04465-33480", name: "Bộ má phanh trước Lexus ES250", price: 2950000})
+      CREATE (part3:Part {code: "04465-YZZD1", name: "Bộ má phanh trước Akebono OEM High-Perf", price: 1650000})
+      CREATE (part4:Part {code: "17801-0H050", name: "Lọc gió động cơ Camry 2.5", price: 280000})
+      CREATE (part5:Part {code: "BUGI-IRIDIUM", name: "Bugi Iridium Denso FK20HR11", price: 350000})
+
+      // THIẾT LẬP QUAN HỆ LẮP RÁP & TƯƠNG THÍCH N-HOPS
+      CREATE (part1)-[:FITS_SUB_ASSEMBLY]->(subBrake)
+      CREATE (part2)-[:FITS_SUB_ASSEMBLY]->(subBrake)
+      CREATE (part3)-[:FITS_SUB_ASSEMBLY]->(subBrake)
+      CREATE (part4)-[:FITS_SUB_ASSEMBLY]->(subFilter)
+      CREATE (part5)-[:FITS_SUB_ASSEMBLY]->(subIgnition)
     `;
 
     await runCypher(cypherSeedQuery);
-    console.log('✅ [Neo4j Seed] Knowledge graph created successfully!');
+    console.log('✅ [Neo4j Seed] Knowledge graph created successfully with 3 Shared Platforms & 5 Parts!');
 
-    // 6. chay va in thu nghiem cau truy van cypher n-hops tra cuu phu tung tuong thich choe
+    // Test Cypher N-hops query for compatible parts
     console.log('\n🔍 [Neo4j Test] Querying N-hops cross-compatible parts for Lexus ES250...');
     const nHopsQuery = `
       MATCH (targetCar:VehicleModel {name: "Lexus ES250"})-[:USES_PLATFORM]->(platform:Platform)

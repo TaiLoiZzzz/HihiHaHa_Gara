@@ -1,6 +1,7 @@
 const WorkOrder = require('../models/work-order.model');
 const { calculateEstimateService } = require('../services/estimate.service');
 const { allocatePartsService, deallocatePartsService } = require('../../inventory/services/inventory.service');
+const { broadcastProgressUpdated } = require('../../../sockets');
 const { sendSuccess } = require('../../../utils/response');
 const { AppError } = require('../../../middlewares/errorHandler');
 
@@ -239,6 +240,67 @@ const updateWorkOrderStatusController = async (req, res, next) => {
   }
 };
 
+// step 138 - 140: controller ky thuat vien cap nhat tien do thi cong & anh nghiem thu (UC-04)
+const updateProgressController = async (req, res, next) => {
+  try {
+    const { order_code } = req.params;
+    const { stage_name, percent_complete, photo_urls = [], note } = req.body;
+
+    if (!stage_name) {
+      return next(new AppError('Vui lòng cung cấp tên công đoạn thi công stage_name', 400, 'BAD_REQUEST'));
+    }
+
+    const workOrder = await WorkOrder.findOne({ order_code });
+    if (!workOrder) {
+      return next(new AppError(`Không tìm thấy Lệnh sửa chữa [${order_code}]`, 404, 'WORK_ORDER_NOT_FOUND'));
+    }
+
+    // step 139: luu vet vao mang inspection_photos va workflow_timeline trong mongodb
+    if (Array.isArray(photo_urls) && photo_urls.length > 0) {
+      for (const pUrl of photo_urls) {
+        workOrder.inspection_photos.push({
+          url: typeof pUrl === 'string' ? pUrl : pUrl.url,
+          caption: typeof pUrl === 'object' ? pUrl.caption : `Ảnh công đoạn ${stage_name}`,
+          uploaded_at: new Date(),
+        });
+      }
+    }
+
+    const progressNote = note || `Thi công công đoạn [${stage_name}] hoàn thành ${percent_complete || 100}%`;
+    workOrder.workflow_timeline.push({
+      status: workOrder.current_status,
+      updated_by: req.user?.phone_number || 'TECHNICIAN',
+      updated_at: new Date(),
+      note: progressNote,
+    });
+
+    await workOrder.save();
+
+    // step 140: ban su kien realtime PROGRESS_UPDATED toi room:order va room:kanban
+    broadcastProgressUpdated(order_code, {
+      stage_name,
+      percent_complete: percent_complete || 100,
+      inspection_photos: workOrder.inspection_photos,
+      updated_by: req.user?.phone_number || 'TECHNICIAN',
+      note: progressNote,
+    });
+
+    return sendSuccess(
+      res,
+      {
+        order_code,
+        stage_name,
+        percent_complete: percent_complete || 100,
+        inspection_photos: workOrder.inspection_photos,
+        timeline: workOrder.workflow_timeline,
+      },
+      `Cập nhật tiến độ công đoạn [${stage_name}] và phát tín hiệu Realtime thành công!`
+    );
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createWorkOrderController,
   getWorkOrderDetailsController,
@@ -246,4 +308,5 @@ module.exports = {
   getCustomerWorkOrdersController,
   customerApproveEstimateController,
   updateWorkOrderStatusController,
+  updateProgressController,
 };
