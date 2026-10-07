@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Wrench, LogIn, LayoutDashboard, Calendar } from "lucide-react";
+import { Wrench, LogIn, User, Shield, PhoneCall } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LiquidGlassButton } from "@/components/ui/liquid-glass-button";
 
@@ -13,7 +13,7 @@ export function PublicNavbar() {
   const navLinks = [
     { label: "Trang Chủ", href: "/" },
     { label: "Dịch Vụ & Bảng Giá", href: "/services" },
-    { label: "Kiến Thức Ô Tô", href: "/blog" },
+    { label: "Cẩm Nang Xe Ô Tô", href: "/blog" },
   ];
 
   return (
@@ -28,14 +28,14 @@ export function PublicNavbar() {
           <div>
             <div className="flex items-center gap-1.5">
               <span className="font-extrabold tracking-wider text-base text-zinc-900 dark:text-zinc-100 font-sans">
-                HIHIHAHA<span className="text-amber-500">.AUTO</span>
+                HIHIHAHA<span className="text-amber-500"> AUTO</span>
               </span>
-              <span className="px-1 py-0.2 text-[9px] font-mono font-bold rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-300 dark:border-zinc-700">
-                4S
+              <span className="px-1.5 py-0.2 text-[9px] font-bold rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                GARA 4S
               </span>
             </div>
             <p className="text-[10px] text-zinc-500 dark:text-zinc-400 tracking-tight hidden sm:block">
-              Smart Workshop & Graph-RAG AI
+              Trung Tâm Chăm Sóc & Sửa Chữa Ô Tô Chuyên Nghiệp
             </p>
           </div>
         </Link>
@@ -60,13 +60,22 @@ export function PublicNavbar() {
           })}
         </nav>
 
-        {/* Actions: Theme Toggle & Login Button */}
+        {/* Actions: Hotline, Portal Switch, Theme Toggle & Login Button */}
         <div className="flex items-center gap-3">
           <ThemeToggle />
+
+          <Link
+            href="/staff/login"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-amber-500 dark:hover:text-amber-400 hover:border-amber-500/40 transition-colors"
+          >
+            <Shield className="w-3.5 h-3.5 text-amber-500" />
+            Cổng Nhân Viên
+          </Link>
+
           <Link href="/login">
             <LiquidGlassButton size="sm" variant="primary">
-              <LogIn className="w-3.5 h-3.5 text-zinc-950" />
-              Đăng Nhập Cổng Gara
+              <User className="w-3.5 h-3.5 text-zinc-950" />
+              Đăng Nhập Chủ Xe
             </LiquidGlassButton>
           </Link>
         </div>
