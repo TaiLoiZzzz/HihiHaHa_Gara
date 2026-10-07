@@ -18,12 +18,12 @@ export function PublicNavbar() {
   ];
 
   return (
-    <header className="relative z-30 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-white/70 dark:bg-brand-dark/70 backdrop-blur-xl sticky top-0 px-6 py-3.5 transition-colors">
+    <header className="relative z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur-md sticky top-0 px-4 sm:px-8 py-3.5 shadow-xs">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative flex items-center justify-center w-10 h-10 rounded-xl overflow-hidden group-hover:scale-105 transition-transform">
+          <div className="relative flex items-center justify-center w-11 h-11 rounded-xl bg-amber-50 border border-amber-200/60 p-1 group-hover:scale-105 transition-transform shadow-xs">
             <Image
               src="/logo.png"
               alt="HiHiHaHa Auto Logo"
@@ -34,57 +34,59 @@ export function PublicNavbar() {
             />
           </div>
           <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-extrabold tracking-wider text-base text-zinc-900 dark:text-zinc-100 font-sans">
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold tracking-tight text-lg text-slate-900 font-sans">
                 HIHIHAHA<span className="text-amber-500"> AUTO</span>
               </span>
-              <span className="px-1.5 py-0.2 text-[9px] font-bold rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+              <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded-md bg-amber-100 text-amber-800 border border-amber-300">
                 GARA 4S
               </span>
             </div>
-            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 tracking-tight hidden sm:block">
+            <p className="text-[11px] text-slate-500 tracking-tight hidden sm:block font-medium">
               Trung Tâm Chăm Sóc & Sửa Chữa Ô Tô Chuyên Nghiệp
             </p>
           </div>
         </Link>
 
         {/* Navigation Links */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-zinc-600 dark:text-zinc-300">
+        <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
           {navLinks.map((link) => {
             const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href));
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`transition-colors py-1 ${
+                className={`transition-colors py-1 relative ${
                   isActive
-                    ? "text-amber-500 dark:text-amber-400 font-bold"
-                    : "hover:text-amber-500 dark:hover:text-amber-400"
+                    ? "text-amber-600 font-bold"
+                    : "hover:text-amber-600"
                 }`}
               >
                 {link.label}
+                {isActive && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500 rounded-full" />
+                )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Actions: Hotline, Portal Switch, Theme Toggle & Login Button */}
+        {/* Actions */}
         <div className="flex items-center gap-3">
-          <ThemeToggle />
-
           <Link
             href="/staff/login"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-amber-500 dark:hover:text-amber-400 hover:border-amber-500/40 transition-colors"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:text-amber-600 hover:border-amber-400 hover:bg-amber-50/50 transition shadow-xs"
           >
             <Shield className="w-3.5 h-3.5 text-amber-500" />
             Cổng Nhân Viên
           </Link>
 
-          <Link href="/login">
-            <LiquidGlassButton size="sm" variant="primary">
-              <User className="w-3.5 h-3.5 text-zinc-950" />
-              Đăng Nhập Chủ Xe
-            </LiquidGlassButton>
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition shadow-md shadow-amber-500/20 active:scale-95"
+          >
+            <User className="w-3.5 h-3.5 text-slate-950" />
+            Đăng Nhập Chủ Xe
           </Link>
         </div>
 

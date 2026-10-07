@@ -105,12 +105,12 @@ export default function StaffLoginPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8 font-sans py-6 pb-16">
+    <div className="max-w-2xl mx-auto space-y-6 font-sans py-8 pb-16">
       
       {/* Back to Customer Link */}
       <Link
         href="/login"
-        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-amber-500 transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-amber-600 transition-colors"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
         Bạn là khách hàng chủ xe? Trở về Cổng Chủ Xe
@@ -118,58 +118,58 @@ export default function StaffLoginPage() {
 
       {/* Header Form */}
       <div className="text-center space-y-2">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl overflow-hidden mb-2 shadow-amber-glow">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200/80 p-2 mb-2 shadow-xs">
           <Image
             src="/logo.png"
             alt="HiHiHaHa Auto Logo"
-            width={64}
-            height={64}
+            width={56}
+            height={56}
             className="object-contain"
             priority
           />
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground">
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
           Cổng Quản Trị & Vận Hành Gara (Staff Portal)
         </h1>
-        <p className="text-xs text-muted-foreground max-w-md mx-auto">
+        <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto font-medium">
           Dành riêng cho Cố Vấn Dịch Vụ, Quản Đốc Xưởng, Kỹ Thuật Viên và Ban Giám Đốc HiHiHaHa Auto
         </p>
       </div>
 
       {/* Form Đăng Nhập Tiêu Chuẩn */}
-      <div className="p-8 rounded-3xl bg-card border shadow-xl space-y-6">
+      <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">
         <form onSubmit={handleStaffLogin} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
                 Số Điện Thoại / Mã Nhân Viên
               </label>
               <div className="relative">
-                <Phone className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
+                <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
                 <input
                   type="text"
                   required
                   placeholder="0988 888 801"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 text-sm font-mono rounded-xl bg-background border focus:outline-none focus:border-amber-500 transition"
+                  className="w-full pl-10 pr-4 py-2.5 text-sm font-mono font-semibold rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition shadow-xs"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
                 Mật Khẩu Bảo Mật
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
+                <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
                 <input
                   type="password"
                   required
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 text-sm font-mono rounded-xl bg-background border focus:outline-none focus:border-amber-500 transition"
+                  className="w-full pl-10 pr-4 py-2.5 text-sm font-mono rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition shadow-xs"
                 />
               </div>
             </div>
@@ -178,19 +178,19 @@ export default function StaffLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs uppercase tracking-wider transition shadow-amber-glow"
+            className="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider transition shadow-md shadow-amber-500/20 active:scale-95"
           >
             {loading ? "Đang xác thực cán bộ..." : "Đăng Nhập Cổng Nội Bộ"}
           </button>
         </form>
 
         {/* 4 Thẻ 1-Click Đăng Nhập Nhanh Nhân Sự */}
-        <div className="pt-6 border-t space-y-3">
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-center">
+        <div className="pt-6 border-t border-slate-200 space-y-3">
+          <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">
             Hoặc Đăng Nhập Nhanh Theo Chức Danh Công Tác
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             {STAFF_ROLES.map((staff) => {
               const Icon = staff.icon;
               return (
@@ -199,27 +199,27 @@ export default function StaffLoginPage() {
                   type="button"
                   onClick={() => handleSelectStaffRole(staff)}
                   disabled={loading}
-                  className="p-4 rounded-2xl border bg-background hover:border-amber-500/50 hover:bg-muted/40 text-left transition-all space-y-2 group shadow-sm"
+                  className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-amber-400 hover:shadow-md text-left transition-all space-y-2 group shadow-xs active:scale-95"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                      <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 border border-amber-200/80 flex items-center justify-center">
                         <Icon className="w-3.5 h-3.5" />
                       </div>
-                      <span className="font-bold text-xs text-foreground">{staff.title}</span>
+                      <span className="font-extrabold text-xs text-slate-900">{staff.title}</span>
                     </div>
-                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border ${staff.badgeColor}`}>
+                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
                       {staff.code}
                     </span>
                   </div>
 
-                  <p className="text-[11px] text-muted-foreground line-clamp-1">
+                  <p className="text-[11px] text-slate-600 line-clamp-1 font-medium">
                     {staff.desc}
                   </p>
 
-                  <div className="pt-1 flex items-center justify-between text-[11px] font-mono text-muted-foreground">
+                  <div className="pt-1 flex items-center justify-between text-[11px] font-mono text-slate-500">
                     <span>SĐT: {staff.phone}</span>
-                    <span className="text-amber-500 font-bold group-hover:translate-x-0.5 transition-transform">
+                    <span className="text-amber-600 font-bold group-hover:translate-x-0.5 transition-transform">
                       Vào làm việc →
                     </span>
                   </div>

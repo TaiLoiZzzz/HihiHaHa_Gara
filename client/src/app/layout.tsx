@@ -33,12 +33,13 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <body
-        className={`${jakartaSans.variable} ${jetbrainsMono.variable} font-sans antialiased bg-brand-light dark:bg-brand-dark text-zinc-900 dark:text-zinc-100 min-h-screen transition-colors duration-200`}
+        className={`${jakartaSans.variable} ${jetbrainsMono.variable} font-sans antialiased bg-slate-50 text-slate-900 min-h-screen selection:bg-amber-100 selection:text-amber-900`}
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
-          enableSystem
+          defaultTheme="light"
+          forcedTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
           {children}

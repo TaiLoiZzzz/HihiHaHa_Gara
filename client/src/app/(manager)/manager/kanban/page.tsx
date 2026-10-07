@@ -163,18 +163,18 @@ export default function WorkshopKanbanPage() {
   };
 
   return (
-    <div className="space-y-6 pb-16">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pb-16 font-sans">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight">Điều Phối Khoang Xưởng (Kanban Realtime)</h1>
-            <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Điều Phối Khoang Xưởng (Kanban)</h1>
+            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
               Live Socket.io
             </span>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-slate-600 mt-1">
             Bảng điều phối 6 cột quy trình khép kín: Quản lý {cards.length} xe đang xử lý tại 4 khoang nâng
           </p>
         </div>
@@ -183,34 +183,34 @@ export default function WorkshopKanbanPage() {
           <GraphRagAiModal />
           <Link
             href="/advisor/create-order"
-            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-md shadow-amber-500/20"
+            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs transition-all flex items-center gap-1.5 shadow-md shadow-amber-500/20 active:scale-95"
           >
-            <Plus className="w-4 h-4" /> Tiếp Nhận Xe Mới
+            <Plus className="w-4 h-4 text-slate-950" /> Tiếp Nhận Xe Mới
           </Link>
         </div>
       </div>
 
       {/* Workshop Stats bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl border bg-card">
-          <p className="text-xs text-muted-foreground uppercase font-bold">Tổng xe trong xưởng</p>
-          <p className="text-2xl font-extrabold font-mono mt-1 text-foreground">{cards.length} xe</p>
+        <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs">
+          <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Tổng xe trong xưởng</p>
+          <p className="text-2xl font-black font-mono mt-1 text-slate-900">{cards.length} xe</p>
         </div>
-        <div className="p-4 rounded-xl border bg-card">
-          <p className="text-xs text-muted-foreground uppercase font-bold">Đang nâng trên cầu</p>
-          <p className="text-2xl font-extrabold font-mono mt-1 text-cyan-500">
+        <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs">
+          <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Đang nâng trên cầu</p>
+          <p className="text-2xl font-black font-mono mt-1 text-amber-600">
             {cards.filter((c) => c.stage === "in_progress").length} xe
           </p>
         </div>
-        <div className="p-4 rounded-xl border bg-card">
-          <p className="text-xs text-muted-foreground uppercase font-bold">Chờ nghiệm thu QC</p>
-          <p className="text-2xl font-extrabold font-mono mt-1 text-orange-500">
+        <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs">
+          <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Chờ nghiệm thu QC</p>
+          <p className="text-2xl font-black font-mono mt-1 text-orange-600">
             {cards.filter((c) => c.stage === "qc").length} xe
           </p>
         </div>
-        <div className="p-4 rounded-xl border bg-card">
-          <p className="text-xs text-muted-foreground uppercase font-bold">Đã hoàn thành hôm nay</p>
-          <p className="text-2xl font-extrabold font-mono mt-1 text-emerald-500">
+        <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs">
+          <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Đã hoàn thành hôm nay</p>
+          <p className="text-2xl font-black font-mono mt-1 text-emerald-600">
             {cards.filter((c) => c.stage === "completed").length} xe
           </p>
         </div>
@@ -226,14 +226,14 @@ export default function WorkshopKanbanPage() {
               key={col.key}
               onDragOver={handleDragOver}
               onDrop={() => handleDrop(col.key)}
-              className={`rounded-2xl border bg-card/60 p-3 min-h-[550px] flex flex-col gap-3 transition-colors ${
-                draggedCardId ? "border-dashed hover:border-amber-500/60" : ""
+              className={`rounded-2xl border border-slate-200/90 bg-slate-100/90 p-3 min-h-[560px] flex flex-col gap-3 transition-colors shadow-xs ${
+                draggedCardId ? "border-dashed hover:border-amber-500/80" : ""
               }`}
             >
               {/* Column Header */}
-              <div className="flex items-center justify-between pb-2 border-b">
-                <span className="text-xs font-bold tracking-tight text-foreground">{col.label}</span>
-                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${col.countColor}`}>
+              <div className="flex items-center justify-between pb-2.5 border-b border-slate-200">
+                <span className="text-xs font-black tracking-tight text-slate-800">{col.label}</span>
+                <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-white text-slate-800 border border-slate-200 shadow-xs">
                   {colCards.length}
                 </span>
               </div>
@@ -241,7 +241,7 @@ export default function WorkshopKanbanPage() {
               {/* Cards List */}
               <div className="space-y-3 flex-1">
                 {colCards.length === 0 ? (
-                  <div className="h-32 flex items-center justify-center border border-dashed rounded-xl text-[11px] text-muted-foreground">
+                  <div className="h-32 flex items-center justify-center border border-dashed border-slate-300 rounded-xl text-xs text-slate-400 font-medium">
                     Kéo xe vào đây
                   </div>
                 ) : (
@@ -250,7 +250,7 @@ export default function WorkshopKanbanPage() {
                       key={card.id}
                       draggable
                       onDragStart={() => handleDragStart(card.id)}
-                      className={`p-3.5 rounded-xl border bg-background shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing transition-all space-y-2.5 ${
+                      className={`p-3.5 rounded-xl border border-slate-200 bg-white shadow-xs hover:shadow-md hover:border-amber-400 cursor-grab active:cursor-grabbing transition-all space-y-2.5 ${
                         card.priority === "urgent" ? "border-l-4 border-l-amber-500" : ""
                       }`}
                     >
@@ -259,30 +259,32 @@ export default function WorkshopKanbanPage() {
                         <div>
                           <Link
                             href={`/customer/orders/${card.orderCode}`}
-                            className="text-[11px] font-mono font-bold text-amber-500 hover:underline block"
+                            className="text-xs font-mono font-bold text-amber-600 hover:underline block"
                           >
                             {card.orderCode}
                           </Link>
-                          <p className="text-sm font-extrabold font-mono tracking-tight mt-0.5 text-foreground">
-                            {card.plateNumber}
-                          </p>
+                          <div className="mt-1">
+                            <span className="text-sm font-black font-mono tracking-tight text-slate-900 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 inline-block">
+                              {card.plateNumber}
+                            </span>
+                          </div>
                         </div>
                         {card.priority === "urgent" && (
-                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-500/10 text-red-500">
+                          <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-red-100 text-red-700 border border-red-200">
                             Gấp
                           </span>
                         )}
                       </div>
 
-                      <p className="text-xs text-muted-foreground">{card.carModel}</p>
+                      <p className="text-xs font-semibold text-slate-600">{card.carModel}</p>
 
                       {/* Progress bar */}
                       <div className="space-y-1">
-                        <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
+                        <div className="flex justify-between text-[11px] text-slate-500 font-mono font-semibold">
                           <span>Tiến độ</span>
-                          <span>{card.progress}%</span>
+                          <span className="text-slate-900 font-bold">{card.progress}%</span>
                         </div>
-                        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all duration-300 ${
                               card.progress === 100
@@ -297,17 +299,17 @@ export default function WorkshopKanbanPage() {
                       </div>
 
                       {/* Khoang & Thợ */}
-                      <div className="text-[11px] space-y-1 text-muted-foreground border-t pt-2">
+                      <div className="text-[11px] space-y-1 text-slate-600 border-t border-slate-100 pt-2 font-medium">
                         <div className="flex items-center gap-1.5 truncate">
                           <Wrench className="w-3 h-3 text-amber-500 shrink-0" />
                           <span className="truncate">{card.bay}</span>
                         </div>
                         <div className="flex items-center gap-1.5 truncate">
-                          <User className="w-3 h-3 text-muted-foreground shrink-0" />
-                          <span className="truncate font-medium text-foreground">{card.technician}</span>
+                          <User className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span className="truncate font-semibold text-slate-900">{card.technician}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[10px]">
-                          <Clock className="w-3 h-3 text-muted-foreground shrink-0" />
+                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                          <Clock className="w-3 h-3 text-slate-400 shrink-0" />
                           <span>Dự kiến: {card.estimatedTime}</span>
                         </div>
                       </div>
@@ -323,7 +325,7 @@ export default function WorkshopKanbanPage() {
                                 handleDrop(COLUMNS[nextIdx].key);
                               }
                             }}
-                            className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-amber-500"
+                            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-amber-600 transition"
                             title="Chuyển cột kế tiếp"
                           >
                             <ArrowRight className="w-3.5 h-3.5" />
