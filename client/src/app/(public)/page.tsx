@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { 
   Wrench, 
   Sparkles, 
@@ -141,90 +142,72 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Cột Phải: Mockup Hồ Sơ Xe Sửa Chữa Minh Bạch Trực Quan */}
-          <div className="lg:col-span-5">
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/50 space-y-5">
+          {/* Cột Phải: Showcase Đội Ngũ Kỹ Thuật Viên & Logo Thương Hiệu (Hiệu Ứng Kính Trong Suốt Cao Cấp) */}
+          <div className="lg:col-span-5 relative">
+            {/* Vầng sáng vàng sang trọng phía sau */}
+            <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-amber-400/20 via-amber-300/30 to-amber-500/20 blur-xl opacity-75 group-hover:opacity-100 transition-opacity" />
+
+            <div className="relative rounded-3xl border border-white/80 bg-white/70 backdrop-blur-xl p-6 sm:p-7 shadow-xl shadow-amber-500/10 space-y-5 text-center">
               
-              <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xs">
-                    4S
+              {/* Header Showcase với Logo chính thức */}
+              <div className="flex items-center justify-between pb-4 border-b border-slate-200/60">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-white border border-amber-200/80 p-1.5 shadow-xs flex items-center justify-center">
+                    <Image
+                      src="/logo.png"
+                      alt="Logo HiHiHaHa Auto"
+                      width={44}
+                      height={44}
+                      className="object-contain"
+                      priority
+                    />
                   </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-slate-900">LỆNH SỬA CHỮA THỜI GIAN THỰC</h3>
-                    <p className="text-[10px] font-mono text-amber-600 font-semibold">#WO-20261001-0089</p>
+                  <div className="text-left">
+                    <h3 className="text-sm font-black text-slate-900 tracking-tight">HIHIHAHA GARA</h3>
+                    <p className="text-[11px] font-bold text-amber-600">CHUYÊN SỬA CHỮA & BẢO DƯỠNG XE</p>
                   </div>
                 </div>
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-ping" />
-                  Đang thi công
+
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-100/90 text-amber-900 border border-amber-300 shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  Đội Ngũ 4S
                 </span>
               </div>
 
-              {/* Thông tin xe */}
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Phương tiện</span>
-                  <span className="text-sm font-bold text-slate-900 font-mono">Toyota Camry 2.5Q</span>
-                </div>
-                <div className="text-right">
-                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Biển số</span>
-                  <span className="text-xs font-black font-mono bg-white px-2 py-0.5 rounded border border-slate-300 text-slate-900">
-                    51K-888.88
-                  </span>
-                </div>
-              </div>
-
-              {/* Progress bar */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="text-slate-600">Tiến độ thi công khoang nâng 02:</span>
-                  <span className="text-amber-600 font-bold font-mono">60%</span>
-                </div>
-                <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-amber-500 to-amber-600 rounded-full w-[60%]" />
+              {/* Hình Ảnh Đội Ngũ Thợ Máy Chính Thức (Mascot Gara) */}
+              <div className="relative py-2 flex items-center justify-center">
+                <div className="relative w-full max-w-[320px] aspect-square rounded-2xl overflow-hidden bg-gradient-to-b from-amber-50/50 to-white/40 p-2 flex items-center justify-center">
+                  <Image
+                    src="/gara-team.png"
+                    alt="Đội ngũ kỹ thuật viên HiHiHaHa Gara"
+                    width={320}
+                    height={320}
+                    className="w-full h-auto object-contain drop-shadow-xl hover:scale-105 transition-transform duration-300"
+                    priority
+                  />
                 </div>
               </div>
 
-              {/* Chi tiết linh kiện minh bạch */}
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center justify-between py-1.5 border-b border-slate-100 text-slate-700">
-                  <span className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    Dầu Castrol EDGE 0W-20 (4L)
-                  </span>
-                  <span className="font-mono font-semibold text-slate-900">1.200.000 đ</span>
+              {/* Thông Tin Trụ Sở & Hotline Trực Tiếp */}
+              <div className="p-3.5 rounded-2xl bg-white/80 border border-slate-200/80 text-left space-y-1.5 shadow-xs">
+                <div className="flex items-start gap-2 text-xs text-slate-700">
+                  <MapPin className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span className="font-semibold">Số 1 Võ Văn Ngân, TP. Thủ Đức, TP. Hồ Chí Minh</span>
                 </div>
-                <div className="flex items-center justify-between py-1.5 border-b border-slate-100 text-slate-700">
-                  <span className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    Lọc nhớt Toyota Camry TNGA
-                  </span>
-                  <span className="font-mono font-semibold text-slate-900">250.000 đ</span>
-                </div>
-                <div className="flex items-center justify-between py-1.5 text-slate-700">
-                  <span className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    Công bảo dưỡng định kỳ 4 bánh
-                  </span>
-                  <span className="font-mono font-semibold text-slate-900">650.000 đ</span>
+                <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+                  <span className="text-slate-500">Hotline: <strong className="text-slate-900 font-mono">0797 526 990</strong></span>
+                  <span className="text-slate-500">Email: <strong className="text-slate-900">tailoi1606@gmail.com</strong></span>
                 </div>
               </div>
 
-              {/* Tổng cộng & Nút xem */}
-              <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] text-slate-500 block">Tổng thanh toán (VAT 8%):</span>
-                  <span className="text-base font-black font-mono text-amber-600">2.808.000 đ</span>
-                </div>
-                <Link
-                  href="/customer/orders/WO-20261001-0089"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-xs"
-                >
-                  Xem Tiến Độ Thật
-                  <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
-                </Link>
-              </div>
+              {/* Nút Đăng Nhập Cổng Chủ Xe Tra Cứu */}
+              <Link
+                href="/login"
+                className="w-full py-3 px-4 rounded-xl bg-slate-950 hover:bg-slate-900 text-amber-400 font-bold text-xs uppercase tracking-wider transition shadow-md flex items-center justify-center gap-2 group/btn"
+              >
+                <span>Đăng Nhập Cổng Chủ Xe Để Tra Cứu Tiến Độ</span>
+                <ArrowRight className="w-4 h-4 text-amber-400 group-hover/btn:translate-x-1 transition-transform" />
+              </Link>
 
             </div>
           </div>
@@ -368,11 +351,11 @@ export default function HomePage() {
 
           <div className="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col gap-3 justify-end">
             <a
-              href="tel:0908888888"
+              href="tel:0797526990"
               className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-slate-950 hover:bg-slate-900 text-amber-400 font-extrabold text-sm shadow-md transition transform active:scale-95"
             >
               <PhoneCall className="w-4 h-4 text-amber-400 animate-bounce" />
-              Hotline Cứu Hộ: 0908 888 888
+              Hotline Cứu Hộ: 0797 526 990
             </a>
             <Link
               href="/login"

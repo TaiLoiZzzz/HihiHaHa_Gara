@@ -124,12 +124,12 @@ export default function CustomerPaymentPage({ params }: Props) {
             {/* Ảnh VietQR chuẩn từ Napas 247 */}
             <div className="relative bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
               <img
-                src={`https://img.vietqr.io/image/MB-0908888888-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(orderCode)}&accountName=GARA%20HIHIHAHA%20AUTO`}
+                src={`https://img.vietqr.io/image/MB-0797526990-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(orderCode)}&accountName=GARA%20HIHIHAHA%20AUTO`}
                 alt="Mã QR Chuyển Khoản VietQR"
                 className="w-64 h-auto object-contain rounded-xl mx-auto"
                 onError={(e) => {
                   // Fallback nếu offline hoặc lỗi mạng
-                  e.currentTarget.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`2|99|0908888888|MB|${totalAmount}|${orderCode}`)}`;
+                  e.currentTarget.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`2|99|0797526990|MB|${totalAmount}|${orderCode}`)}`;
                 }}
               />
             </div>
@@ -142,7 +142,7 @@ export default function CustomerPaymentPage({ params }: Props) {
               </div>
               <div className="flex justify-between items-center py-1 border-b border-slate-50">
                 <span className="text-slate-500 font-medium">Số tài khoản:</span>
-                <span className="font-mono font-bold text-amber-600 text-sm tracking-wider">0908888888</span>
+                <span className="font-mono font-bold text-amber-600 text-sm tracking-wider">0797526990</span>
               </div>
               <div className="flex justify-between items-center py-1 border-b border-slate-50">
                 <span className="text-slate-500 font-medium">Chủ thụ hưởng:</span>

@@ -83,3 +83,14 @@
 1. **Lưu phiên làm việc (Session Persistence):** Token xác thực được lưu an toàn trong `localStorage` (`hihihaha_token` & `hihihaha_user`), giúp phiên làm việc duy trì ổn định khi chuyển trang hoặc F5.
 2. **Đăng xuất an toàn:** Tại thanh điều hướng (Navbar) của từng vai trò, bấm nút **Đăng Xuất** để xóa token và quay về trang chủ.
 3. **Không dùng chung quyền:** Nếu đăng nhập với vai trò Cố vấn dịch vụ, hệ thống chỉ hiển thị các tính năng của Cố vấn dịch vụ. Tương tự với Quản đốc, Thợ máy và Chủ gara.
+
+---
+
+## 4. THÔNG TIN LIÊN HỆ & TÀI KHOẢN NGÂN HÀNG CHÍNH THỨC
+* **Hotline / Zalo hỗ trợ kỹ thuật:** `0797 526 990`
+* **Hòm thư điện tử (Email):** `tailoi1606@gmail.com`
+* **Trụ sở trung tâm Gara:** `Số 1 Võ Văn Ngân, TP. Thủ Đức, TP. Hồ Chí Minh`
+* **Tài khoản thụ hưởng VietQR / Napas247:**
+  - Ngân hàng: **MB Bank (Ngân hàng Quân Đội)**
+  - Số tài khoản: **0797526990**
+  - Tên thụ hưởng: **GARA HIHIHAHA AUTO**

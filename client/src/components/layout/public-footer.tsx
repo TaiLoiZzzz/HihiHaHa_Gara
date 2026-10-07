@@ -70,15 +70,15 @@ export function PublicFooter() {
           </h4>
           <div className="flex items-start gap-2 text-[12px]">
             <MapPin className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-            <span className="text-slate-700">Khu Công Nghệ Cao, TP. Thủ Đức, TP. Hồ Chí Minh</span>
+            <span className="text-slate-700">Số 1 Võ Văn Ngân, TP. Thủ Đức, TP. Hồ Chí Minh</span>
           </div>
           <div className="flex items-center gap-2 text-[12px]">
             <Phone className="w-4 h-4 text-amber-500 shrink-0" />
-            <span className="font-mono font-bold text-slate-900">Hotline: 0908 888 888</span>
+            <span className="font-mono font-bold text-slate-900">Hotline: 0797 526 990</span>
           </div>
           <div className="flex items-center gap-2 text-[12px]">
             <Mail className="w-4 h-4 text-amber-500 shrink-0" />
-            <span className="text-slate-700">cskh@hihihaha-auto.vn</span>
+            <span className="text-slate-700">tailoi1606@gmail.com</span>
           </div>
           <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200/80 text-[11px] space-y-1">
             <div className="font-bold text-slate-900">Giờ Vận Hành Xưởng:</div>
