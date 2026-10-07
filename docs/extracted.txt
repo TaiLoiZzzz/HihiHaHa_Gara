@@ -1,0 +1,124 @@
+HỒ SƠ ĐỀ TÀI DỰ ÁN
+Hệ thống quản lý gara sửa xe
+MỤC ĐÍCH CỦA HỒ SƠ NÀY
+Đây là hồ sơ tổng quan đề tài dự án cho nhóm. Hồ sơ cung cấp:
+Bối cảnh và domain của khách hàng giả định.
+Persona khách hàng đề xuất (nhóm có thể bổ sung/điều chỉnh).
+Phạm vi đề tài: những gì TRONG/NGOÀI scope.
+Các use case chính mà nhóm cần khai thác.
+Use case lõi để code (cuối kỳ).
+Một số ràng buộc và yêu cầu phi chức năng tiêu biểu.
+Lưu ý: hồ sơ này là điểm KHỞI ĐẦU, không phải SRS hoàn chỉnh. Nhóm sẽ tự phát triển SRS đầy đủ qua các buổi học, dựa trên hồ sơ này + công việc khảo sát/phỏng vấn của nhóm.
+1. Bối cảnh
+Gara "Thành Phát Auto" tại Q.12, TP.HCM, do anh Phát (37 tuổi) làm chủ, chuyên sửa xe ô tô con, có 5 thợ sửa xe, tiếp nhận trung bình 8-12 xe mỗi ngày.
+Hiện tại khách mang xe đến, cố vấn dịch vụ viết phiếu tiếp nhận giấy mô tả tình trạng xe, thợ sửa xong báo miệng cho anh Phát để tính tiền. Vấn đề: khách gọi hỏi tiến độ xe liên tục vì không biết đang sửa đến đâu, đôi khi phụ tùng ghi trong hóa đơn không khớp với phụ tùng thực tế lắp (nghi ngờ thất thoát), và khó theo dõi thợ nào đang làm xe nào để phân công hợp lý.
+2. Persona đề xuất
+Nhóm có thể dùng các persona này hoặc tự bổ sung:
+Persona chính: Anh Phát - Chủ gara
+37 tuổi, mở gara 7 năm, trước đó từng là thợ sửa xe chính.
+Mức công nghệ: dùng điện thoại, Zalo, Excel cơ bản, KHÔNG biết lập trình.
+Goals: (1) Khách biết được tiến độ sửa xe mà không cần gọi hỏi; (2) Kiểm soát chính xác phụ tùng dùng cho từng xe; (3) Phân công thợ hợp lý theo tải công việc.
+Pain points: Khách gọi hỏi liên tục làm gián đoạn công việc; phụ tùng xuất kho không khớp hóa đơn nghi có thất thoát; không rõ thợ nào đang rảnh để giao xe mới.
+Persona phụ: Anh Tùng - Cố vấn dịch vụ (tiếp nhận xe)
+30 tuổi, phụ trách tiếp nhận xe và báo giá cho khách.
+Goals: Ghi nhận tình trạng xe nhanh, báo giá rõ ràng trước khi sửa.
+Pain points: Phiếu giấy dễ thất lạc, khó tra lại lịch sử sửa chữa cũ của xe quen.
+Persona phụ: Chú Ba - Thợ sửa xe chính
+45 tuổi, 20 năm kinh nghiệm sửa xe.
+Goals: Biết rõ xe nào cần làm trước, xem được yêu cầu sửa chữa chi tiết.
+Pain points: Đôi khi 2 thợ cùng tưởng mình phụ trách 1 xe, chồng chéo công việc.
+Persona phụ: Chị Ngọc - Khách hàng, chủ xe
+32 tuổi, mang xe đi sửa/bảo dưỡng định kỳ.
+Goals: Biết chính xác xe đang ở công đoạn nào, nhận báo giá trước khi gara sửa các hạng mục phát sinh.
+Pain points: Không biết khi nào xe sửa xong để sắp xếp đến lấy, phát sinh thêm chi phí không được báo trước.
+3. Phạm vi đề tài
+TRONG scope (phải làm)
+Tiếp nhận xe: thông tin xe, khách hàng, mô tả tình trạng/yêu cầu sửa chữa.
+Báo giá: liệt kê hạng mục sửa chữa + phụ tùng dự kiến, khách xác nhận trước khi làm.
+Theo dõi tiến độ sửa chữa: trạng thái (tiếp nhận/đang sửa/chờ phụ tùng/hoàn tất).
+Phân công thợ: gán thợ phụ trách từng xe.
+Quản lý phụ tùng sử dụng: ghi nhận phụ tùng đã dùng cho từng xe, trừ tồn kho phụ tùng.
+Xuất hóa đơn: tổng hợp tiền công + phụ tùng, in hóa đơn khi giao xe.
+Báo cáo: doanh thu theo tháng, hạng mục sửa chữa phổ biến, hiệu suất từng thợ.
+NGOÀI scope (Won't have trong dự án này)
+Đặt lịch hẹn trước qua app - không làm, chỉ tiếp nhận trực tiếp/gọi điện.
+Quản lý nhập hàng phụ tùng từ nhà cung cấp chi tiết - chỉ quản lý tồn kho đơn giản.
+Bảo hành điện tử liên kết hãng xe - ngoài phạm vi.
+Thanh toán online - chỉ ghi nhận tiền mặt/chuyển khoản thủ công.
+4. Các Use Case chính (định hướng)
+Đây là gợi ý các use case nhóm cần khai thác. Nhóm sẽ phát hiện thêm qua các buổi học.
+#
+Use Case
+Actor chính
+Mô tả ngắn
+1
+Tiếp nhận xe
+Cố vấn dịch vụ
+Ghi nhận thông tin xe, tình trạng, yêu cầu
+2
+Báo giá sửa chữa
+Cố vấn dịch vụ
+Liệt kê hạng mục + phụ tùng, khách xác nhận
+3
+Phân công thợ
+Chủ gara / Cố vấn dịch vụ
+Gán thợ phụ trách xe
+4
+Cập nhật tiến độ sửa chữa
+Thợ sửa xe
+Chuyển trạng thái theo từng công đoạn
+5
+Ghi nhận phụ tùng sử dụng
+Thợ sửa xe
+Chọn phụ tùng, trừ tồn kho
+6
+Xuất hóa đơn
+Cố vấn dịch vụ
+Tổng hợp tiền công + phụ tùng
+7
+Tra cứu tiến độ xe
+Khách hàng
+Xem trạng thái sửa chữa xe của mình
+8
+Xem báo cáo
+Chủ gara
+Doanh thu, hạng mục phổ biến, hiệu suất thợ
+5. Use Case lõi để CODE (cuối kỳ)
+USE CASE: CẬP NHẬT TIẾN ĐỘ SỬA CHỮA
+Đây là use case nhóm sẽ thực sự code (có UI, có DB, có business logic, có test) trong các buổi cuối kỳ. Lý do chọn:
+Là tính năng cốt lõi giải quyết đúng pain point lớn nhất: khách không biết tiến độ xe.
+Có business rule về luồng trạng thái hợp lệ: xe phải đi qua đúng thứ tự công đoạn (không thể "hoàn tất" khi chưa "đang sửa").
+Có DB lookup (thông tin xe, thợ phụ trách) + DB update (trạng thái, lịch sử thay đổi trạng thái) để hiển thị theo thời gian thực cho khách.
+Có nhiều test case: cập nhật sai thứ tự trạng thái, thợ chưa được phân công cố cập nhật, xe chờ phụ tùng lâu cần cảnh báo.
+Main flow đề xuất:
+Thợ sửa xe (hoặc cố vấn dịch vụ) mở phiếu xe đang phụ trách.
+Hệ thống hiển thị trạng thái hiện tại của xe và các trạng thái tiếp theo hợp lệ.
+Thợ chọn trạng thái mới (VD: từ "Đang sửa" sang "Chờ phụ tùng" hoặc "Hoàn tất").
+Nếu chuyển sang "Chờ phụ tùng": thợ ghi chú phụ tùng đang thiếu.
+Hệ thống kiểm tra điều kiện:
+a. Trạng thái mới có hợp lệ theo đúng thứ tự luồng công việc (không nhảy cóc, không quay lui tuỳ tiện)?
+b. Người cập nhật có phải là thợ đang được phân công cho xe này không?
+c. Nếu chuyển sang "Hoàn tất": tất cả hạng mục sửa chữa trong báo giá đã được đánh dấu xong chưa?
+Nếu thoả: cập nhật trạng thái, ghi lại thời gian và người cập nhật vào lịch sử.
+Nếu KHÔNG thoả: hiển thị lý do cụ thể (VD: "Còn 1 hạng mục 'Thay dầu phanh' chưa hoàn tất, chưa thể chuyển sang Hoàn tất").
+6. Một số yêu cầu phi chức năng tiêu biểu
+Performance: 
+Cập nhật trạng thái và phản ánh cho khách tra cứu trong dưới 2 giây.
+Reliability: 
+Lịch sử thay đổi trạng thái không được mất, phục vụ tra cứu khi có tranh chấp.
+Usability: 
+Thợ cập nhật trạng thái xe trong dưới 15 giây (thao tác nhanh trong lúc tay dính dầu mỡ).
+Compatibility: 
+Giao diện cập nhật trạng thái chạy tốt trên máy tính bảng dùng trong xưởng.
+Security: 
+Chỉ thợ được phân công hoặc chủ gara mới cập nhật được trạng thái xe đó.
+7. Một số 'yêu cầu ẩn' anh Phát không tự nói (nhóm sẽ khám phá khi phỏng vấn)
+Anh Phát có vài khách VIP được ưu tiên sửa trước dù đến sau
+,
+ chỉ tiết lộ khi hỏi "Có khách hàng nào được ưu tiên không?"
+Anh Phát giữ một khoản chiết khấu riêng khi mua phụ tùng giá tốt, không ghi rõ trong báo giá cho khách
+, 
+chỉ tiết lộ khi hỏi "Cách tính giá phụ tùng trong báo giá thế nào?"
+Từng có thợ báo hoàn tất nhưng thực tế chưa lắp xong, khách đến lấy xe phát hiện lỗi phải sửa lại
+,
+ chỉ tiết lộ khi hỏi về "vấn đề từng gặp".

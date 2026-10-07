@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Sơ Đồ Tuần Tự Từ Trên Xuống - Transaction & Multi-DBMS</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    .step-card {
+      transition: all 0.3s ease;
+    }
+    .step-card:hover {
+      border-color: #3b82f6;
+      box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.2);
+    }
+    .flow-line {
+      position: absolute;
+      left: 28px;
+      top: 40px;
+      bottom: -30px;
+      width: 4px;
+      background: linear-gradient(to bottom, #3b82f6, #8b5cf6, #10b981);
+      z-index: 0;
+    }
+    .code-font {
+      font-family: Consolas, Monaco, 'Courier New', monospace;
+    }
+    .highlight-badge {
+      animation: pulseBadge 1.5s infinite;
+    }
+    @keyframes pulseBadge {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased p-3 md:p-8 font-sans">
+  <div class="max-w-5xl mx-auto space-y-8">
+
+    <!-- HEADER TỔNG QUAN -->
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+      <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+      
+      <div class="flex flex-wrap items-center gap-2 mb-3">
+        <span class="px-3 py-1 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full text-xs font-bold uppercase tracking-wider">
+          Sơ Đồ Vẽ Từ Trên Xuống (Top-Down Pipeline)
+        </span>
+        <span class="text-xs text-slate-400">Đơn xe Camry: <b class="text-emerald-400">51K-888.88</b></span>
+        <span class="text-xs text-slate-400">Mã Lệnh: <b class="text-cyan-400">WO-20261001-0089</b></span>
+        <span class="text-xs text-slate-400">Số tiền: <b class="text-amber-400">2.808.000 đ</b></span>
+      </div>
+
+      <h1 class="text-2xl md:text-3xl font-extrabold text-white">
+        Dòng Chảy Giao Dịch (Transaction) & Cách 3 CSDL Thay Đổi
+      </h1>
+      <p class="text-sm text-slate-400 mt-2 max-w-3xl leading-relaxed">
+        Cuộn từ trên xuống dưới theo thứ tự thời gian. Mỗi chặng mô tả rõ: <b>Ai gửi cho ai? Lệnh gì đang chạy?</b> và <b>Ruột bên trong Bảng (Postgres), Document (Mongo), Khóa (Redis)</b> biến đổi như thế nào.
+      </p>
+
+      <!-- BẢNG ĐIỀU HƯỚNG NHANH TỚI CÁC BƯỚC -->
+      <div class="mt-6 pt-5 border-t border-slate-800 flex flex-wrap items-center gap-2">
+        <span class="text-xs font-semibold text-slate-400 mr-2">Nhảy nhanh:</span>
+        <a href="#step-1" class="px-3 py-1 bg-slate-800 hover:bg-blue-900/40 hover:text-blue-300 text-slate-300 rounded-lg text-xs font-medium border border-slate-700 transition">B1: Khởi tạo</a>
+        <a href="#step-2" class="px-3 py-1 bg-slate-800 hover:bg-blue-900/40 hover:text-blue-300 text-slate-300 rounded-lg text-xs font-medium border border-slate-700 transition">B2: Quét VietQR</a>
+        <a href="#step-3" class="px-3 py-1 bg-blue-900/40 text-blue-300 rounded-lg text-xs font-bold border border-blue-500/50 transition">B3: Transaction (ACID) ★</a>
+        <a href="#step-4" class="px-3 py-1 bg-slate-800 hover:bg-blue-900/40 hover:text-blue-300 text-slate-300 rounded-lg text-xs font-medium border border-slate-700 transition">B4: Worker quét</a>
+        <a href="#step-5" class="px-3 py-1 bg-slate-800 hover:bg-blue-900/40 hover:text-blue-300 text-slate-300 rounded-lg text-xs font-medium border border-slate-700 transition">B5: MongoDB trừ kho</a>
+        <a href="#step-6" class="px-3 py-1 bg-slate-800 hover:bg-blue-900/40 hover:text-blue-300 text-slate-300 rounded-lg text-xs font-medium border border-slate-700 transition">B6: Hoàn tất</a>
+      </div>
+    </div>
+
+    <!-- 3 HỘP ĐỊNH NGHĨA DỄ HIỂU NHẤT TRƯỚC KHI XEM SƠ ĐỒ -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-cyan-950/20 border border-cyan-800/40 rounded-2xl p-4">
+        <div class="flex items-center gap-2 text-cyan-400 font-bold text-sm">
+          <span>🐘</span> <span>PostgreSQL (BẢNG - TABLE)</span>
+        </div>
+        <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+          Giống <b>bảng tính Excel</b>. Dữ liệu chia thành các cột nghiêm ngặt: <code>txn_id</code>, <code>vnp_txn_ref</code>, <code>amount</code>, <code>status</code>. Rất chặt chẽ, dùng để giữ tiền!
+        </p>
+      </div>
+
+      <div class="bg-emerald-950/20 border border-emerald-800/40 rounded-2xl p-4">
+        <div class="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+          <span>🍃</span> <span>MongoDB (HỒ SƠ - DOCUMENT)</span>
+        </div>
+        <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+          Giống một <b>cuốn sổ tay JSON</b>. Lưu trọn vẹn cả chiếc xe, mảng phụ tùng và link ảnh thợ chụp vào 1 file duy nhất. Rất linh hoạt, dùng cho xưởng sửa xe!
+        </p>
+      </div>
+
+      <div class="bg-rose-950/20 border border-rose-800/40 rounded-2xl p-4">
+        <div class="flex items-center gap-2 text-rose-400 font-bold text-sm">
+          <span>⚡</span> <span>Redis (TỦ GỬI ĐỒ - KEY-VALUE)</span>
+        </div>
+        <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+          Giống <b>tủ giữ đồ có khóa hẹn giờ</b>. Gắn chìa khóa <code>hold:WO0089</code> giữ phụ tùng trong 15 phút. Khách thanh toán xong là xóa chìa khóa giải phóng ngay!
+        </p>
+      </div>
+    </div>
+
+    <!-- KHU VỰC SƠ ĐỒ DỌC TỪ TRÊN XUỐNG DƯỚI -->
+    <div class="space-y-10 relative">
+
+      <!-- ==================== BƯỚC 1 ==================== -->
+      <div id="step-1" class="relative pl-12 md:pl-16">
+        <!-- Đường nối dọc -->
+        <div class="flow-line"></div>
+        <!-- Điểm mốc Icon -->
+        <div class="absolute left-0 top-0 w-14 h-14 rounded-2xl bg-blue-600 text-white font-black text-xl flex items-center justify-center shadow-lg shadow-blue-500/30 z-10">
+          1
+        </div>
+
+        <div class="step-card bg-slate-900 border border-slate-800 rounded-3xl p-5 md:p-6 shadow-xl space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <span class="text-[11px] font-mono uppercase px-2 py-0.5 bg-blue-950 text-blue-400 border border-blue-800/50 rounded">Chặng 1: Chiều đi</span>
+              <h2 class="text-lg md:text-xl font-bold text-white mt-1">Khách Bấm Thanh Toán ➔ Hệ Thống Tự Sinh Mã vnp_TxnRef</h2>
+            </div>
+            <div class="flex items-center gap-1.5 text-xs font-mono text-cyan-300 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+              <span>📱 Khách</span> ➔ <span>⚙️ Backend</span> ➔ <span>🐘 PostgreSQL</span>
+            </div>
+          </div>
+
+          <!-- GIẢI THÍCH DỄ HIỂU -->
+          <div class="text-sm text-slate-300 leading-relaxed space-y-2">
+            <p>
+              <b>Chuyện gì xảy ra?</b> Khách mở web trên điện thoại bấm <i>"Thanh toán 2.808.000 đ"</i>. Backend tự nghĩ ra một mã hóa đơn duy nhất là <code>vnp_TxnRef = "20261002_WO0089"</code> rồi lưu một dòng vào bảng <b>payment_transactions</b> của PostgreSQL với trạng thái <b>PENDING</b> (Chờ thanh toán).
+            </p>
+          </div>
+
+          <!-- LỆNH SQL ĐANG CHẠY -->
+          <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+            <div class="flex items-center justify-between text-xs text-slate-400 pb-1.5 border-b border-slate-800 font-mono">
+              <span>Lệnh SQL chạy vào PostgreSQL:</span>
+              <span class="text-cyan-400">PostgreSQL Table: payment_transactions</span>
+            </div>
+            <pre class="text-xs text-emerald-400 code-font mt-2 overflow-x-auto leading-relaxed"><code>INSERT INTO payment_transactions (
+    order_code, vnp_txn_ref, amount, status, payment_link_expires_at
+) VALUES (
+    'WO-20261001-0089',
+    '20261002_WO0089',
+    2808000.00,
+    'PENDING',
+    NOW() + INTERVAL '10 minutes'
+);</code></pre>
+          </div>
+
+          <!-- MỔ XẺ RUỘT CSDL SAU BƯỚC NÀY -->
+          <div class="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-4 space-y-3">
+            <div class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <span>🔬 Ruột Các Cơ Sở Dữ Liệu Ngay Lúc Này:</span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+              <!-- Bảng Postgres -->
+              <div class="bg-slate-900 border border-cyan-900/40 p-3 rounded-xl">
+                <div class="text-cyan-400 font-bold mb-1">🐘 PostgreSQL (Bảng payment_transactions):</div>
+                <div class="text-slate-300 bg-slate-950 p-2 rounded border border-slate-800 text-[11px]">
+                  [ref: <b class="text-cyan-300">20261002_WO0089</b> | tiền: <b>2.808.000 đ</b> | status: <b class="text-amber-400 bg-amber-950/60 px-1 py-0.5 rounded">PENDING</b> | hạn: 10 phút]
+                </div>
+              </div>
+
+              <!-- Doc Mongo -->
+              <div class="bg-slate-900 border border-emerald-900/40 p-3 rounded-xl">
+                <div class="text-emerald-400 font-bold mb-1">🍃 MongoDB (Document work_orders):</div>
+                <div class="text-slate-300 bg-slate-950 p-2 rounded border border-slate-800 text-[11px]">
+                  { xe: "51K-888.88", payment_status: <b class="text-rose-400 bg-rose-950/60 px-1 py-0.5 rounded">"UNPAID"</b>, kho_má_phanh: <b>4 bộ</b> }
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ==================== BƯỚC 2 ==================== -->
+      <div id="step-2" class="relative pl-12 md:pl-16">
+        <div class="flow-line"></div>
+        <div class="absolute left-0 top-0 w-14 h-14 rounded-2xl bg-indigo-600 text-white font-black text-xl flex items-center justify-center shadow-lg shadow-indigo-500/30 z-10">
+          2
+        </div>
+
+        <div class="step-card bg-slate-900 border border-slate-800 rounded-3xl p-5 md:p-6 shadow-xl space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <span class="text-[11px] font-mono uppercase px-2 py-0.5 bg-indigo-950 text-indigo-400 border border-indigo-800/50 rounded">Chặng 1: Chiều đi</span>
+              <h2 class="text-lg md:text-xl font-bold text-white mt-1">Tạo Link VNPay ➔ Khách Mở App Ngân Hàng Quét VietQR</h2>
+            </div>
+            <div class="flex items-center gap-1.5 text-xs font-mono text-amber-300 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+              <span>⚙️ Backend</span> ➔ <span>💳 VNPay</span> ➔ <span>📱 Màn hình Khách</span>
+            </div>
+          </div>
+
+          <div class="text-sm text-slate-300 leading-relaxed space-y-2">
+            <p>
+              <b>Chuyện gì xảy ra?</b> Backend dùng mã bí mật băm chữ ký SHA-512, tạo ra một đường link dẫn sang VNPay. Màn hình điện thoại khách hiện mã <b>VietQR Napas247</b> chứa sẵn đúng số tiền <b>2.808.000 đ</b>. Khách mở app ngân hàng (VCB, MB, Techcombank...) quét mã chuyển tiền.
+            </p>
+            <p class="text-xs text-amber-400/90 bg-amber-950/20 border border-amber-800/30 p-2.5 rounded-xl">
+              ⏱ <b>Quy tắc sống còn:</b> Hạn thanh toán VNPay được đặt là <b>$T_{pay} = 10\text{ phút}$</b>, nhỏ hơn thời hạn giữ kho Redis <b>$T_{hold} = 15\text{ phút}$</b>. Điều này đảm bảo không bao giờ xảy ra chuyện khách trả tiền khi phụ tùng trong kho đã bị giải phóng!
+            </p>
+          </div>
+
+          <!-- LỆNH CODE -->
+          <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+            <div class="flex items-center justify-between text-xs text-slate-400 pb-1.5 border-b border-slate-800 font-mono">
+              <span>Code Backend Node.js tạo URL kèm hạn 10 phút:</span>
+              <span class="text-blue-400">Node.js Express</span>
+            </div>
+            <pre class="text-xs text-emerald-400 code-font mt-2 overflow-x-auto leading-relaxed"><code>const vnp_Params = {
+    vnp_TmnCode: 'HIHIHAHA01',
+    vnp_Amount: 2808000 * 100, // VNPay quy định nhân 100
+    vnp_TxnRef: '20261002_WO0089',
+    vnp_ExpireDate: moment().add(10, 'minutes').format('YYYYMMDDHHmmss')
+};
+const secureHash = crypto.createHmac('sha512', secret).update(signData).digest('hex');
+const paymentUrl = vnp_Url + '?' + qs.stringify(vnp_Params) + '&vnp_SecureHash=' + secureHash;</code></pre>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ==================== BƯỚC 3 (ĐIỂM ĂN TIỀN NHẤT) ==================== -->
+      <div id="step-3" class="relative pl-12 md:pl-16">
+        <div class="flow-line"></div>
+        <div class="absolute left-0 top-0 w-14 h-14 rounded-2xl bg-cyan-600 text-white font-black text-xl flex items-center justify-center shadow-lg shadow-cyan-500/40 z-10 highlight-badge">
+          3
+        </div>
+
+        <div class="step-card bg-slate-900 border-2 border-cyan-500/60 rounded-3xl p-5 md:p-6 shadow-2xl space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <span class="text-[11px] font-mono uppercase px-2 py-0.5 bg-cyan-950 text-cyan-400 border border-cyan-800/50 rounded font-bold">
+                ★ ĐIỂM CỐT TỬ: LOCAL ACID TRANSACTION TRONG POSTGRESQL ★
+              </span>
+              <h2 class="text-lg md:text-xl font-bold text-white mt-1">VNPay Báo Tiền Về ➔ Mở Transaction Lưu Tiền & Tạo Thư Outbox</h2>
+            </div>
+            <div class="flex items-center gap-1.5 text-xs font-mono text-cyan-300 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+              <span>💳 VNPay IPN</span> ➔ <span>⚙️ Backend</span> ➔ <span>🐘 PostgreSQL {BEGIN...COMMIT}</span>
+            </div>
+          </div>
+
+          <div class="text-sm text-slate-300 leading-relaxed space-y-2">
+            <p>
+              <b>Chuyện gì xảy ra?</b> Khách chuyển tiền xong, VNPay bắn một tin báo ngầm (Webhook IPN) sang Backend. Backend mở ngay một <b>Transaction trong PostgreSQL</b> làm cùng lúc 2 việc:
+            </p>
+            <ol class="list-decimal pl-5 space-y-1 text-xs text-slate-200">
+              <li>Đổi dòng trong bảng <code>payment_transactions</code> từ PENDING sang <b>SUCCESS</b> (Đã có tiền).</li>
+              <li>Chèn 1 dòng vào bảng <code>outbox_events</code> mang trạng thái <b>PENDING</b> (Dặn dò Worker đi trừ kho).</li>
+            </ol>
+            <div class="p-3 bg-cyan-950/40 border border-cyan-800/50 rounded-xl text-xs text-cyan-200">
+              💡 <b>Tại sao bắt buộc phải dùng Transaction ở đây?</b><br/>
+              Vì 2 lệnh này nằm chung khối <code>BEGIN ... COMMIT</code>. Nếu server bị sập nguồn đúng lúc này, cả 2 cùng biến mất (Rollback). Không bao giờ xảy ra tai họa nhận được tiền của khách mà quên tạo thư đi trừ kho!
+            </div>
+          </div>
+
+          <!-- LỆNH SQL TRANSACTION -->
+          <div class="bg-slate-950 border border-cyan-900/60 rounded-2xl p-4">
+            <div class="flex items-center justify-between text-xs text-cyan-400 pb-1.5 border-b border-slate-800 font-mono font-bold">
+              <span>Khối Transaction Cục Bộ Tuyệt Đối:</span>
+              <span>PostgreSQL ACID (All or Nothing)</span>
+            </div>
+            <pre class="text-xs text-emerald-400 code-font mt-2 overflow-x-auto leading-relaxed"><code>BEGIN; -- BẮT ĐẦU GIAO DỊCH NGUYÊN TỬ
+
+-- 1. Cập nhật tiền đã vào tài khoản gara
+UPDATE payment_transactions 
+SET status = 'SUCCESS', vnp_bank_code = 'NCB', completed_at = NOW() 
+WHERE vnp_txn_ref = '20261002_WO0089';
+
+-- 2. Tạo bức thư Outbox dặn dò trừ kho (NẰM TRONG CÙNG TRANSACTION)
+INSERT INTO outbox_events (
+    aggregate_type, aggregate_id, event_type, payload, processed_status
+) VALUES (
+    'WORK_ORDER', 
+    'WO-20261001-0089', 
+    'PAYMENT_COMPLETED', 
+    '{"amount": 2808000, "part_code": "04465-06100", "qty": 1}', 
+    'PENDING'
+);
+
+COMMIT; -- LƯU VĨNH VIỄN XUỐNG ĐĨA CỨNG!</code></pre>
+          </div>
+
+          <!-- MỔ XẺ RUỘT CSDL TẠI BƯỚC 3 -->
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 text-xs font-mono">
+            <div class="text-cyan-400 font-bold uppercase">🔬 Soi Ruột 2 Bảng Trong PostgreSQL Vừa Thay Đổi Xong:</div>
+            
+            <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-[11px]">
+              <div>• Bảng payment_transactions: status đổi thành <b class="text-emerald-400 bg-emerald-950 px-1 py-0.5 rounded">SUCCESS (ĐÃ CÓ TIỀN)</b></div>
+              <div>• Bảng outbox_events: xuất hiện dòng mới <b class="text-purple-400 bg-purple-950 px-1 py-0.5 rounded">PENDING (CHỜ WORKER NHẶT ĐI)</b></div>
+            </div>
+            <div class="text-[11px] text-slate-400 font-sans">
+              <i>(Lưu ý: Lúc này phía MongoDB xe vẫn là UNPAID và kho vẫn còn 4 bộ vì MongoDB nằm ở database riêng, chưa đụng tới!)</i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ==================== BƯỚC 4 ==================== -->
+      <div id="step-4" class="relative pl-12 md:pl-16">
+        <div class="flow-line"></div>
+        <div class="absolute left-0 top-0 w-14 h-14 rounded-2xl bg-purple-600 text-white font-black text-xl flex items-center justify-center shadow-lg shadow-purple-500/30 z-10">
+          4
+        </div>
+
+        <div class="step-card bg-slate-900 border border-slate-800 rounded-3xl p-5 md:p-6 shadow-xl space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <span class="text-[11px] font-mono uppercase px-2 py-0.5 bg-purple-950 text-purple-400 border border-purple-800/50 rounded">Chặng 2: Chuyển tiếp ngầm</span>
+              <h2 class="text-lg md:text-xl font-bold text-white mt-1">Outbox Worker Thức Dậy ➔ Quét Thư Bằng Partial Index</h2>
+            </div>
+            <div class="flex items-center gap-1.5 text-xs font-mono text-purple-300 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+              <span>🐘 outbox_events</span> ➔ <span>🔄 Worker ngầm (SKIP LOCKED)</span>
+            </div>
+          </div>
+
+          <div class="text-sm text-slate-300 leading-relaxed space-y-2">
+            <p>
+              <b>Chuyện gì xảy ra?</b> Một tiến trình chạy ngầm tên là <b>Outbox Worker</b> thức dậy mỗi 2 giây. Nó vào bảng <code>outbox_events</code> tìm các bức thư đang <b>PENDING</b> để nhặt đi xử lý. Nó dùng lệnh khóa <code>SKIP LOCKED</code> để nếu có nhiều worker cùng chạy thì không tranh nhau 1 bức thư.
+            </p>
+            <p class="text-xs text-purple-300 bg-purple-950/30 border border-purple-800/40 p-2.5 rounded-xl">
+              ⚡ <b>Bí mật tốc độ của Partial Index:</b> Bảng outbox sau này có thể chứa cả triệu dòng cũ. Nhờ có <code>WHERE processed_status = 'PENDING'</code>, PostgreSQL chỉ quét trong đúng 5 - 10 dòng đang chờ, tốc độ nhanh như chớp dưới <b>0.1 mili-giây</b> mà không tốn RAM!
+            </p>
+          </div>
+
+          <!-- LỆNH SQL -->
+          <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+            <div class="flex items-center justify-between text-xs text-slate-400 pb-1.5 border-b border-slate-800 font-mono">
+              <span>Lệnh SQL Worker quét lấy mẻ 20 sự kiện:</span>
+              <span class="text-purple-400">Worker Polling</span>
+            </div>
+            <pre class="text-xs text-emerald-400 code-font mt-2 overflow-x-auto leading-relaxed"><code>SELECT * FROM outbox_events 
+WHERE processed_status = 'PENDING' 
+ORDER BY created_at ASC 
+LIMIT 20 
+FOR UPDATE SKIP LOCKED;
+
+-- Nhờ có Partial Index đã tạo ở Bước 36:
+-- CREATE INDEX idx_outbox_pending ON outbox_events(processed_status) 
+-- WHERE processed_status = 'PENDING';</code></pre>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ==================== BƯỚC 5 ==================== -->
+      <div id="step-5" class="relative pl-12 md:pl-16">
+        <div class="flow-line"></div>
+        <div class="absolute left-0 top-0 w-14 h-14 rounded-2xl bg-emerald-600 text-white font-black text-xl flex items-center justify-center shadow-lg shadow-emerald-500/30 z-10">
+          5
+        </div>
+
+        <div class="step-card bg-slate-900 border border-slate-800 rounded-3xl p-5 md:p-6 shadow-xl space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <span class="text-[11px] font-mono uppercase px-2 py-0.5 bg-emerald-950 text-emerald-400 border border-emerald-800/50 rounded">Chặng 3: Cập nhật Lõi xưởng</span>
+              <h2 class="text-lg md:text-xl font-bold text-white mt-1">Cập Nhật MongoDB & Trừ Kho Vật Lý (Khử Trùng Lặp Idempotent)</h2>
+            </div>
+            <div class="flex items-center gap-1.5 text-xs font-mono text-emerald-300 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+              <span>🔄 Worker</span> ➔ <span>🍃 MongoDB (Đổi PAID)</span> ➔ <span>⚡ Redis (Xóa khóa)</span>
+            </div>
+          </div>
+
+          <div class="text-sm text-slate-300 leading-relaxed space-y-2">
+            <p>
+              <b>Chuyện gì xảy ra?</b> Worker cầm nội dung bức thư sang nạp vào MongoDB:
+            </p>
+            <ol class="list-decimal pl-5 space-y-1 text-xs text-slate-200">
+              <li>Đổi trạng thái xe thành <b>PAID</b> (Đã trả tiền).</li>
+              <li>Trừ kho vật lý má phanh từ <b>4 bộ xuống 3 bộ</b>.</li>
+              <li>Vào Redis xóa chìa khóa giữ chỗ <code>hold</code> vì khách đã lấy đồ thật.</li>
+            </ol>
+            <div class="p-3 bg-emerald-950/40 border border-emerald-800/50 rounded-xl text-xs text-emerald-200">
+              🛡️ <b>Chống lỗi mạng lag (Idempotency):</b> Điều kiện <code>payment_status: { $ne: 'PAID' }</code> nghĩa là <i>"Chỉ cập nhật khi chưa phải là PAID"</i>. Nếu mạng lag gửi bức thư này 2 lần, MongoDB thấy xe đã PAID rồi sẽ không làm gì cả $\rightarrow$ Không bao giờ bị trừ thành 2 bộ má phanh!
+            </div>
+          </div>
+
+          <!-- CODE MONGO -->
+          <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+            <div class="flex items-center justify-between text-xs text-slate-400 pb-1.5 border-b border-slate-800 font-mono">
+              <span>Code Mongoose cập nhật có điều kiện:</span>
+              <span class="text-emerald-400">MongoDB Node.js Driver</span>
+            </div>
+            <pre class="text-xs text-emerald-400 code-font mt-2 overflow-x-auto leading-relaxed"><code>// 1. Chỉ cập nhật khi trạng thái xe KHÔNG PHẢI LÀ PAID ($ne)
+const res = await WorkOrder.updateOne(
+    { order_code: 'WO-20261001-0089', payment_status: { $ne: 'PAID' } },
+    { $set: { payment_status: 'PAID', current_status: 'PAYMENT_CONFIRMED' } }
+);
+
+if (res.modifiedCount === 1) {
+    // 2. LẦN ĐẦU TIÊN: Trừ tồn kho vật lý má phanh từ 4 xuống 3!
+    await InventoryItem.updateOne(
+        { part_code: '04465-06100' }, { $inc: { stock_quantity: -1 } }
+    );
+    // 3. Xóa key giữ chỗ trên Redis
+    await redis.del('hold:WO-20261001-0089:04465-06100');
+}</code></pre>
+          </div>
+
+          <!-- MỔ XẺ RUỘT MONGODB & REDIS TẠI BƯỚC 5 -->
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 text-xs font-mono">
+            <div class="text-emerald-400 font-bold uppercase">🔬 Soi Ruột MongoDB & Redis Sau Khi Trừ Kho:</div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-[11px]">
+                <div class="text-slate-400">• Hồ sơ xe (work_orders):</div>
+                <div>payment_status = <b class="text-emerald-400 bg-emerald-950 px-1 py-0.5 rounded">"PAID"</b></div>
+              </div>
+              <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-[11px]">
+                <div class="text-slate-400">• Kho má phanh (inventory_items):</div>
+                <div>stock_quantity = <b class="text-amber-400 bg-amber-950 px-1 py-0.5 rounded">3 bộ (ĐÃ TRỪ -1)</b></div>
+              </div>
+            </div>
+            <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-[11px]">
+              <div>• Tủ Redis: <span class="line-through text-slate-500">KEY hold:WO0089</span> ➔ <b class="text-emerald-400">ĐÃ XÓA GIẢI PHÓNG!</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ==================== BƯỚC 6 ==================== -->
+      <div id="step-6" class="relative pl-12 md:pl-16">
+        <div class="absolute left-0 top-0 w-14 h-14 rounded-2xl bg-teal-600 text-white font-black text-xl flex items-center justify-center shadow-lg shadow-teal-500/30 z-10">
+          6
+        </div>
+
+        <div class="step-card bg-slate-900 border border-slate-800 rounded-3xl p-5 md:p-6 shadow-xl space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <span class="text-[11px] font-mono uppercase px-2 py-0.5 bg-teal-950 text-teal-400 border border-teal-800/50 rounded">Chặng 4: Hoàn tất trọn vẹn</span>
+              <h2 class="text-lg md:text-xl font-bold text-white mt-1">Đóng Dấu Thư Outbox ➔ Socket.io Báo Về Điện Thoại Khách</h2>
+            </div>
+            <div class="flex items-center gap-1.5 text-xs font-mono text-teal-300 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+              <span>🔄 Worker</span> ➔ <span>🐘 outbox_events (PROCESSED)</span> ➔ <span>📱 Điện thoại Khách</span>
+            </div>
+          </div>
+
+          <div class="text-sm text-slate-300 leading-relaxed space-y-2">
+            <p>
+              <b>Chuyện gì xảy ra?</b> Worker quay lại PostgreSQL đóng dấu lên bức thư: <b>PROCESSED</b> (Đã xong nhiệm vụ). Ngay lập tức, máy chủ phát sóng WebSocket (Socket.io) về điện thoại của khách: Màn hình tự động hiển thị <b>dấu tích xanh</b> thông báo thanh toán thành công kèm nút tải hóa đơn VAT!
+            </p>
+          </div>
+
+          <!-- LỆNH HOÀN TẤT -->
+          <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+            <div class="flex items-center justify-between text-xs text-slate-400 pb-1.5 border-b border-slate-800 font-mono">
+              <span>Lệnh cập nhật trạng thái bức thư đã xử lý xong:</span>
+              <span class="text-teal-400">PostgreSQL Update</span>
+            </div>
+            <pre class="text-xs text-emerald-400 code-font mt-2 overflow-x-auto leading-relaxed"><code>UPDATE outbox_events 
+SET processed_status = 'PROCESSED', processed_at = NOW() 
+WHERE event_id = 'e7b8c9d0-1234-5678-9abc-def012345678';
+
+// Phát sóng thời gian thực về máy khách
+io.to('room:order:WO-20261001-0089').emit('PAYMENT_COMPLETED', {
+    order_code: 'WO-20261001-0089',
+    amount: 2808000,
+    status: 'PAID'
+});</code></pre>
+          </div>
+
+          <!-- TỔNG KẾT TRẠNG THÁI CUỐI CÙNG -->
+          <div class="bg-emerald-950/20 border border-emerald-800/50 p-4 rounded-2xl text-xs space-y-2">
+            <div class="font-bold text-emerald-400 text-sm flex items-center gap-2">
+              <span>🎉</span> <span>HOÀN TẤT VÒNG ĐỜI GIAO DỊCH 100%:</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-slate-300 font-mono text-[11px] pt-1">
+              <div class="bg-slate-900/80 p-2 rounded border border-slate-800">
+                🐘 <b>PostgreSQL:</b><br/>Tiền = SUCCESS<br/>Outbox = PROCESSED
+              </div>
+              <div class="bg-slate-900/80 p-2 rounded border border-slate-800">
+                🍃 <b>MongoDB:</b><br/>Xe = PAID<br/>Kho má phanh = 3 bộ
+              </div>
+              <div class="bg-slate-900/80 p-2 rounded border border-slate-800">
+                ⚡ <b>Redis:</b><br/>Khóa hold = Đã xóa<br/>Kho giải phóng
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="text-center text-xs text-slate-500 py-6 border-t border-slate-800">
+      Hệ Thống Quản Lý Dịch Vụ Ô Tô HIHIHAHA_AUTO &bull; Bản Đồ Kiến Trúc Đa CSDL & Transactional Outbox Pattern
+    </div>
+
+  </div>
+</body>
+</html>
