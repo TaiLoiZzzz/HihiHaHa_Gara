@@ -1,51 +1,102 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { LogOut, ArrowLeft, Car, FileText, CreditCard } from "lucide-react";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { usePathname, useRouter } from "next/navigation";
+import { LogOut, Car, FileText, CreditCard } from "lucide-react";
+import { getCurrentUser, clearSession, UserSession } from "@/lib/api";
+import { toast } from "sonner";
 
 export function CustomerNavbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<UserSession | null>(null);
+
+  useEffect(() => {
+    setUser(getCurrentUser());
+  }, []);
+
+  const handleLogout = () => {
+    clearSession();
+    toast.success("Đã đăng xuất khỏi cổng khách hàng");
+    router.push("/login");
+  };
+
+  const navLinks = [
+    { label: "Hồ Sơ Xe", href: "/customer", icon: Car },
+    { label: "Lệnh Đang Sửa", href: "/customer/orders/WO-20261001-0089", icon: FileText },
+    { label: "Thanh Toán QR", href: "/customer/payment/WO-20261001-0089", icon: CreditCard },
+  ];
 
   return (
-    <header className="border-b border-zinc-200 dark:border-zinc-800 bg-white/70 dark:bg-brand-dark/70 backdrop-blur-xl sticky top-0 z-30 px-6 py-3.5">
-      <div className="max-w-6xl mx-auto flex items-center justify-between">
+    <header className="border-b border-slate-200 bg-white/95 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-8 py-3 shadow-xs font-sans">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
         
+        {/* Brand & Customer Info */}
         <div className="flex items-center gap-3">
-          <Link href="/customer" className="flex items-center gap-2.5">
-            <div className="relative w-8 h-8 rounded-xl overflow-hidden shrink-0">
+          <Link href="/customer" className="flex items-center gap-3">
+            <div className="relative w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/80 p-1 flex items-center justify-center shrink-0 shadow-xs">
               <Image
                 src="/logo.png"
                 alt="HiHiHaHa Auto Logo"
-                width={32}
-                height={32}
+                width={36}
+                height={36}
                 className="object-contain"
               />
             </div>
             <div>
-              <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 font-sans">
-                Cổng Khách Hàng <span className="text-amber-500 font-mono text-xs">51K-888.88</span>
-              </span>
-              <p className="text-[10px] text-zinc-500">Chủ xe: Minh Thảo • Hạng VIP Gold</p>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-sm text-slate-900 font-sans tracking-tight">
+                  CỔNG CHỦ XE
+                </span>
+                <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-amber-100 text-amber-900 border border-amber-300">
+                  {user?.license_plate || "51K-888.88"}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 font-medium">
+                {user?.full_name ? `Chủ xe: ${user.full_name}` : "Chủ xe: Minh Thảo"} • Hạng VIP Gold
+              </p>
             </div>
           </Link>
         </div>
 
+        {/* Customer Navigation Links */}
+        <nav className="hidden sm:flex items-center gap-2 text-xs font-bold">
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            const isActive = pathname === link.href || (link.href !== "/customer" && pathname.startsWith(link.href));
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition ${
+                  isActive
+                    ? "bg-slate-900 text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${isActive ? "text-amber-400" : "text-slate-500"}`} />
+                <span>{link.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Logout */}
         <div className="flex items-center gap-3">
-          <ThemeToggle />
-          <Link
-            href="/login"
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 transition"
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl border border-slate-300 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-600 transition shadow-xs"
           >
             <LogOut className="w-3.5 h-3.5" />
-            Đăng Xuất
-          </Link>
+            <span className="hidden sm:inline">Đăng Xuất</span>
+          </button>
         </div>
 
       </div>
     </header>
   );
 }
+export default CustomerNavbar;

@@ -118,25 +118,50 @@ export default function CustomerPaymentPage({ params }: Props) {
           </p>
         </div>
 
-        {/* Khối Mã VietQR Động */}
+        {/* Khối Mã VietQR Thật Chuẩn Ngân Hàng */}
         <div className="flex flex-col items-center justify-center space-y-4">
-          <div className="relative p-4 rounded-3xl bg-white dark:bg-zinc-900 border-2 border-amber-500/30 shadow-2xl flex flex-col items-center">
-            {/* SVG Giả Lập Mã VietQR Chuẩn EMVCo */}
-            <div className="w-56 h-56 rounded-2xl bg-zinc-100 dark:bg-zinc-950 flex flex-col items-center justify-center border border-zinc-200 dark:border-zinc-800 p-3">
-              <QrCode className="w-36 h-36 text-zinc-900 dark:text-zinc-100" />
-              <div className="text-[10px] font-mono text-zinc-500 mt-2 font-bold tracking-wider">
-                NAPAS247 • MB BANK • 0908888888
-              </div>
+          <div className="p-6 rounded-3xl bg-white border-2 border-amber-500/40 shadow-xl flex flex-col items-center max-w-sm w-full">
+            {/* Ảnh VietQR chuẩn từ Napas 247 */}
+            <div className="relative bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+              <img
+                src={`https://img.vietqr.io/image/MB-0908888888-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(orderCode)}&accountName=GARA%20HIHIHAHA%20AUTO`}
+                alt="Mã QR Chuyển Khoản VietQR"
+                className="w-64 h-auto object-contain rounded-xl mx-auto"
+                onError={(e) => {
+                  // Fallback nếu offline hoặc lỗi mạng
+                  e.currentTarget.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`2|99|0908888888|MB|${totalAmount}|${orderCode}`)}`;
+                }}
+              />
             </div>
 
-            <div className="mt-3 text-xs font-mono text-zinc-500">
-              Nội dung chuyển khoản: <strong className="text-amber-500 font-bold">{orderCode}</strong>
+            {/* Bảng Chi Tiết Thông Tin Chuyển Khoản */}
+            <div className="w-full mt-4 pt-4 border-t border-slate-100 space-y-2 text-left text-xs">
+              <div className="flex justify-between items-center py-1 border-b border-slate-50">
+                <span className="text-slate-500 font-medium">Ngân hàng:</span>
+                <span className="font-bold text-slate-800">MB Bank (Quân Đội)</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-slate-50">
+                <span className="text-slate-500 font-medium">Số tài khoản:</span>
+                <span className="font-mono font-bold text-amber-600 text-sm tracking-wider">0908888888</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-slate-50">
+                <span className="text-slate-500 font-medium">Chủ thụ hưởng:</span>
+                <span className="font-bold text-slate-800 uppercase">GARA HIHIHAHA AUTO</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-slate-50">
+                <span className="text-slate-500 font-medium">Số tiền:</span>
+                <span className="font-mono font-bold text-slate-900">{formatCurrencyVND(totalAmount)}</span>
+              </div>
+              <div className="flex justify-between items-center py-1">
+                <span className="text-slate-500 font-medium">Nội dung CK:</span>
+                <span className="font-mono font-extrabold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">{orderCode}</span>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-zinc-400">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
             <Clock className="w-3.5 h-3.5 text-amber-500" />
-            Mã QR có hiệu lực trong: <strong className="text-zinc-300 font-mono">09:59</strong>
+            Mã QR tự động cập nhật số tiền & nội dung đơn hàng
           </div>
         </div>
 

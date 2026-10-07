@@ -1,44 +1,85 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
-interface FetchOptions extends RequestInit {
+export interface UserSession {
+  id: string;
+  full_name: string;
+  phone_number: string;
+  email?: string;
+  role: "CUSTOMER" | "SERVICE_ADVISOR" | "WORKSHOP_MANAGER" | "TECHNICIAN" | "OWNER" | string;
+  license_plate?: string;
+  vip_rank?: string;
+}
+
+export interface FetchOptions extends RequestInit {
   token?: string;
   roleFallback?: string;
 }
 
-// Lưu trữ token theo vai trò
-export async function getValidToken(role: string = "SERVICE_ADVISOR"): Promise<string> {
+// Lưu session người dùng sau khi đăng nhập thành công
+export function saveSession(token: string, user: UserSession): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("hihihaha_token", token);
+  localStorage.setItem("hihihaha_user", JSON.stringify(user));
+}
+
+// Lấy thông tin user hiện tại từ session
+export function getCurrentUser(): UserSession | null {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem("hihihaha_user");
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as UserSession;
+  } catch {
+    return null;
+  }
+}
+
+// Lấy token đã lưu trong phiên làm việc
+export function getSavedToken(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("hihihaha_token") || "";
+}
+
+// Xóa phiên làm việc khi đăng xuất
+export function clearSession(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem("hihihaha_token");
+  localStorage.removeItem("hihihaha_user");
+}
+
+// Lấy token hợp lệ (ưu tiên token đã đăng nhập trong localStorage)
+export async function getValidToken(roleFallback: string = "SERVICE_ADVISOR"): Promise<string> {
   if (typeof window === "undefined") return "";
 
-  const storageKey = `hihihaha_token_${role.toLowerCase()}`;
-  const cached = localStorage.getItem(storageKey);
-  if (cached) return cached;
+  const saved = getSavedToken();
+  if (saved) return saved;
 
+  // Nếu chưa đăng nhập, cấp token theo role để tránh đứt kết nối
   try {
     const phoneMap: Record<string, string> = {
-      CUSTOMER: "0908888888",
-      SERVICE_ADVISOR: "0901000001",
-      WORKSHOP_MANAGER: "0901000002",
-      TECHNICIAN: "0901000003",
-      OWNER: "0901000004",
+      CUSTOMER: "0912345678",
+      SERVICE_ADVISOR: "0988888801",
+      WORKSHOP_MANAGER: "0988888802",
+      TECHNICIAN: "0988888803",
+      OWNER: "0988888800",
     };
 
     const res = await fetch(`${API_BASE_URL}/auth/dev-login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        role,
-        phone: phoneMap[role] || "0901000001",
+        role: roleFallback,
+        phone_number: phoneMap[roleFallback] || "0988888801",
       }),
     });
 
     const data = await res.json();
     if (data?.data?.accessToken) {
-      localStorage.setItem(storageKey, data.data.accessToken);
-      localStorage.setItem("hihihaha_active_token", data.data.accessToken);
+      saveSession(data.data.accessToken, data.data.user);
       return data.data.accessToken;
     }
   } catch (err) {
-    console.warn("Lỗi khi xin dev token tự động:", err);
+    console.warn("Lỗi xác thực:", err);
   }
 
   return "";
@@ -49,9 +90,7 @@ export async function fetchApi<T>(endpoint: string, options: FetchOptions = {}):
 
   let activeToken = token;
   if (!activeToken && typeof window !== "undefined") {
-    activeToken =
-      localStorage.getItem("hihihaha_active_token") ||
-      (await getValidToken(roleFallback));
+    activeToken = getSavedToken() || (await getValidToken(roleFallback));
   }
 
   const reqHeaders: Record<string, string> = {
@@ -79,27 +118,79 @@ export async function fetchApi<T>(endpoint: string, options: FetchOptions = {}):
   return data;
 }
 
-// Các hàm chuyên dụng gọi API dữ liệu thật
+// Các hàm nghiệp vụ gọi Backend API thật
 export const api = {
-  // 1. Lấy thông tin Lệnh sửa chữa thật
+  // 1. Đăng nhập nhân viên nội bộ thật (SĐT + Mật khẩu)
+  staffLogin: async (phone_number: string, password: string) => {
+    const res = await fetch(`${API_BASE_URL}/auth/staff-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone_number, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || "Đăng nhập nhân viên không thành công");
+    }
+    if (data.data?.accessToken && data.data?.user) {
+      saveSession(data.data.accessToken, data.data.user);
+    }
+    return data;
+  },
+
+  // 2. Yêu cầu mã OTP cho khách hàng
+  requestOtp: async (phone_number: string, license_plate: string) => {
+    const res = await fetch(`${API_BASE_URL}/auth/request-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone_number, license_plate }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || "Không thể gửi OTP");
+    }
+    return data;
+  },
+
+  // 3. Xác thực OTP và đăng nhập khách hàng thật
+  verifyOtp: async (phone_number: string, license_plate: string, otp_code: string) => {
+    const res = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone_number, license_plate, otp_code }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || "Mã OTP không hợp lệ");
+    }
+    if (data.data?.accessToken && data.data?.user) {
+      saveSession(data.data.accessToken, data.data.user);
+    }
+    return data;
+  },
+
+  // 4. Lấy thông tin Lệnh sửa chữa thật
   getWorkOrder: (orderCode: string) =>
     fetchApi<{ success: boolean; data: any }>(`/work-orders/${orderCode}`, {
       roleFallback: "CUSTOMER",
     }),
 
-  // 2. Lấy danh sách Lệnh của tôi
+  // 5. Lấy danh sách Lệnh của tôi
   getMyWorkOrders: () =>
     fetchApi<{ success: boolean; data: any[] }>(`/work-orders/my-orders`, {
       roleFallback: "SERVICE_ADVISOR",
     }),
 
-  // 3. Lấy kho 500 phụ tùng OEM thật
-  getInventory: (limit = 100, page = 1) =>
-    fetchApi<{ success: boolean; data: any }>(`/inventory?limit=${limit}&page=${page}`, {
+  // 6. Lấy kho phụ tùng OEM có hỗ trợ phân trang & tìm kiếm
+  getInventory: (limit = 15, page = 1, category?: string, search?: string) => {
+    let url = `/inventory?limit=${limit}&page=${page}`;
+    if (category && category !== "all") url += `&category=${encodeURIComponent(category)}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    return fetchApi<{ success: boolean; data: any }>(url, {
       roleFallback: "WORKSHOP_MANAGER",
-    }),
+    });
+  },
 
-  // 4. Tạo URL thanh toán VNPay thật
+  // 7. Tạo URL thanh toán VNPay Sandbox thật
   createPaymentUrl: (orderCode: string, bankCode?: string) =>
     fetchApi<{
       success: boolean;
@@ -115,7 +206,7 @@ export const api = {
       body: JSON.stringify({ order_code: orderCode, bank_code: bankCode }),
     }),
 
-  // 5. Cập nhật tiến độ & ảnh nghiệm thu của thợ
+  // 8. Cập nhật tiến độ & ảnh nghiệm thu của thợ
   updateProgress: (orderCode: string, payload: { stage?: string; note?: string; photo_url?: string; caption?: string }) =>
     fetchApi<{ success: boolean; data: any }>(`/work-orders/${orderCode}/progress`, {
       method: "POST",
@@ -123,15 +214,17 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
-  // 6. Chẩn đoán AI Graph-RAG Gemini
+  // 9. Chẩn đoán AI Graph-RAG Gemini
   diagnoseAI: (vehicleModel: string, symptoms: string) =>
     fetchApi<{ success: boolean; data: any }>(`/ai/diagnose`, {
       method: "POST",
       body: JSON.stringify({ vehicle_model: vehicleModel, symptoms }),
     }),
 
-  // 7. Lấy token xác thực theo vai trò
+  // 10. Quản lý phiên làm việc
   getValidToken,
+  getCurrentUser,
+  clearSession,
 };
 
 export default api;
