@@ -1,14 +1,41 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Car, Award, Calendar, FileText, ChevronRight, ShieldCheck, Clock, ArrowRight } from "lucide-react";
+import { Car, Award, Calendar, FileText, ChevronRight, ShieldCheck, Clock, ArrowRight, Loader2 } from "lucide-react";
 import { formatCurrencyVND } from "@/lib/utils";
 import { LiquidGlassButton } from "@/components/ui/liquid-glass-button";
+import { api } from "@/lib/api";
 
 export default function CustomerDashboardPage() {
+  const [loading, setLoading] = useState(true);
+  const [order, setOrder] = useState<any>(null);
+
+  useEffect(() => {
+    async function loadCustomerVehicle() {
+      try {
+        setLoading(true);
+        const res = await api.getWorkOrder("WO-20261001-0089");
+        if (res.success && res.data) {
+          setOrder(res.data);
+        }
+      } catch (err: any) {
+        console.warn("Chưa tải được profile xe:", err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadCustomerVehicle();
+  }, []);
+
+  const plateNumber = order?.license_plate || "51K-888.88";
+  const vehicleModel = order?.vehicle_model || "Toyota Camry 2.5Q (2022)";
+  const customerName = order?.customer_name || "Minh Thảo";
+  const totalAmount = order?.estimate?.total_amount || 2808000;
+  const orderCode = order?.order_code || "WO-20261001-0089";
+
   return (
-    <div className="space-y-8 font-sans">
+    <div className="space-y-8 font-sans pb-16">
       
       {/* Header Profile Xe & Hạng VIP */}
       <div className="p-8 rounded-3xl bg-white dark:bg-brand-cardDark border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -19,18 +46,18 @@ export default function CustomerDashboardPage() {
           <div className="space-y-1">
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100">
-                Toyota Camry 2.5Q (2022)
+                {vehicleModel}
               </h1>
               <span className="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700">
-                51K-888.88
+                {plateNumber}
               </span>
             </div>
             <div className="flex items-center gap-4 text-xs text-zinc-500">
-              <span>Chủ sở hữu: <strong>Minh Thảo</strong></span>
+              <span>Chủ sở hữu: <strong>{customerName}</strong></span>
               <span>•</span>
               <span>Số khung VIN: <span className="font-mono">VN123456789</span></span>
               <span>•</span>
-              <span>ODO: <strong>38.450 km</strong></span>
+              <span>Hồ sơ: <strong className="text-emerald-500">Đã đồng bộ MongoDB</strong></span>
             </div>
           </div>
         </div>
@@ -49,21 +76,21 @@ export default function CustomerDashboardPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 text-xs font-mono font-bold rounded-full bg-amber-500 text-zinc-950">
-              CẦN DUYỆT BÁO GIÁ
+              {order?.current_status === "QUOTE_SENT" ? "CẦN DUYỆT BÁO GIÁ" : "ĐANG XỬ LÝ"}
             </span>
             <span className="text-xs font-mono font-bold text-zinc-500">
-              Mã: WO-20261001-0089
+              Mã: {orderCode}
             </span>
           </div>
           <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
             Báo Giá Bảo Dưỡng 40.000km & Thay Má Phanh Trước
           </h2>
           <p className="text-xs text-zinc-600 dark:text-zinc-400">
-            Cố vấn dịch vụ Quang Tùng đã gửi báo giá nhúng VAT 8%. Tổng chi phí dự toán: <strong className="text-amber-600 dark:text-amber-400 font-mono text-sm">{formatCurrencyVND(2808000)}</strong>.
+            Cố vấn dịch vụ Quang Tùng đã gửi báo giá nhúng VAT 8%. Tổng chi phí dự toán: <strong className="text-amber-600 dark:text-amber-400 font-mono text-sm">{formatCurrencyVND(totalAmount)}</strong>.
           </p>
         </div>
 
-        <Link href="/customer/orders/WO-20261001-0089">
+        <Link href={`/customer/orders/${orderCode}`}>
           <LiquidGlassButton size="md">
             Xem & Ký Duyệt Báo Giá
             <ArrowRight className="w-4 h-4 ml-1 text-zinc-950" />

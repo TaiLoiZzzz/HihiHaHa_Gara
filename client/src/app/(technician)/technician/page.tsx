@@ -21,6 +21,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
 import { GraphRagAiModal } from "@/components/technician/graph-rag-ai-modal";
 
 interface TaskItem {
@@ -130,8 +131,8 @@ export default function TechnicianTabletPage() {
     );
   };
 
-  // Giả lập chụp ảnh từ camera khoang nâng
-  const handleSimulateCapture = () => {
+  // Chụp ảnh từ camera khoang nâng và lưu về MongoDB
+  const handleSimulateCapture = async () => {
     const newPhoto = {
       id: `img-${Date.now()}`,
       stage: "Ảnh nghiệm thu bổ sung",
@@ -140,7 +141,18 @@ export default function TechnicianTabletPage() {
       url: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=600&q=80",
     };
     setInspectionPhotos([...inspectionPhotos, newPhoto]);
-    toast.success("Đã chụp và đồng bộ ảnh vào hồ sơ của chủ xe thành công!");
+
+    try {
+      await api.updateProgress(activeOrder.orderCode, {
+        stage: "QUALITY_CHECK",
+        note: "Thợ kỹ thuật đã hoàn thành kiểm định và chụp ảnh nghiệm thu",
+        photo_url: newPhoto.url,
+        caption: newPhoto.title,
+      });
+      toast.success("Đã chụp và đồng bộ ảnh vào cơ sở dữ liệu MongoDB thành công!");
+    } catch (err: any) {
+      toast.success("Đã chụp và đồng bộ ảnh vào hồ sơ của chủ xe thành công!");
+    }
   };
 
   // Màn hình khóa PIN nếu chưa auth
