@@ -12,6 +12,7 @@ export function formatCurrencyVND(amount: number): string {
     currency: "VND",
   }).format(amount);
 }
+export const formatVND = formatCurrencyVND;
 
 // Định dạng ngày giờ chuẩn Việt Nam
 export function formatDateTime(date: string | Date): string {

@@ -16,11 +16,20 @@ import {
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 interface StaffNavbarProps {
-  currentRoleTitle: string;
+  currentRoleTitle?: string;
+  role?: "advisor" | "manager" | "technician" | "owner" | string;
 }
 
-export function StaffNavbar({ currentRoleTitle }: StaffNavbarProps) {
+const ROLE_TITLES: Record<string, string> = {
+  advisor: "Cố Vấn Dịch Vụ",
+  manager: "Quản Đốc Xưởng",
+  technician: "Kỹ Thuật Viên",
+  owner: "Chủ Doanh Nghiệp Gara",
+};
+
+export function StaffNavbar({ currentRoleTitle, role = "advisor" }: StaffNavbarProps) {
   const pathname = usePathname();
+  const displayTitle = currentRoleTitle || ROLE_TITLES[role] || "Nhân Viên Vận Hành";
 
   const links = [
     { label: "Bảng Lệnh Sửa Chữa", href: "/advisor/work-orders", icon: ClipboardList },
@@ -46,7 +55,7 @@ export function StaffNavbar({ currentRoleTitle }: StaffNavbarProps) {
                 HIHIHAHA<span className="text-amber-500">.OPS</span>
               </span>
               <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                {currentRoleTitle}
+                {displayTitle}
               </span>
             </div>
             <p className="text-[10px] text-zinc-500">Khu Vực Quản Trị & Vận Hành Kỹ Thuật Gara</p>

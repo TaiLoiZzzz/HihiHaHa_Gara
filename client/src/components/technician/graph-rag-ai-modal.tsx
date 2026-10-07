@@ -34,10 +34,11 @@ interface DiagnosisResponse {
 }
 
 interface GraphRagAiModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
   vehicleModel?: string;
   onApplyPart?: (part: RecommendedPart, laborCost: number) => void;
+  triggerLabel?: string;
 }
 
 export function GraphRagAiModal({
@@ -45,12 +46,34 @@ export function GraphRagAiModal({
   onClose,
   vehicleModel = "Toyota Camry 2.5Q",
   onApplyPart,
+  triggerLabel = "Trợ Lý AI Graph-RAG",
 }: GraphRagAiModalProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [symptoms, setSymptoms] = useState("Đạp phanh nghe tiếng rít kim loại ken két ở 2 bánh trước");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DiagnosisResponse | null>(null);
 
-  if (!isOpen) return null;
+  const isControlled = typeof isOpen === "boolean";
+  const showModal = isControlled ? isOpen : internalOpen;
+
+  const handleClose = () => {
+    if (onClose) onClose();
+    if (!isControlled) setInternalOpen(false);
+  };
+
+  if (!showModal) {
+    if (isControlled) return null;
+    return (
+      <button
+        type="button"
+        onClick={() => setInternalOpen(true)}
+        className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/15 to-amber-500/25 hover:from-amber-500/25 hover:to-amber-500/35 border border-amber-500/30 text-amber-600 dark:text-amber-400 font-semibold text-xs transition-all shadow-sm flex items-center gap-1.5"
+      >
+        <Sparkles className="w-3.5 h-3.5 animate-pulse text-amber-500" />
+        {triggerLabel}
+      </button>
+    );
+  }
 
   const handleDiagnose = async () => {
     if (!symptoms.trim()) {
@@ -106,7 +129,7 @@ export function GraphRagAiModal({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
           >
             <X className="w-5 h-5" />
@@ -226,7 +249,7 @@ export function GraphRagAiModal({
                             onApplyPart(part, result.estimated_labor_cost);
                           }
                           toast.success(`Đã chọn phụ tùng ${part.part_code} vào Lệnh sửa chữa!`);
-                          onClose();
+                          handleClose();
                         }}
                         className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 hover:bg-amber-500 hover:text-zinc-950 dark:hover:bg-amber-400 dark:hover:text-zinc-950 transition"
                       >
