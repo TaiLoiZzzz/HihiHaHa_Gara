@@ -11,22 +11,28 @@ const WorkOrderSchema = new mongoose.Schema(
     current_status: {
       type: String,
       enum: [
-        'DRAFT',
-        'INSPECTION',
-        'QUOTE_SENT',
-        'QUOTE_APPROVED',
-        'APPROVED',
-        'WAITING_PARTS',
-        'IN_PROGRESS',
-        'QUALITY_CHECK',
-        'COMPLETED',
-        'PAYMENT_PENDING',
-        'PAID',
-        'DELIVERED',
-        'CANCELLED',
+        'DRAFT',           // 1. Nháp tiếp nhận
+        'INSPECTION',       // 2. Đang tháo rã kiểm tra / khám xe
+        'QUOTE_SENT',       // 3. Đã phát hành bảng báo giá
+        'QUOTE_APPROVED',  // 4. Khách hàng đã chốt làm dịch vụ
+        'APPROVED',        // 5. Đồng bộ trạng thái phê duyệt
+        'WAITING_PARTS',   // 6. Đang xuất kho phụ tùng ra khoang
+        'IN_PROGRESS',     // 7. Thợ đang thi công tại cầu nâng
+        'QUALITY_CHECK',   // 8. Đang kiểm định an toàn KCS / QC
+        'COMPLETED',       // 9. Thi công hoàn tất 100%
+        'PAYMENT_PENDING', // 10. Đang mở cổng thanh toán VNPay
+        'PAID',            // 11. Giao dịch tài chính hoàn tất
+        'DELIVERED',       // 12. Xe đã xuất xưởng bàn giao khách
+        'CANCELLED',       // 13. Hủy lệnh (hoàn trả vật tư về kệ)
       ],
       default: 'DRAFT',
     },
+    payment_status: {
+      type: String,
+      enum: ['UNPAID', 'PENDING', 'PAID'],
+      default: 'UNPAID',
+    },
+    paid_at: { type: Date },
     assigned_technicians: [
       {
         technician_id: { type: String, required: true },
