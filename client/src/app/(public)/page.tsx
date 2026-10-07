@@ -29,59 +29,11 @@ export default function HomePage() {
   const [appliedPart, setAppliedPart] = useState<SelectedPartInfo | null>(null);
 
   return (
-    <div className="relative min-h-screen bg-brand-light dark:bg-brand-dark overflow-hidden font-sans transition-colors duration-300">
+    <div className="relative min-h-screen bg-transparent overflow-hidden font-sans">
       
       {/* Background Grid Pattern & Ambient Glow */}
       <div className="absolute inset-0 bg-[radial-gradient(#e4e4e7_1px,transparent_1px)] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none opacity-40" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-amber-500/10 dark:bg-amber-500/5 blur-[120px] rounded-full pointer-events-none" />
-
-      {/* Top Navbar */}
-      <header className="relative z-20 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-white/70 dark:bg-brand-dark/70 backdrop-blur-xl sticky top-0 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          
-          {/* Logo & Brand Name */}
-          <div className="flex items-center gap-3">
-            <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500 text-zinc-950 font-bold shadow-amber-glow border border-amber-300/50">
-              <Wrench className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold tracking-wider text-lg text-zinc-900 dark:text-zinc-100 font-sans">
-                  HIHIHAHA<span className="text-amber-500">.AUTO</span>
-                </span>
-                <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-300 dark:border-zinc-700">
-                  4S SMART
-                </span>
-              </div>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 tracking-tight">
-                Enterprise Garage Management & Knowledge Graph AI
-              </p>
-            </div>
-          </div>
-
-          {/* Navigation Items & Actions */}
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-6 text-sm font-semibold text-zinc-600 dark:text-zinc-300">
-              <a href="#features" className="hover:text-amber-500 transition">Hạ Tầng Phân Tán</a>
-              <a href="#ai-graph" className="hover:text-amber-500 transition">Graph-RAG AI</a>
-              <a href="#workflow" className="hover:text-amber-500 transition">Quy Trình 13 Trạng Thái</a>
-            </div>
-
-            <div className="flex items-center gap-2.5">
-              <ThemeToggle />
-              <LiquidGlassButton
-                size="sm"
-                onClick={() => setIsAiModalOpen(true)}
-                className="hidden sm:inline-flex"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-zinc-950" />
-                Mở AI Graph-RAG
-              </LiquidGlassButton>
-            </div>
-          </div>
-
-        </div>
-      </header>
 
       {/* Hero Section */}
       <section className="relative z-10 max-w-7xl mx-auto px-6 pt-16 pb-24 text-center">
