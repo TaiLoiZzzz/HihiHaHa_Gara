@@ -16,7 +16,7 @@ import {
   Smartphone,
   Lock
 } from "lucide-react";
-import { getValidToken } from "@/lib/api";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 
 const STAFF_ROLES = [
@@ -79,7 +79,7 @@ export default function StaffLoginPage() {
       const roleToUse = matched ? matched.role : "SERVICE_ADVISOR";
       const targetUrl = matched ? matched.targetUrl : "/advisor/work-orders";
 
-      await getValidToken(roleToUse);
+      await api.getValidToken(roleToUse);
       toast.success(`Đăng nhập thành công tài khoản Cán bộ nhân viên!`);
       setTimeout(() => {
         router.push(targetUrl);
@@ -96,7 +96,7 @@ export default function StaffLoginPage() {
   const handleSelectStaffRole = async (staff: typeof STAFF_ROLES[0]) => {
     setLoading(true);
     setPhone(staff.phone);
-    await getValidToken(staff.role);
+    await api.getValidToken(staff.role);
     toast.success(`Đã đăng nhập vai trò: ${staff.title} (${staff.code})`);
     setTimeout(() => {
       router.push(staff.targetUrl);

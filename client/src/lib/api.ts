@@ -129,4 +129,9 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ vehicle_model: vehicleModel, symptoms }),
     }),
+
+  // 7. Lấy token xác thực theo vai trò
+  getValidToken,
 };
+
+export default api;

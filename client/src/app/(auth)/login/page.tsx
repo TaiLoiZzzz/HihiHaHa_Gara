@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Car, Smartphone, ArrowRight, Shield, CheckCircle2, Lock } from "lucide-react";
 import { LiquidGlassButton } from "@/components/ui/liquid-glass-button";
-import { getValidToken } from "@/lib/api";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 
 export default function CustomerLoginPage() {
@@ -32,7 +32,7 @@ export default function CustomerLoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await getValidToken("CUSTOMER");
+      await api.getValidToken("CUSTOMER");
       toast.success("Xác thực chủ xe thành công! Đang chuyển đến hồ sơ xe...");
       setTimeout(() => {
         router.push("/customer");
@@ -48,7 +48,7 @@ export default function CustomerLoginPage() {
   // 1-Click Đăng nhập nhanh khách hàng mẫu
   const handleQuickCustomerLogin = async () => {
     setLoading(true);
-    await getValidToken("CUSTOMER");
+    await api.getValidToken("CUSTOMER");
     toast.success("Đã đăng nhập nhanh hồ sơ chủ xe: Minh Thảo (51K-888.88)!");
     setTimeout(() => {
       router.push("/customer");
