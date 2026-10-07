@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
-import { Wrench, Phone, Mail, MapPin, Shield, CheckCircle2 } from "lucide-react";
+import Image from "next/image";
+import { Phone, Mail, MapPin, Shield, CheckCircle2 } from "lucide-react";
 
 export function PublicFooter() {
   return (
@@ -10,11 +11,17 @@ export function PublicFooter() {
         {/* Cột 1: Thông tin thương hiệu */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-amber-500 text-zinc-950 flex items-center justify-center font-bold">
-              <Wrench className="w-4 h-4" />
+            <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0">
+              <Image
+                src="/logo.png"
+                alt="HiHiHaHa Auto Logo"
+                width={32}
+                height={32}
+                className="object-contain"
+              />
             </div>
             <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100">
-              HIHIHAHA<span className="text-amber-500">.AUTO</span>
+              HIHIHAHA<span className="text-amber-500"> AUTO</span>
             </span>
           </div>
           <p className="leading-relaxed text-[11px]">

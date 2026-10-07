@@ -2,8 +2,9 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Wrench, LogOut, ArrowLeft, Car, FileText, CreditCard } from "lucide-react";
+import { LogOut, ArrowLeft, Car, FileText, CreditCard } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export function CustomerNavbar() {
@@ -15,8 +16,14 @@ export function CustomerNavbar() {
         
         <div className="flex items-center gap-3">
           <Link href="/customer" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500 text-zinc-950 font-bold flex items-center justify-center shadow-amber-glow">
-              <Car className="w-4 h-4" />
+            <div className="relative w-8 h-8 rounded-xl overflow-hidden shrink-0">
+              <Image
+                src="/logo.png"
+                alt="HiHiHaHa Auto Logo"
+                width={32}
+                height={32}
+                className="object-contain"
+              />
             </div>
             <div>
               <span className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 font-sans">

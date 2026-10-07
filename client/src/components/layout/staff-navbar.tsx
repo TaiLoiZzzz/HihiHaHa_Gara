@@ -2,9 +2,9 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { 
-  Wrench, 
   ClipboardList, 
   PlusCircle, 
   Kanban, 
@@ -46,8 +46,14 @@ export function StaffNavbar({ currentRoleTitle, role = "advisor" }: StaffNavbarP
         
         {/* Brand & Role */}
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-amber-500 text-zinc-950 font-bold flex items-center justify-center shadow-amber-glow">
-            <Wrench className="w-4 h-4" />
+          <div className="relative w-9 h-9 rounded-xl overflow-hidden shrink-0">
+            <Image
+              src="/logo.png"
+              alt="HiHiHaHa Auto Logo"
+              width={36}
+              height={36}
+              className="object-contain"
+            />
           </div>
           <div>
             <div className="flex items-center gap-2">

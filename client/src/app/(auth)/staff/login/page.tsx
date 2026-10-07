@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { 
   Shield, 
@@ -117,8 +118,15 @@ export default function StaffLoginPage() {
 
       {/* Header Form */}
       <div className="text-center space-y-2">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-500/15 text-amber-500 border border-amber-500/30 mb-1">
-          <Shield className="w-7 h-7" />
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl overflow-hidden mb-2 shadow-amber-glow">
+          <Image
+            src="/logo.png"
+            alt="HiHiHaHa Auto Logo"
+            width={64}
+            height={64}
+            className="object-contain"
+            priority
+          />
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground">
           Cổng Quản Trị & Vận Hành Gara (Staff Portal)

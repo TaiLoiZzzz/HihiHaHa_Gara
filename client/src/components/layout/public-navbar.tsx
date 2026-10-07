@@ -2,8 +2,9 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Wrench, LogIn, User, Shield, PhoneCall } from "lucide-react";
+import { LogIn, User, Shield, PhoneCall } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LiquidGlassButton } from "@/components/ui/liquid-glass-button";
 
@@ -22,8 +23,15 @@ export function PublicNavbar() {
         
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-amber-500 text-zinc-950 font-bold shadow-amber-glow border border-amber-300/50 group-hover:scale-105 transition-transform">
-            <Wrench className="w-5 h-5" />
+          <div className="relative flex items-center justify-center w-10 h-10 rounded-xl overflow-hidden group-hover:scale-105 transition-transform">
+            <Image
+              src="/logo.png"
+              alt="HiHiHaHa Auto Logo"
+              width={40}
+              height={40}
+              className="object-contain"
+              priority
+            />
           </div>
           <div>
             <div className="flex items-center gap-1.5">

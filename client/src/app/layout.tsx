@@ -19,6 +19,10 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "HiHiHaHa Auto | Hệ Thống Quản Trị Dịch Vụ Ô Tô Thông Minh 4S",
   description: "Trung tâm dịch vụ bảo dưỡng, sửa chữa ô tô thông minh ứng dụng Graph-RAG AI, kiểm soát kho găng và ký duyệt báo giá điện tử thời gian thực.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
