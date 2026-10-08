@@ -67,10 +67,11 @@ function TechnicianTabletContent() {
   // 2. Tab chính trên Tablet: 'active' (Xe đang thi công), 'waiting' (Hàng đợi xe chờ), 'history' (Lịch sử riêng của thợ)
   const [mainTab, setMainTab] = useState<"active" | "waiting" | "history">("active");
 
-  // 3. Dữ liệu Dashboard toàn diện của riêng thợ này
+  // 3. Dữ liệu Dashboard toàn diện của riêng thợ này & Tải toàn xưởng
   const [activeOrders, setActiveOrders] = useState<any[]>([]);
   const [completedOrders, setCompletedOrders] = useState<any[]>([]);
   const [waitingQueue, setWaitingQueue] = useState<any[]>([]);
+  const [workloads, setWorkloads] = useState<any[]>([]);
   const [stats, setStats] = useState({
     active_count: 0,
     max_allowed: 3,
@@ -156,11 +157,19 @@ function TechnicianTabletContent() {
     }
   }, []);
 
-  // Tải dữ liệu toàn diện của Kỹ thuật viên (Xe đang làm + Lịch sử cá nhân + Hàng đợi)
+  // Tải dữ liệu toàn diện của Kỹ thuật viên (Xe đang làm + Lịch sử cá nhân + Hàng đợi + Tải toàn xưởng)
   const loadTechnicianData = useCallback(async (techId: string, preferredOrderCode?: string, silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const res = await api.getTechnicianDashboard(techId);
+      const [res, workloadRes] = await Promise.all([
+        api.getTechnicianDashboard(techId),
+        api.getTechniciansWorkload().catch(() => ({ success: false, data: [] })),
+      ]);
+
+      if (workloadRes.success && Array.isArray(workloadRes.data)) {
+        setWorkloads(workloadRes.data);
+      }
+
       if (res.success && res.data) {
         const { active_orders, completed_orders, waiting_queue, stats: techStats } = res.data;
         setActiveOrders(active_orders || []);
@@ -197,6 +206,42 @@ function TechnicianTabletContent() {
       if (!silent) setLoading(false);
     }
   }, [activeOrderCode, queryOrder, loadOrderDetails]);
+
+  // Nhận xe từ hàng đợi vào khoang của thợ hiện tại
+  const handleClaimOrder = async (orderCode: string, plateNumber: string) => {
+    if (stats.active_count >= stats.max_allowed) {
+      toast.error(`Bạn đã đạt tải tối đa (${stats.active_count}/${stats.max_allowed} xe). Vui lòng hoàn tất xe hiện tại trước!`);
+      return;
+    }
+    try {
+      setLoading(true);
+      await api.assignWorkOrder(orderCode, {
+        technician_id: selectedTech.id,
+        technician_name: selectedTech.name,
+        bay: "Khoang Nâng 01 (Cầu 2 trụ)",
+        priority: "normal",
+      });
+      toast.success(`🎉 Đã nhận xe [${plateNumber}] vào bàn làm việc của [${selectedTech.name}]!`);
+      setMainTab("active");
+      await loadTechnicianData(selectedTech.id, orderCode);
+    } catch (err: any) {
+      toast.error(err.message || "Không thể nhận xe vào khoang");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Chuyển nhanh sang thợ phụ trách xe được chọn
+  const handleSwitchToTechAndCar = async (targetTechId: string, targetOrderCode: string) => {
+    const targetTech = TECHNICIANS.find((t) => t.id === targetTechId);
+    if (targetTech) {
+      setSelectedTech(targetTech);
+      setActiveOrderCode(targetOrderCode);
+      setMainTab("active");
+      toast.success(`Đã chuyển sang tài khoản [${targetTech.name}] để thi công xe!`);
+      await loadTechnicianData(targetTech.id, targetOrderCode);
+    }
+  };
 
   // Load ban đầu khi chọn thợ
   useEffect(() => {
@@ -478,13 +523,18 @@ function TechnicianTabletContent() {
                 const target = TECHNICIANS.find((t) => t.id === e.target.value);
                 if (target) handleSelectTech(target);
               }}
-              className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs"
+              className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs max-w-sm truncate"
             >
-              {TECHNICIANS.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
+              {TECHNICIANS.map((t) => {
+                const wl = workloads.find((w) => w.id === t.id);
+                const plates = wl?.orders?.map((o: any) => o.license_plate).join(", ");
+                const label = plates ? `${t.name} • (${wl.orders.length} xe: ${plates})` : `${t.name} • (Rảnh)`;
+                return (
+                  <option key={t.id} value={t.id}>
+                    {label}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
@@ -506,6 +556,47 @@ function TechnicianTabletContent() {
           </button>
         </div>
       </div>
+
+      {/* Thanh Điều Hướng Nhanh Xe Đang Xử Lý Toàn Xưởng */}
+      {workloads.some((w) => w.orders?.length > 0) && (
+        <div className="p-4 rounded-3xl border border-slate-200 bg-white shadow-xs space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+              <Layers className="w-4 h-4 text-amber-500" />
+              Xe Đang Xử Lý Trong Xưởng ({workloads.reduce((acc, w) => acc + (w.orders?.length || 0), 0)} xe)
+            </span>
+            <span className="text-[11px] text-slate-400">
+              Nhấp vào xe bất kỳ để mở trực tiếp bàn làm việc
+            </span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {workloads.flatMap((w) =>
+              (w.orders || []).map((ord: any) => {
+                const isCurrentTech = w.id === selectedTech.id;
+                const isCurrentActive = activeOrder?.orderCode === ord.order_code;
+                return (
+                  <button
+                    key={ord.order_code}
+                    type="button"
+                    onClick={() => handleSwitchToTechAndCar(w.id, ord.order_code)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-2xs active:scale-95 ${
+                      isCurrentActive
+                        ? "bg-amber-500 text-slate-950 ring-2 ring-amber-500/40 font-black"
+                        : isCurrentTech
+                        ? "bg-amber-50 border border-amber-300 text-amber-900 hover:bg-amber-100"
+                        : "bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200 hover:border-slate-300"
+                    }`}
+                  >
+                    <Car className="w-3.5 h-3.5 shrink-0" />
+                    <span className="font-mono font-black">{ord.license_plate}</span>
+                    <span className="text-[10px] font-sans opacity-80">({w.name.split(" ")[0]})</span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 4 Thẻ Thống Kê Năng Suất Của Riêng Thợ Này */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1083,6 +1174,28 @@ function TechnicianTabletContent() {
                     </ul>
                   </div>
                 )}
+
+                {/* Hành động đối với xe trong hàng đợi */}
+                <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleClaimOrder(wq.order_code, wq.license_plate)}
+                    className="flex-1 py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition shadow-xs flex items-center justify-center gap-1.5 active:scale-95"
+                  >
+                    <Wrench className="w-3.5 h-3.5" />
+                    <span>Nhận Vào Khoang Của Tôi</span>
+                  </button>
+                  {wq.assigned_technicians?.[0]?.technician_id && (
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchToTechAndCar(wq.assigned_technicians[0].technician_id, wq.order_code)}
+                      className="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition border border-slate-200 shrink-0"
+                      title="Xem bàn làm việc của thợ được phân công"
+                    >
+                      Mở Bàn Làm Việc →
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
