@@ -19,11 +19,34 @@ import {
   PieChart,
   BarChart3,
   FileText,
+  Phone,
+  Eye,
+  Loader2,
 } from "lucide-react";
 import { formatVND } from "@/lib/utils";
+import { api } from "@/lib/api";
 
 export default function OwnerDashboardPage() {
   const [timeRange, setTimeRange] = useState<"day" | "week" | "month" | "quarter">("month");
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+
+  React.useEffect(() => {
+    async function loadOrders() {
+      try {
+        setLoadingOrders(true);
+        const res = await api.getMyWorkOrders({ all: true });
+        if (res.success && Array.isArray(res.data)) {
+          setRecentOrders(res.data);
+        }
+      } catch (e) {
+        console.warn("Owner dashboard load orders err:", e);
+      } finally {
+        setLoadingOrders(false);
+      }
+    }
+    loadOrders();
+  }, []);
 
   // Dữ liệu tài chính tháng 10/2026
   const stats = {
@@ -331,6 +354,108 @@ export default function OwnerDashboardPage() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Bảng Giám Sát Các Lệnh Sửa Chữa Mới Nhất & Liên Hệ Khách Hàng (Dành cho Chủ Gara) */}
+      <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 className="text-base font-bold flex items-center gap-2">
+              <FileText className="w-4 h-4 text-amber-500" />
+              Lệnh Sửa Chữa Đang Xử Lý & Liên Hệ Khách Hàng (Live MongoDB)
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Thông tin trực quan bao gồm số điện thoại khách hàng, tiến độ kỹ thuật và thợ trực tiếp thi công
+            </p>
+          </div>
+          <Link
+            href="/manager/kanban"
+            className="text-xs text-amber-500 hover:underline font-semibold"
+          >
+            Mở Kanban Điều Phối →
+          </Link>
+        </div>
+
+        {loadingOrders ? (
+          <div className="py-12 flex flex-col items-center justify-center gap-2">
+            <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+            <p className="text-xs text-muted-foreground font-mono">Đang tải danh sách lệnh sửa chữa...</p>
+          </div>
+        ) : recentOrders.length === 0 ? (
+          <div className="py-8 text-center text-xs text-muted-foreground border border-dashed rounded-xl">
+            Chưa có lệnh sửa chữa nào được ghi nhận.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-border/80 text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground bg-muted/30">
+                  <th className="py-3 px-4">Mã Lệnh</th>
+                  <th className="py-3 px-4">Biển Số & Dòng Xe</th>
+                  <th className="py-3 px-4">Khách Hàng & SĐT</th>
+                  <th className="py-3 px-4">Kỹ Thuật Viên</th>
+                  <th className="py-3 px-4">Trạng Thái</th>
+                  <th className="py-3 px-4 text-right">Tổng Tiền</th>
+                  <th className="py-3 px-4 text-center">Xem</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/60 font-medium">
+                {recentOrders.slice(0, 10).map((ord) => {
+                  const techName = ord.assigned_technicians?.[0]?.technician_name || "Chưa gán thợ";
+                  const phone = ord.customer_phone || "";
+                  const total = ord.estimate?.total_amount || 0;
+                  return (
+                    <tr key={ord.order_code} className="hover:bg-muted/40 transition">
+                      <td className="py-3 px-4 font-mono font-bold text-amber-500">
+                        {ord.order_code}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="font-mono font-bold bg-muted px-2 py-0.5 rounded text-foreground inline-block">
+                          {ord.license_plate}
+                        </span>
+                        <div className="text-[11px] text-muted-foreground mt-0.5">{ord.vehicle_model}</div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-foreground">{ord.customer_name || "Khách hàng"}</div>
+                        {phone && (
+                          <a
+                            href={`tel:${phone}`}
+                            className="text-[11px] text-amber-500 hover:text-amber-400 font-bold flex items-center gap-1 mt-0.5 hover:underline font-mono"
+                            title="Gọi điện cho khách hàng"
+                          >
+                            <Phone className="w-3 h-3 text-amber-500" />
+                            {phone}
+                          </a>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-muted-foreground">
+                        <span className="font-semibold text-foreground">{techName}</span>
+                        <div className="text-[10px] text-muted-foreground">{ord.bay || "Khoang nâng"}</div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                          {ord.current_status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono font-bold text-foreground">
+                        {formatVND(total)}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <Link
+                          href={`/customer/orders/${ord.order_code}`}
+                          className="p-1.5 rounded-lg hover:bg-amber-500 hover:text-black inline-block text-muted-foreground transition"
+                          title="Xem hồ sơ xe"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

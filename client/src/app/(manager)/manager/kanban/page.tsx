@@ -22,6 +22,7 @@ import {
   UserCheck,
   X,
   Check,
+  Phone,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,6 +32,7 @@ interface KanbanCard {
   plateNumber: string;
   carModel: string;
   customerName: string;
+  customerPhone: string;
   technician: string;
   bay: string;
   progress: number;
@@ -69,6 +71,7 @@ const INITIAL_CARDS: KanbanCard[] = [
     plateNumber: "51K-888.88",
     carModel: "Toyota Camry 2.5Q",
     customerName: "Minh Thảo",
+    customerPhone: "0912 345 678",
     technician: "Nguyễn Văn Thợ (THO-01)",
     bay: "Khoang nâng 02",
     progress: 60,
@@ -82,6 +85,7 @@ const INITIAL_CARDS: KanbanCard[] = [
     plateNumber: "51F-123.45",
     carModel: "Mazda CX-5 2.0",
     customerName: "Trần Thị B",
+    customerPhone: "0903 112 233",
     technician: "Trần Văn Cường (THO-02)",
     bay: "Khoang chẩn đoán 01",
     progress: 10,
@@ -95,6 +99,7 @@ const INITIAL_CARDS: KanbanCard[] = [
     plateNumber: "30E-999.99",
     carModel: "Mercedes-Benz E300",
     customerName: "Lê Hoàng C",
+    customerPhone: "0977 445 566",
     technician: "Chưa gán thợ",
     bay: "Khu vực tiếp nhận",
     progress: 20,
@@ -108,6 +113,7 @@ const INITIAL_CARDS: KanbanCard[] = [
     plateNumber: "60A-777.77",
     carModel: "Honda CR-V 1.5 Turbo",
     customerName: "Phạm Văn D",
+    customerPhone: "0938 778 899",
     technician: "Nguyễn Văn Thợ (THO-01)",
     bay: "Khoang kho vật tư",
     progress: 40,
@@ -121,6 +127,7 @@ const INITIAL_CARDS: KanbanCard[] = [
     plateNumber: "51H-555.55",
     carModel: "Ford Ranger Wildtrak",
     customerName: "Hoàng Minh E",
+    customerPhone: "0918 990 011",
     technician: "Trần Văn Cường (THO-02)",
     bay: "Khoang kiểm định QC",
     progress: 90,
@@ -134,6 +141,7 @@ const INITIAL_CARDS: KanbanCard[] = [
     plateNumber: "51A-111.11",
     carModel: "Hyundai Tucson 2.0",
     customerName: "Vũ Đình F",
+    customerPhone: "0988 223 344",
     technician: "Nguyễn Văn Thợ (THO-01)",
     bay: "Bãi bàn giao xe",
     progress: 100,
@@ -224,6 +232,7 @@ export default function WorkshopKanbanPage() {
             plateNumber: wo.license_plate || "51K-888.88",
             carModel: wo.vehicle_model || "Toyota Camry 2.5Q",
             customerName: wo.customer_name || "Khách Hàng",
+            customerPhone: wo.customer_phone || wo.customer?.phone || wo.phone || "",
             technician: assignedTechName,
             bay: assignedBay,
             progress,
@@ -599,7 +608,23 @@ export default function WorkshopKanbanPage() {
                         )}
                       </div>
 
-                      <p className="text-xs font-semibold text-slate-600">{card.carModel}</p>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-700">{card.carModel}</p>
+                        <div className="flex items-center justify-between text-[11px] mt-1 pt-1 border-t border-slate-100">
+                          <span className="text-slate-500 truncate font-medium">Khách: <strong className="text-slate-800">{card.customerName}</strong></span>
+                          {card.customerPhone && (
+                            <a
+                              href={`tel:${card.customerPhone}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-amber-600 hover:text-amber-700 font-bold flex items-center gap-1 hover:underline shrink-0 ml-1.5"
+                              title="Gọi điện cho khách hàng"
+                            >
+                              <Phone className="w-3 h-3 text-amber-500" />
+                              {card.customerPhone}
+                            </a>
+                          )}
+                        </div>
+                      </div>
 
                       {/* Progress bar */}
                       <div className="space-y-1">
@@ -716,6 +741,15 @@ export default function WorkshopKanbanPage() {
                 <div className="text-right">
                   <p className="text-slate-500 font-medium">Chủ sở hữu:</p>
                   <p className="font-bold text-slate-900">{selectedCardForAssign.customerName}</p>
+                  {selectedCardForAssign.customerPhone && (
+                    <a
+                      href={`tel:${selectedCardForAssign.customerPhone}`}
+                      className="text-xs text-amber-600 hover:text-amber-700 font-bold flex items-center justify-end gap-1 mt-0.5 hover:underline"
+                    >
+                      <Phone className="w-3 h-3 text-amber-500" />
+                      {selectedCardForAssign.customerPhone}
+                    </a>
+                  )}
                 </div>
               </div>
 

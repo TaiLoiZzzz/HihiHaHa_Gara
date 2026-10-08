@@ -16,7 +16,8 @@ import {
   CheckCircle2, 
   Clock, 
   AlertCircle,
-  Plus
+  Plus,
+  Phone
 } from "lucide-react";
 import { formatCurrencyVND } from "@/lib/utils";
 import { api } from "@/lib/api";
@@ -95,8 +96,8 @@ export default function ManagerWorkOrdersPage() {
             statusColor: st.color,
             totalAmount: wo.estimate?.total_amount || 2808000,
             progress: typeof wo.progress_percent === "number" ? wo.progress_percent : 50,
-            technician: wo.assigned_technician?.full_name || "Phạm Thợ Xưởng (THO-01)",
-            bay: "Khoang Nâng 02",
+            technician: wo.assigned_technicians?.[0]?.technician_name || wo.assigned_technician?.full_name || "Chưa gán thợ",
+            bay: wo.bay || "Chưa xếp khoang",
             created_at: new Date(wo.createdAt || Date.now()).toLocaleDateString("vi-VN"),
           };
         });
@@ -118,8 +119,8 @@ export default function ManagerWorkOrdersPage() {
               statusColor: st.color,
               totalAmount: wo.estimate?.total_amount || 2808000,
               progress: wo.progress_percent || 60,
-              technician: "Phạm Thợ Xưởng (THO-01)",
-              bay: "Khoang Nâng 02",
+              technician: wo.assigned_technicians?.[0]?.technician_name || "Nguyễn Văn Thợ (THO-01)",
+              bay: wo.bay || "Khoang Nâng 02",
               created_at: new Date(wo.createdAt || Date.now()).toLocaleDateString("vi-VN"),
             },
           ]);
@@ -270,7 +271,15 @@ export default function ManagerWorkOrdersPage() {
 
                     <td className="py-3.5 px-4">
                       <div className="font-semibold text-slate-800">{order.customer}</div>
-                      <div className="text-[11px] font-mono text-slate-500">{order.phone}</div>
+                      {order.phone && (
+                        <a
+                          href={`tel:${order.phone}`}
+                          className="text-[11px] font-mono text-purple-600 hover:text-purple-700 font-bold flex items-center gap-1 mt-0.5 hover:underline"
+                        >
+                          <Phone className="w-3 h-3 text-purple-500" />
+                          {order.phone}
+                        </a>
+                      )}
                     </td>
 
                     <td className="py-3.5 px-4">

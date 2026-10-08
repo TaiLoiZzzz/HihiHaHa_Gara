@@ -18,6 +18,7 @@ import {
   Layers,
   Wrench,
   Sparkles,
+  Phone,
 } from "lucide-react";
 import { formatVND } from "@/lib/utils";
 import { toast } from "sonner";
@@ -334,8 +335,22 @@ export default function EditOrderEstimatePage() {
               {orderData?.current_status || "Chờ duyệt"}
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-600 mt-1">
-            Xe: {carModel} (Biển số: {plateNumber}) • Chủ xe: {customerName} ({customerPhone})
+          <p className="text-xs sm:text-sm text-slate-600 mt-1 flex items-center flex-wrap gap-1.5">
+            <span>Xe: <strong>{carModel}</strong> (Biển số: <strong className="font-mono">{plateNumber}</strong>)</span>
+            <span>•</span>
+            <span>Chủ xe: <strong>{customerName}</strong></span>
+            {customerPhone && (
+              <>
+                <span>•</span>
+                <a
+                  href={`tel:${customerPhone}`}
+                  className="text-amber-600 hover:text-amber-700 font-bold inline-flex items-center gap-1 hover:underline"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  {customerPhone}
+                </a>
+              </>
+            )}
           </p>
         </div>
 

@@ -62,6 +62,8 @@ export default function CustomerDashboardPage() {
             <div className="flex items-center gap-4 text-xs text-slate-500">
               <span>Chủ sở hữu: <strong className="text-slate-800">{customerName}</strong></span>
               <span>•</span>
+              <span>SĐT: <strong className="font-mono text-slate-800">{order?.customer_phone || "0912 345 678"}</strong></span>
+              <span>•</span>
               <span>Số khung VIN: <span className="font-mono">VN123456789</span></span>
               <span>•</span>
               <span>Trạng thái xe: <strong className="text-emerald-600">{isPaid ? "Đã Quyết Toán Xong" : "Đang Bảo Dưỡng"}</strong></span>

@@ -660,6 +660,8 @@ const getTechniciansWorkloadController = async (req, res, next) => {
           bay: o.bay,
           current_status: o.current_status,
           progress_percent: o.progress_percent,
+          customer_name: o.customer_name,
+          customer_phone: o.customer_phone,
         })),
       };
     });

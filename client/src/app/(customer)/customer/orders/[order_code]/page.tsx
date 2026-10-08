@@ -193,7 +193,7 @@ export default function WorkOrderDetailPage({ params }: Props) {
             </span>
           </div>
           <p className="text-xs text-slate-600 font-medium">
-            Phương tiện: <strong className="text-slate-900">{vehicleModel}</strong> • Biển số: <strong className="font-mono text-slate-900">{plateNumber}</strong> • Chủ xe: <strong className="text-slate-900">{customerName}</strong>
+            Phương tiện: <strong className="text-slate-900">{vehicleModel}</strong> • Biển số: <strong className="font-mono text-slate-900">{plateNumber}</strong> • Chủ xe: <strong className="text-slate-900">{customerName}</strong> {orderData?.customer_phone ? <>• SĐT: <strong className="font-mono text-slate-900">{orderData.customer_phone}</strong></> : null}
           </p>
         </div>
 

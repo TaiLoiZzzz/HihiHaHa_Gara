@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { ClipboardList, PlusCircle, Search, Eye, Edit3, Loader2, RefreshCw } from "lucide-react";
+import { ClipboardList, PlusCircle, Search, Eye, Edit3, Loader2, RefreshCw, Phone } from "lucide-react";
 import { formatCurrencyVND } from "@/lib/utils";
 import { LiquidGlassButton } from "@/components/ui/liquid-glass-button";
 import { api } from "@/lib/api";
@@ -12,6 +12,7 @@ interface OrderItemDisplay {
   plate: string;
   car: string;
   customer: string;
+  phone: string;
   status: string;
   statusText: string;
   statusColor: string;
@@ -73,6 +74,7 @@ export default function AdvisorWorkOrdersPage() {
             plate: wo.license_plate || "51K-888.88",
             car: wo.vehicle_model || "Toyota Camry 2.5Q",
             customer: wo.customer_name || "Minh Thảo",
+            phone: wo.customer_phone || wo.customer?.phone || wo.phone || "",
             status: wo.current_status,
             statusText: st.text,
             statusColor: st.color,
@@ -94,6 +96,7 @@ export default function AdvisorWorkOrdersPage() {
               plate: wo.license_plate,
               car: wo.vehicle_model,
               customer: wo.customer_name,
+              phone: wo.customer_phone || "",
               status: wo.current_status,
               statusText: st.text,
               statusColor: st.color,
@@ -119,7 +122,8 @@ export default function AdvisorWorkOrdersPage() {
     (o) =>
       o.order_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       o.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      o.customer.toLowerCase().includes(searchTerm.toLowerCase())
+      o.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      o.phone.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -201,8 +205,17 @@ export default function AdvisorWorkOrdersPage() {
                       </div>
                       <div className="text-[11px] text-slate-500 mt-0.5">{order.car}</div>
                     </td>
-                    <td className="py-4 px-6 font-semibold text-slate-900">
-                      {order.customer}
+                    <td className="py-4 px-6">
+                      <div className="font-semibold text-slate-900">{order.customer}</div>
+                      {order.phone && (
+                        <a
+                          href={`tel:${order.phone}`}
+                          className="text-[11px] text-amber-600 hover:text-amber-700 font-bold flex items-center gap-1 mt-0.5 hover:underline"
+                        >
+                          <Phone className="w-3 h-3 text-amber-500" />
+                          {order.phone}
+                        </a>
+                      )}
                     </td>
                     <td className="py-4 px-6">
                       <span className="inline-flex px-3 py-1 text-[11px] font-bold rounded-full border bg-amber-50 text-amber-800 border-amber-300">

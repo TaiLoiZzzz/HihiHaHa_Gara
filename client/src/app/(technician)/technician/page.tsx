@@ -23,6 +23,7 @@ import {
   Layers,
   ArrowRight,
   Calendar,
+  Phone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -121,6 +122,7 @@ export default function TechnicianTabletPage() {
           plateNumber: wo.license_plate,
           carModel: wo.vehicle_model,
           customerName: wo.customer_name,
+          customerPhone: wo.customer_phone || wo.customer?.phone || wo.phone || "",
           bay: wo.bay || "Khoang Nâng",
           current_status: wo.current_status,
           priority: wo.priority,
@@ -639,7 +641,20 @@ export default function TechnicianTabletPage() {
 
                       <div>
                         <p className="text-xs font-bold text-slate-900 truncate">{ord.vehicle_model}</p>
-                        <p className="text-[11px] text-slate-500 truncate">Khách: {ord.customer_name}</p>
+                        <div className="flex items-center justify-between text-[11px] mt-0.5">
+                          <span className="text-slate-500 truncate">Khách: {ord.customer_name}</span>
+                          {ord.customer_phone && (
+                            <a
+                              href={`tel:${ord.customer_phone}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-amber-600 font-bold hover:underline flex items-center gap-1 ml-1 shrink-0"
+                              title="Gọi điện cho khách"
+                            >
+                              <Phone className="w-3 h-3 text-amber-500" />
+                              {ord.customer_phone}
+                            </a>
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex items-center justify-between pt-1 border-t border-slate-200 text-[11px]">
@@ -702,6 +717,38 @@ export default function TechnicianTabletPage() {
                   </button>
                 </div>
               ) : null}
+
+              {/* Thanh Thông Tin Phương Tiện & Chủ Xe */}
+              <div className="p-4 rounded-3xl border border-slate-200 bg-white shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-3">
+                  <div className="font-mono font-black text-sm px-3 py-1.5 rounded-xl bg-slate-900 text-white shrink-0">
+                    {activeOrder.plateNumber}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900">{activeOrder.carModel}</h3>
+                    <p className="text-slate-500 text-[11px] font-mono">Mã Lệnh: {activeOrder.orderCode} • {activeOrder.bay}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 bg-amber-50/80 px-3.5 py-2 rounded-2xl border border-amber-200/80 self-start sm:self-auto">
+                  <div>
+                    <span className="text-[11px] text-slate-500 font-medium">Chủ xe: </span>
+                    <strong className="text-slate-900 font-bold">{activeOrder.customerName}</strong>
+                  </div>
+                  {activeOrder.customerPhone ? (
+                    <a
+                      href={`tel:${activeOrder.customerPhone}`}
+                      className="text-amber-800 hover:text-amber-950 font-bold flex items-center gap-1.5 hover:underline bg-white px-2.5 py-1 rounded-xl border border-amber-300 shadow-2xs shrink-0"
+                      title="Gọi điện trực tiếp cho chủ xe"
+                    >
+                      <Phone className="w-3.5 h-3.5 text-amber-600" />
+                      <span>{activeOrder.customerPhone}</span>
+                    </a>
+                  ) : (
+                    <span className="text-slate-400">Chưa có SĐT</span>
+                  )}
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* Cột trái: Tiến độ & Checklist (7 cols) */}
@@ -937,7 +984,19 @@ export default function TechnicianTabletPage() {
 
                 <div>
                   <h4 className="text-sm font-bold text-slate-900">{wq.vehicle_model}</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">Chủ xe: {wq.customer_name} ({wq.customer_phone})</p>
+                  <div className="flex items-center justify-between text-xs text-slate-500 mt-1">
+                    <span>Chủ xe: <strong className="text-slate-800">{wq.customer_name}</strong></span>
+                    {wq.customer_phone && (
+                      <a
+                        href={`tel:${wq.customer_phone}`}
+                        className="text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 hover:underline"
+                        title="Gọi cho khách"
+                      >
+                        <Phone className="w-3 h-3 text-blue-500" />
+                        {wq.customer_phone}
+                      </a>
+                    )}
+                  </div>
                 </div>
 
                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
@@ -1007,7 +1066,19 @@ export default function TechnicianTabletPage() {
 
                   <div>
                     <h4 className="text-sm font-bold text-slate-900">{co.vehicle_model}</h4>
-                    <p className="text-xs text-slate-500 mt-0.5">Chủ xe: {co.customer_name}</p>
+                    <div className="flex items-center justify-between text-xs text-slate-500 mt-1">
+                      <span>Chủ xe: <strong className="text-slate-800">{co.customer_name}</strong></span>
+                      {co.customer_phone && (
+                        <a
+                          href={`tel:${co.customer_phone}`}
+                          className="text-emerald-600 hover:text-emerald-800 font-bold flex items-center gap-1 hover:underline"
+                          title="Gọi cho khách"
+                        >
+                          <Phone className="w-3 h-3 text-emerald-500" />
+                          {co.customer_phone}
+                        </a>
+                      )}
+                    </div>
                   </div>
 
                   <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1">
