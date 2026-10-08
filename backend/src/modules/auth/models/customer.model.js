@@ -14,7 +14,28 @@ const CustomerSchema = new mongoose.Schema(
       },
     ],
     total_spent: { type: Number, default: 0 },
-    vip_rank: { type: String, enum: ['STANDARD', 'SILVER', 'GOLD', 'DIAMOND'], default: 'STANDARD' },
+    vip_rank: {
+      type: String,
+      uppercase: true,
+      enum: [
+        'STANDARD',
+        'SILVER',
+        'GOLD',
+        'PLATINUM',
+        'DIAMOND',
+        'Standard',
+        'Silver',
+        'Gold',
+        'Platinum',
+        'Diamond',
+        'standard',
+        'silver',
+        'gold',
+        'platinum',
+        'diamond',
+      ],
+      default: 'STANDARD',
+    },
     audit_logs: [
       {
         action: { type: String },
@@ -25,5 +46,11 @@ const CustomerSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+CustomerSchema.pre('validate', function () {
+  if (this.vip_rank) {
+    this.vip_rank = this.vip_rank.toUpperCase();
+  }
+});
 
 module.exports = mongoose.model('Customer', CustomerSchema);

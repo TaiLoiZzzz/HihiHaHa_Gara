@@ -98,7 +98,7 @@ async function seedClean() {
       full_name: 'Minh Thảo',
       phone_number: '0797526990',
       email: 'tailoi1606@gmail.com',
-      vip_rank: 'Gold',
+      vip_rank: 'GOLD',
       total_spent: 12500000,
       vehicles_owned: [
         {
@@ -118,7 +118,7 @@ async function seedClean() {
       full_name: 'Đặng Văn Lâm',
       phone_number: '0988777777',
       email: 'tailoi1606@gmail.com',
-      vip_rank: 'Silver',
+      vip_rank: 'SILVER',
       total_spent: 3500000,
       vehicles_owned: [
         {
@@ -138,7 +138,7 @@ async function seedClean() {
       full_name: 'Lê Hoàng Cường',
       phone_number: '0907654321',
       email: 'cuong.le@gmail.com',
-      vip_rank: 'Platinum',
+      vip_rank: 'PLATINUM',
       total_spent: 28000000,
       vehicles_owned: [
         {
@@ -156,7 +156,7 @@ async function seedClean() {
       full_name: 'Trần Văn Dũng',
       phone_number: '0903333333',
       email: 'dung.tran@gmail.com',
-      vip_rank: 'Standard',
+      vip_rank: 'STANDARD',
       total_spent: 1200000,
       vehicles_owned: [
         {
