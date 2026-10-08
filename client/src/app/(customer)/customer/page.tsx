@@ -5,13 +5,15 @@ import Link from "next/link";
 import { Car, Award, Calendar, FileText, ChevronRight, ShieldCheck, Clock, ArrowRight, Loader2, CheckCircle2, CreditCard } from "lucide-react";
 import { formatCurrencyVND } from "@/lib/utils";
 import { LiquidGlassButton } from "@/components/ui/liquid-glass-button";
-import { api } from "@/lib/api";
+import { api, getCurrentUser } from "@/lib/api";
 
 export default function CustomerDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
+    setUser(getCurrentUser());
     async function loadCustomerVehicle() {
       try {
         setLoading(true);
@@ -19,11 +21,6 @@ export default function CustomerDashboardPage() {
         const resList = await api.getMyWorkOrders();
         if (resList.success && Array.isArray(resList.data) && resList.data.length > 0) {
           setOrder(resList.data[0]);
-        } else {
-          const res = await api.getWorkOrder("WO-20261001-0089");
-          if (res.success && res.data) {
-            setOrder(res.data);
-          }
         }
       } catch (err: any) {
         console.warn("Chưa tải được profile xe:", err.message);
@@ -34,11 +31,11 @@ export default function CustomerDashboardPage() {
     loadCustomerVehicle();
   }, []);
 
-  const plateNumber = order?.license_plate || "51K-888.88";
-  const vehicleModel = order?.vehicle_model || "Toyota Camry 2.5Q (2022)";
-  const customerName = order?.customer_name || "Minh Thảo";
-  const totalAmount = order?.estimate?.total_amount || 2808000;
-  const orderCode = order?.order_code || "WO-20261001-0089";
+  const plateNumber = order?.license_plate || user?.license_plate || "HỒ SƠ XE";
+  const vehicleModel = order?.vehicle_model || (plateNumber !== "HỒ SƠ XE" ? `Xe Ô Tô (${plateNumber})` : "Xe Của Quý Khách");
+  const customerName = order?.customer_name || user?.full_name || "Quý Khách";
+  const totalAmount = order?.estimate?.total_amount || 0;
+  const orderCode = order?.order_code || "";
   const isPaid = order?.payment_status === "PAID" || order?.current_status === "PAID";
 
   return (

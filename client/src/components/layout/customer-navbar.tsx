@@ -68,11 +68,11 @@ export function CustomerNavbar() {
                   CỔNG CHỦ XE
                 </span>
                 <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-amber-100 text-amber-900 border border-amber-300">
-                  {plateNumber || user?.license_plate || "51K-888.88"}
+                  {plateNumber || user?.license_plate || "HỒ SƠ XE"}
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 font-medium">
-                {user?.full_name ? `Chủ xe: ${user.full_name}` : "Chủ xe: Minh Thảo"} • Hạng VIP Gold
+                {user?.full_name ? `Chủ xe: ${user.full_name}` : "Cổng Tra Cứu Khách Hàng"} • Thành Viên Gara
               </p>
             </div>
           </Link>

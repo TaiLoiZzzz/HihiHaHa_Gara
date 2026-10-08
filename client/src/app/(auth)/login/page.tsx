@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Car,
   Smartphone,
@@ -14,31 +14,23 @@ import {
   AlertCircle,
   Edit3,
   Loader2,
-  Search,
-  Sparkles,
-  ArrowRight,
+  Lock,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 
-// Danh sách xe mẫu chuẩn hóa đã có trong cơ sở dữ liệu
-const SAMPLE_CARS = [
-  { plate: "51K-888.88", phone: "0912345678", name: "Minh Thảo", model: "Camry 2.5Q" },
-  { plate: "51H-999.88", phone: "0797526990", name: "Minh Thảo", model: "Mercedes C200" },
-  { plate: "30E-999.99", phone: "0907654321", name: "Lê Hoàng Cường", model: "Mercedes E300" },
-  { plate: "51F-123.45", phone: "0901234567", name: "Trần Thị Bích", model: "Mazda CX-5" },
-];
-
-export default function CustomerLoginPage() {
+function CustomerLoginForm() {
   const router = useRouter();
-  const [phone, setPhone] = useState("0912345678");
-  const [licensePlate, setLicensePlate] = useState("51K-888.88");
+  const searchParams = useSearchParams();
+
+  const [phone, setPhone] = useState("");
+  const [licensePlate, setLicensePlate] = useState("");
   const [email, setEmail] = useState("");
 
   // Trạng thái nhận diện hồ sơ xe trong DB
-  const [customerFound, setCustomerFound] = useState<boolean | null>(true);
-  const [customerName, setCustomerName] = useState<string>("Minh Thảo");
-  const [linkedEmailMasked, setLinkedEmailMasked] = useState<string | null>("t***6@gmail.com");
+  const [customerFound, setCustomerFound] = useState<boolean | null>(null);
+  const [customerName, setCustomerName] = useState<string>("");
+  const [linkedEmailMasked, setLinkedEmailMasked] = useState<string | null>(null);
   const [showEmailInput, setShowEmailInput] = useState(false);
   const [checkingProfile, setCheckingProfile] = useState(false);
 
@@ -46,6 +38,14 @@ export default function CustomerLoginPage() {
   const [sentEmailInfo, setSentEmailInfo] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Tự động nhận diện biển số nếu truyền từ trang chủ /services
+  useEffect(() => {
+    const p = searchParams.get("plate");
+    if (p) {
+      setLicensePlate(p.trim().toUpperCase());
+    }
+  }, [searchParams]);
 
   // Tự động kiểm tra hồ sơ khách hàng khi thay đổi biển số hoặc số điện thoại
   const checkCustomerProfile = useCallback(async (plate: string, phoneNumber: string) => {
@@ -128,7 +128,7 @@ export default function CustomerLoginPage() {
       if (res.success) {
         setOtpSent(true);
         setSentEmailInfo(res.data?.email || res.data?.masked_email || email || "Gmail của bạn");
-        toast.success(res.message || "Mã OTP đã được gửi đến Gmail của bạn!");
+        toast.success(res.message || "Mã OTP đã được gửi đến Gmail của quý khách!");
       } else {
         toast.error(res.message || res.error || "Không thể gửi mã OTP.");
       }
@@ -165,15 +165,8 @@ export default function CustomerLoginPage() {
     }
   };
 
-  const handleSelectSample = (sample: typeof SAMPLE_CARS[0]) => {
-    setLicensePlate(sample.plate);
-    setPhone(sample.phone);
-    setShowEmailInput(false);
-  };
-
   return (
     <div className="max-w-md mx-auto space-y-6 font-sans py-8">
-      
       {/* Header Form */}
       <div className="text-center space-y-2">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200/80 p-2 mb-2 shadow-xs">
@@ -196,10 +189,8 @@ export default function CustomerLoginPage() {
 
       {/* Card Form Đăng Nhập OTP */}
       <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">
-        
         {!otpSent ? (
           <form onSubmit={handleSendOtp} className="space-y-4">
-            
             {/* Input Biển Số Xe */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
@@ -210,7 +201,7 @@ export default function CustomerLoginPage() {
                 <input
                   type="text"
                   required
-                  placeholder="VD: 51K-888.88"
+                  placeholder="VD: 51K-999.99"
                   value={licensePlate}
                   onChange={(e) => setLicensePlate(e.target.value.toUpperCase())}
                   className="w-full pl-10 pr-4 py-2.5 text-sm font-mono font-bold rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition uppercase tracking-wider shadow-xs"
@@ -228,7 +219,7 @@ export default function CustomerLoginPage() {
                 <input
                   type="tel"
                   required
-                  placeholder="VD: 0912345678"
+                  placeholder="VD: 0988 777 777"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 text-sm font-mono font-semibold rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition shadow-xs"
@@ -240,14 +231,14 @@ export default function CustomerLoginPage() {
             {checkingProfile ? (
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-center gap-2">
                 <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />
-                <span>Đang đối soát hồ sơ xe trong cơ sở dữ liệu gara...</span>
+                <span>Đang đối soát hồ sơ xe trong hệ thống...</span>
               </div>
             ) : customerFound === true ? (
               <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 space-y-1.5 animate-in fade-in duration-200">
                 <div className="flex items-center justify-between">
                   <span className="font-bold flex items-center gap-1.5 text-emerald-800">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    Hồ sơ hợp lệ: {customerName}
+                    Chủ xe: {customerName}
                   </span>
                   {linkedEmailMasked && !showEmailInput && (
                     <button
@@ -261,7 +252,7 @@ export default function CustomerLoginPage() {
                 </div>
                 {linkedEmailMasked && !showEmailInput && (
                   <div className="text-[11px] text-emerald-700">
-                    Mã OTP sẽ gửi về: <strong className="font-mono text-emerald-900">{linkedEmailMasked}</strong>
+                    Mã xác thực sẽ gửi về: <strong className="font-mono text-emerald-900">{linkedEmailMasked}</strong>
                   </div>
                 )}
               </div>
@@ -272,10 +263,10 @@ export default function CustomerLoginPage() {
                   Không tìm thấy hồ sơ xe trong hệ thống gara
                 </div>
                 <p className="text-[11px] text-red-600 leading-relaxed">
-                  Biển số <strong className="font-mono text-red-900">{licensePlate}</strong> và SĐT <strong className="font-mono text-red-900">{phone}</strong> không khớp hoặc xe chưa từng được tiếp nhận tại xưởng.
+                  Biển số <strong className="font-mono text-red-900">{licensePlate}</strong> và SĐT <strong className="font-mono text-red-900">{phone}</strong> chưa có hồ sơ tiếp nhận tại gara.
                 </p>
-                <p className="text-[10px] text-red-500 italic">
-                  * Xe cần được Cố vấn dịch vụ tạo lệnh tiếp nhận tại xưởng để khởi tạo tài khoản tra cứu.
+                <p className="text-[10px] text-slate-500 italic">
+                  * Xe cần được Cố vấn dịch vụ tiếp nhận tại xưởng hoặc kiểm tra lại thông tin đã đăng ký.
                 </p>
               </div>
             ) : null}
@@ -284,9 +275,9 @@ export default function CustomerLoginPage() {
             {customerFound && showEmailInput && (
               <div className="space-y-1.5 pt-1 animate-in fade-in duration-200">
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center justify-between">
-                  <span>Cập Nhật Gmail Nhận OTP</span>
-                  <span className="text-[10px] text-amber-600 font-semibold lowercase">
-                    Lưu vào hồ sơ xe
+                  <span>Địa Chỉ Gmail Nhận Mã Xác Thực</span>
+                  <span className="text-[10px] text-amber-600 font-semibold">
+                    Cập nhật vào hồ sơ xe
                   </span>
                 </label>
                 <div className="relative">
@@ -294,7 +285,7 @@ export default function CustomerLoginPage() {
                   <input
                     type="email"
                     required
-                    placeholder="VD: tailoi1606@gmail.com"
+                    placeholder="VD: chuxe@gmail.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 text-sm font-mono font-semibold rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition shadow-xs"
@@ -309,33 +300,8 @@ export default function CustomerLoginPage() {
               disabled={loading || customerFound === false || checkingProfile}
               className="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider transition shadow-md shadow-amber-500/20 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {loading ? "Đang gửi mã OTP..." : checkingProfile ? "Đang đối soát..." : "Gửi Mã Xác Thực OTP"}
+              {loading ? "Đang gửi mã xác thực..." : checkingProfile ? "Đang kiểm tra..." : "Gửi Mã Xác Thực OTP"}
             </button>
-
-            {/* Gợi Ý Nhanh Các Xe Mẫu Có Sẵn Trong Database */}
-            <div className="pt-2 border-t border-slate-100">
-              <p className="text-[11px] font-bold text-slate-500 mb-2 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Chọn nhanh hồ sơ xe trong hệ thống để test:
-              </p>
-              <div className="grid grid-cols-2 gap-1.5">
-                {SAMPLE_CARS.map((c) => (
-                  <button
-                    key={c.plate}
-                    type="button"
-                    onClick={() => handleSelectSample(c)}
-                    className="p-2 rounded-lg border border-slate-200 hover:border-amber-400 hover:bg-amber-50/50 text-left transition group text-[11px]"
-                  >
-                    <div className="font-mono font-bold text-slate-900 group-hover:text-amber-800">
-                      {c.plate}
-                    </div>
-                    <div className="text-[10px] text-slate-500 truncate">
-                      {c.phone} ({c.name})
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
           </form>
         ) : (
           <form onSubmit={handleVerifyOtp} className="space-y-4">
@@ -355,16 +321,16 @@ export default function CustomerLoginPage() {
               <div className="space-y-1 text-slate-700">
                 <div>Biển số: <strong className="text-slate-900 font-mono">{licensePlate}</strong></div>
                 <div>SĐT: <strong className="text-slate-900 font-mono">{phone}</strong></div>
-                <div>Hòm thư Gmail: <strong className="text-amber-800 font-mono">{sentEmailInfo || email}</strong></div>
+                <div>Địa chỉ hòm thư: <strong className="text-amber-800 font-mono">{sentEmailInfo || email}</strong></div>
               </div>
-              <div className="p-2 bg-amber-100/70 rounded-lg text-[11px] text-amber-900 font-semibold border border-amber-300/60">
-                💡 Mở hộp thư Gmail của bạn để lấy mã OTP 6 số. (Mã kiểm tra nhanh hệ thống: <span className="font-mono font-bold text-red-600 underline">123456</span>)
+              <div className="p-2.5 bg-amber-100/70 rounded-xl text-[11px] text-amber-900 leading-relaxed font-medium border border-amber-300/60">
+                💡 Hệ thống đã gửi mã xác thực gồm 6 chữ số đến địa chỉ Gmail của quý khách. Vui lòng kiểm tra hộp thư đến (hoặc thư mục Spam/Quảng cáo) để xác nhận.
               </div>
             </div>
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                Nhập Mã OTP (6 số)
+                Nhập Mã Xác Thực OTP (6 số)
               </label>
               <div className="relative">
                 <KeyRound className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
@@ -372,7 +338,7 @@ export default function CustomerLoginPage() {
                   type="text"
                   required
                   maxLength={6}
-                  placeholder="123456"
+                  placeholder="••••••"
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value)}
                   className="w-full text-center py-3 text-lg font-mono font-bold tracking-widest rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition shadow-xs"
@@ -389,23 +355,29 @@ export default function CustomerLoginPage() {
             </button>
           </form>
         )}
-
       </div>
 
       {/* Chuyển Sang Cổng Nhân Viên */}
       <div className="p-4 rounded-2xl border border-slate-200 bg-white text-center space-y-1 shadow-xs">
         <p className="text-xs text-slate-600 font-medium">
-          Bạn là Cố vấn dịch vụ, Quản đốc, Thợ máy hoặc Ban Giám Đốc?
+          Dành cho Cố vấn dịch vụ, Quản đốc, Kỹ thuật viên & Ban Giám Đốc
         </p>
         <Link
           href="/staff/login"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 hover:text-amber-700 hover:underline mt-1"
         >
           <Shield className="w-3.5 h-3.5" />
-          Đăng Nhập Cổng Nhân Viên Nội Bộ (Staff Portal) →
+          Đăng Nhập Cổng Nội Bộ Gara (Staff Portal) →
         </Link>
       </div>
-
     </div>
+  );
+}
+
+export default function CustomerLoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[50vh] flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-amber-500" /></div>}>
+      <CustomerLoginForm />
+    </Suspense>
   );
 }
