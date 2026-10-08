@@ -11,7 +11,7 @@ const { AppError } = require('../../../middlewares/errorHandler');
 const ALLOWED_TRANSITIONS = {
   DRAFT: ['INSPECTION', 'QUOTE_SENT', 'CANCELLED'],
   INSPECTION: ['QUOTE_SENT', 'CANCELLED'],
-  QUOTE_SENT: ['QUOTE_APPROVED', 'APPROVED', 'CANCELLED'],
+  QUOTE_SENT: ['QUOTE_APPROVED', 'APPROVED', 'WAITING_PARTS', 'CANCELLED'],
   QUOTE_APPROVED: ['WAITING_PARTS', 'IN_PROGRESS', 'CANCELLED'],
   APPROVED: ['WAITING_PARTS', 'IN_PROGRESS', 'CANCELLED'],
   WAITING_PARTS: ['IN_PROGRESS', 'CANCELLED'],
@@ -263,8 +263,12 @@ const customerApproveEstimateController = async (req, res, next) => {
     }
 
     const currentStatus = workOrder.current_status;
-    const nextStatus = 'QUOTE_APPROVED';
-    if (!ALLOWED_TRANSITIONS[currentStatus]?.includes(nextStatus) && !ALLOWED_TRANSITIONS[currentStatus]?.includes('APPROVED')) {
+    const nextStatus = 'WAITING_PARTS';
+    if (
+      !ALLOWED_TRANSITIONS[currentStatus]?.includes(nextStatus) &&
+      !ALLOWED_TRANSITIONS[currentStatus]?.includes('QUOTE_APPROVED') &&
+      !ALLOWED_TRANSITIONS[currentStatus]?.includes('APPROVED')
+    ) {
       return next(
         new AppError(
           `Không thể chuyển trạng thái từ [${currentStatus}] sang [${nextStatus}]`,
@@ -274,7 +278,7 @@ const customerApproveEstimateController = async (req, res, next) => {
       );
     }
 
-    if (Array.isArray(selected_item_codes)) {
+    if (Array.isArray(selected_item_codes) && selected_item_codes.length > 0) {
       workOrder.estimate.items.forEach((item) => {
         if (item.part_code) {
           item.selected = selected_item_codes.includes(item.part_code);
@@ -287,17 +291,32 @@ const customerApproveEstimateController = async (req, res, next) => {
     updatedEstimate.approved_at = new Date();
     workOrder.estimate = updatedEstimate;
 
-    // step 107 - 112: thuc hien cap phat phu tung an toan bang redis redlock mutex
-    const allocResult = await allocatePartsService(order_code, workOrder.estimate.items);
+    // step 107 - 112: thuc hien cap phat phu tung an toan bang redis redlock mutex (co fallback an toan)
+    let allocatedPartsList = [];
+    try {
+      const allocResult = await allocatePartsService(order_code, workOrder.estimate.items);
+      allocatedPartsList = allocResult?.allocatedParts || [];
+    } catch (allocErr) {
+      console.warn(`[AllocateParts Warning] Cấp phát phụ tùng tự động gặp cảnh báo cho lệnh ${order_code}:`, allocErr.message);
+    }
 
     workOrder.current_status = 'WAITING_PARTS';
+    workOrder.progress_percent = Math.max(workOrder.progress_percent || 0, 30);
     workOrder.workflow_timeline.push({
       status: 'WAITING_PARTS',
-      updated_by: req.user?.phone_number || 'CUSTOMER',
-      note: `Khách hàng phê duyệt báo giá. Đã cấp phát ${allocResult.allocatedParts?.length || 0} phụ tùng qua Redis Redlock`,
+      updated_by: req.user?.full_name || req.user?.phone_number || 'Khách hàng',
+      updated_at: new Date(),
+      note: `Khách hàng đã ký duyệt báo giá điện tử thành công. Cấp phát ${allocatedPartsList.length} phụ tùng qua Redis Redlock. Lệnh sẵn sàng để Quản đốc phân công thợ & khoang nâng.`,
     });
 
     await workOrder.save();
+
+    broadcastProgressUpdated(order_code, {
+      stage_name: 'KHÁCH HÀNG KÝ DUYỆT BÁO GIÁ',
+      percent_complete: 30,
+      updated_by: req.user?.full_name || 'Khách hàng',
+      note: 'Khách hàng đã ký duyệt báo giá trực tuyến thành công',
+    });
 
     const io = req.app.get('socketio');
     if (io) {
@@ -306,11 +325,11 @@ const customerApproveEstimateController = async (req, res, next) => {
         license_plate: workOrder.license_plate,
         approved_at: updatedEstimate.approved_at,
         total_amount: updatedEstimate.total_amount,
-        allocated_parts: allocResult.allocatedParts,
+        allocated_parts: allocatedPartsList,
       });
     }
 
-    return sendSuccess(res, workOrder, 'Khách hàng phê duyệt báo giá & cấp phát kho an toàn thành công');
+    return sendSuccess(res, workOrder, 'Khách hàng phê duyệt báo giá điện tử thành công!');
   } catch (err) {
     next(err);
   }

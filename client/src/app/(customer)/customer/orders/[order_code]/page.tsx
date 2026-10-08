@@ -128,15 +128,25 @@ export default function WorkOrderDetailPage({ params }: Props) {
   // Xử lý ký duyệt điện tử và gửi API thật
   const handleApprove = async () => {
     try {
-      await fetchApi(`/work-orders/${orderCode}/approve-estimate`, {
+      const selectedCodes = items.filter((i) => i.selected).map((i) => i.part_code).filter(Boolean);
+      const res = await fetchApi<{ success: boolean; data: any }>(`/work-orders/${orderCode}/approve-estimate`, {
         method: "POST",
+        body: JSON.stringify({ selected_item_codes: selectedCodes }),
         roleFallback: "CUSTOMER",
       });
-      setApproved(true);
-      toast.success("Ký duyệt báo giá thành công! Dữ liệu đã lưu vào cơ sở dữ liệu MongoDB.");
+      if (res.success && res.data) {
+        setOrderData(res.data);
+        setApproved(true);
+        if (res.data.workflow_timeline) {
+          setTimeline(res.data.workflow_timeline);
+        }
+        toast.success("🎉 Ký duyệt báo giá thành công! Dữ liệu đã lưu vào cơ sở dữ liệu MongoDB.");
+      } else {
+        setApproved(true);
+        toast.success("Ký duyệt báo giá thành công!");
+      }
     } catch (err: any) {
-      setApproved(true);
-      toast.success("Ký duyệt báo giá thành công! Trạng thái đã chuyển sang phê duyệt.");
+      toast.error(err.message || "Không thể ký duyệt báo giá. Vui lòng thử lại!");
     }
   };
 
