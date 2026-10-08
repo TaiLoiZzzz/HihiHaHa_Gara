@@ -1,4 +1,12 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+export function getApiBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host.includes("quachtailoi.id.vn") || (host !== "localhost" && host !== "127.0.0.1")) {
+      return process.env.NEXT_PUBLIC_API_URL || "https://api.hihihahagara.quachtailoi.id.vn/api/v1";
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+}
 
 export interface UserSession {
   id: string;
@@ -76,7 +84,7 @@ export async function getValidToken(roleFallback: string = "SERVICE_ADVISOR"): P
       OWNER: "0988888800",
     };
 
-    const res = await fetch(`${API_BASE_URL}/auth/dev-login`, {
+    const res = await fetch(`${getApiBaseUrl()}/auth/dev-login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -113,7 +121,7 @@ export async function fetchApi<T>(endpoint: string, options: FetchOptions = {}):
     reqHeaders["Authorization"] = `Bearer ${activeToken}`;
   }
 
-  const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+  const url = `${getApiBaseUrl()}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
 
   const response = await fetch(url, {
     headers: reqHeaders,
@@ -133,7 +141,7 @@ export async function fetchApi<T>(endpoint: string, options: FetchOptions = {}):
 export const api = {
   // 1. Đăng nhập nhân viên nội bộ thật (SĐT + Mật khẩu)
   staffLogin: async (phone_number: string, password: string) => {
-    const res = await fetch(`${API_BASE_URL}/auth/staff-login`, {
+    const res = await fetch(`${getApiBaseUrl()}/auth/staff-login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone_number, password }),
@@ -154,7 +162,7 @@ export const api = {
       const params = new URLSearchParams();
       if (license_plate) params.append("license_plate", license_plate);
       if (phone_number) params.append("phone_number", phone_number);
-      const res = await fetch(`${API_BASE_URL}/auth/lookup-customer?${params.toString()}`);
+      const res = await fetch(`${getApiBaseUrl()}/auth/lookup-customer?${params.toString()}`);
       return await res.json();
     } catch (e) {
       return { success: false, data: { found: false } };
@@ -163,7 +171,7 @@ export const api = {
 
   // 2. Yêu cầu mã OTP cho khách hàng (hỗ trợ nhập email trực tiếp)
   requestOtp: async (phone_number: string, license_plate: string, email?: string) => {
-    const res = await fetch(`${API_BASE_URL}/auth/request-otp`, {
+    const res = await fetch(`${getApiBaseUrl()}/auth/request-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone_number, license_plate, email }),
@@ -177,7 +185,7 @@ export const api = {
 
   // 3. Xác thực OTP và đăng nhập khách hàng thật
   verifyOtp: async (phone_number: string, license_plate: string, otp_code: string) => {
-    const res = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+    const res = await fetch(`${getApiBaseUrl()}/auth/verify-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone_number, license_plate, otp_code }),
