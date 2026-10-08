@@ -65,9 +65,21 @@ export default function WorkOrderDetailPage({ params }: Props) {
     async function loadData() {
       try {
         setLoading(true);
-        const res = await api.getWorkOrder(orderCode);
-        if (res.success && res.data) {
-          const wo = res.data;
+        let wo: any = null;
+        try {
+          const res = await api.getWorkOrder(orderCode);
+          if (res.success && res.data) {
+            wo = res.data;
+          }
+        } catch (fetchErr) {
+          // Nếu không lấy được mã này (ví dụ link cũ hoặc xe khác), lấy lệnh của chính khách hàng
+          const myOrders = await api.getMyWorkOrders();
+          if (myOrders.success && Array.isArray(myOrders.data) && myOrders.data.length > 0) {
+            wo = myOrders.data[0];
+          }
+        }
+
+        if (wo) {
           setOrderData(wo);
           if (wo.estimate?.items && wo.estimate.items.length > 0) {
             setItems(
@@ -77,7 +89,10 @@ export default function WorkOrderDetailPage({ params }: Props) {
               }))
             );
           }
-          if (wo.estimate?.approval_status === "APPROVED" || wo.current_status !== "QUOTE_SENT") {
+          if (
+            wo.estimate?.approval_status === "APPROVED" || 
+            (wo.current_status !== "QUOTE_SENT" && wo.current_status !== "DRAFT" && wo.current_status !== "INSPECTION")
+          ) {
             setApproved(true);
           }
           if (wo.workflow_timeline) {
@@ -88,7 +103,7 @@ export default function WorkOrderDetailPage({ params }: Props) {
           }
         }
       } catch (err: any) {
-        console.warn("Chưa tải được từ API, nạp dữ liệu gốc:", err.message);
+        console.warn("Chưa tải được từ API:", err.message);
       } finally {
         setLoading(false);
       }

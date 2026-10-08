@@ -5,16 +5,33 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, Car, FileText, CreditCard } from "lucide-react";
-import { getCurrentUser, clearSession, UserSession } from "@/lib/api";
+import { getCurrentUser, clearSession, UserSession, api } from "@/lib/api";
 import { toast } from "sonner";
 
 export function CustomerNavbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<UserSession | null>(null);
+  const [activeOrderCode, setActiveOrderCode] = useState<string>("WO-20261001-0089");
+  const [plateNumber, setPlateNumber] = useState<string>("51K-888.88");
 
   useEffect(() => {
-    setUser(getCurrentUser());
+    const curUser = getCurrentUser();
+    setUser(curUser);
+    if (curUser?.license_plate) {
+      setPlateNumber(curUser.license_plate);
+    }
+
+    // Tự động lấy Lệnh sửa chữa mới nhất của chính chủ xe này
+    api.getMyWorkOrders().then((res) => {
+      if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+        const firstOrder = res.data[0];
+        setActiveOrderCode(firstOrder.order_code);
+        if (firstOrder.license_plate) {
+          setPlateNumber(firstOrder.license_plate);
+        }
+      }
+    }).catch(() => {});
   }, []);
 
   const handleLogout = () => {
@@ -25,8 +42,8 @@ export function CustomerNavbar() {
 
   const navLinks = [
     { label: "Hồ Sơ Xe", href: "/customer", icon: Car },
-    { label: "Lệnh Đang Sửa", href: "/customer/orders/WO-20261001-0089", icon: FileText },
-    { label: "Thanh Toán QR", href: "/customer/payment/WO-20261001-0089", icon: CreditCard },
+    { label: "Lệnh Đang Sửa", href: `/customer/orders/${activeOrderCode}`, icon: FileText },
+    { label: "Thanh Toán QR", href: `/customer/payment/${activeOrderCode}`, icon: CreditCard },
   ];
 
   return (
@@ -51,7 +68,7 @@ export function CustomerNavbar() {
                   CỔNG CHỦ XE
                 </span>
                 <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-amber-100 text-amber-900 border border-amber-300">
-                  {user?.license_plate || "51K-888.88"}
+                  {plateNumber || user?.license_plate || "51K-888.88"}
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 font-medium">

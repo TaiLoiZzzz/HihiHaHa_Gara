@@ -42,7 +42,8 @@ const createWorkOrderController = async (req, res, next) => {
     const order_code = `WO-${dateStr}-${randomSuffix}`;
 
     const estimateData = calculateEstimateService(items || []);
-    const initialStatus = items && items.length > 0 ? 'QUOTE_SENT' : 'DRAFT';
+    // Quy chuan tiep nhan xe gara 4S: Xe vua vao xuong la INSPECTION (Tiep nhan xe - Cot 1 Kanban)
+    const initialStatus = 'INSPECTION';
 
     const workOrder = await WorkOrder.create({
       order_code,
@@ -144,9 +145,18 @@ const getWorkOrderDetailsController = async (req, res, next) => {
     }
 
     if (req.user && req.user.role === 'CUSTOMER') {
+      const userPhone = req.user.phone_number;
       const userPlate = req.user.license_plate;
-      if (userPlate && workOrder.license_plate !== userPlate) {
-        return next(new AppError('Bạn không có quyền truy cập Lệnh sửa chữa này', 403, 'FORBIDDEN'));
+      const isOwner = (userPhone && workOrder.customer_phone === userPhone) ||
+                      (userPlate && workOrder.license_plate === userPlate);
+      if (!isOwner) {
+        const cust = await Customer.findOne({
+          phone_number: userPhone,
+          'vehicles_owned.license_plate': workOrder.license_plate,
+        });
+        if (!cust) {
+          return next(new AppError('Bạn không có quyền truy cập Lệnh sửa chữa này', 403, 'FORBIDDEN'));
+        }
       }
     }
 

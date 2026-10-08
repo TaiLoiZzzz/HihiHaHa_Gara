@@ -18,6 +18,7 @@ import {
   Wrench,
   ClipboardList,
   Boxes,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -139,10 +140,75 @@ const STAGE_TO_STATUS: Record<KanbanCard["stage"], string> = {
 export default function WorkshopKanbanPage() {
   const [cards, setCards] = useState<KanbanCard[]>(INITIAL_CARDS);
   const [draggedCardId, setDraggedCardId] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
-  // Đồng bộ trạng thái lệnh thật từ MongoDB & Khôi phục vị trí thẻ khi bấm F5
+  // Đồng bộ trạng thái lệnh thật từ MongoDB & Khôi phục vị trí thẻ
+  const syncRealOrder = React.useCallback(async (showToast = false) => {
+    try {
+      setSyncing(true);
+      const resList = await api.getMyWorkOrders();
+      if (resList.success && Array.isArray(resList.data) && resList.data.length > 0) {
+        const mappedCards: KanbanCard[] = resList.data.map((wo: any, idx: number) => {
+          let stage: KanbanCard["stage"] = "in_progress";
+          let progress = typeof wo.progress_percent === "number" ? wo.progress_percent : 0;
+
+          if (wo.payment_status === "PAID" || wo.current_status === "PAID" || wo.current_status === "COMPLETED") {
+            stage = "completed";
+            progress = 100;
+          } else if (wo.current_status === "QUALITY_CHECK") {
+            stage = "qc";
+            progress = Math.max(progress, 85);
+          } else if (wo.current_status === "IN_PROGRESS") {
+            stage = "in_progress";
+            progress = progress || 50;
+          } else if (wo.current_status === "QUOTE_APPROVED" || wo.current_status === "WAITING_PARTS") {
+            stage = "approved";
+            progress = 30;
+          } else if (wo.current_status === "QUOTE_SENT") {
+            stage = "quoting";
+            progress = 20;
+          } else {
+            // DRAFT, INSPECTION -> Cột 1: Tiếp nhận xe!
+            stage = "intake";
+            progress = 10;
+          }
+
+          return {
+            id: `db-card-${wo.order_code || idx}`,
+            orderCode: wo.order_code,
+            plateNumber: wo.license_plate || "51K-888.88",
+            carModel: wo.vehicle_model || "Toyota Camry 2.5Q",
+            customerName: wo.customer_name || "Minh Thảo",
+            technician: wo.assigned_technician?.full_name || "Nguyễn Văn Thợ (THO-01)",
+            bay: "Khoang Nâng 02",
+            progress,
+            stage,
+            estimatedTime: "Hôm nay",
+            priority: (wo.priority || "normal") as "normal" | "urgent",
+          };
+        });
+
+        // Đảm bảo không bỏ sót thẻ demo nào
+        const extraCards = INITIAL_CARDS.filter(
+          (c) => !mappedCards.some((mc: any) => mc.orderCode === c.orderCode)
+        );
+        const finalCards = [...mappedCards, ...extraCards];
+        setCards(finalCards);
+        localStorage.setItem("hihihaha_kanban_cards", JSON.stringify(finalCards));
+
+        if (showToast) {
+          toast.success(`Đã đồng bộ Live ${mappedCards.length} xe từ cơ sở dữ liệu MongoDB!`);
+        }
+      }
+    } catch (err: any) {
+      if (showToast) toast.error("Không thể kết nối đến máy chủ MongoDB.");
+    } finally {
+      setSyncing(false);
+    }
+  }, []);
+
   React.useEffect(() => {
-    // 1. Phục hồi ngay lập tức từ localStorage để chống reset vị trí cột khi F5
+    // 1. Phục hồi nhanh từ cache
     const cachedKanban = localStorage.getItem("hihihaha_kanban_cards");
     if (cachedKanban) {
       try {
@@ -150,101 +216,9 @@ export default function WorkshopKanbanPage() {
         if (Array.isArray(parsed) && parsed.length > 0) setCards(parsed);
       } catch (e) {}
     }
-
-    // 2. Đồng bộ từ MongoDB
-    async function syncRealOrder() {
-      try {
-        const resList = await api.getMyWorkOrders();
-        if (resList.success && Array.isArray(resList.data) && resList.data.length > 0) {
-          const mappedCards = resList.data.map((wo: any, idx: number) => {
-            let stage: KanbanCard["stage"] = "in_progress";
-            let progress = typeof wo.progress_percent === "number" ? wo.progress_percent : 0;
-
-            if (wo.payment_status === "PAID" || wo.current_status === "PAID" || wo.current_status === "COMPLETED") {
-              stage = "completed";
-              progress = 100;
-            } else if (wo.current_status === "QUALITY_CHECK") {
-              stage = "qc";
-              progress = Math.max(progress, 85);
-            } else if (wo.current_status === "IN_PROGRESS") {
-              stage = "in_progress";
-              progress = progress || 50;
-            } else if (wo.current_status === "QUOTE_APPROVED" || wo.current_status === "WAITING_PARTS") {
-              stage = "approved";
-              progress = 30;
-            } else if (wo.current_status === "QUOTE_SENT") {
-              stage = "quoting";
-              progress = 20;
-            } else {
-              stage = "intake";
-              progress = 10;
-            }
-
-            return {
-              id: `db-card-${wo.order_code || idx}`,
-              orderCode: wo.order_code,
-              plateNumber: wo.license_plate || "51K-888.88",
-              carModel: wo.vehicle_model || "Toyota Camry 2.5Q",
-              customerName: wo.customer_name || "Minh Thảo",
-              technician: wo.assigned_technician?.full_name || "Nguyễn Văn Thợ (THO-01)",
-              bay: "Khoang Nâng 02",
-              progress,
-              stage,
-              estimatedTime: "Hôm nay",
-              priority: (wo.priority || "normal") as "normal" | "urgent",
-            };
-          });
-
-          const extraCards = INITIAL_CARDS.filter(
-            (c) => !mappedCards.some((mc: any) => mc.orderCode === c.orderCode)
-          );
-          const finalCards = [...mappedCards, ...extraCards];
-          setCards(finalCards);
-          localStorage.setItem("hihihaha_kanban_cards", JSON.stringify(finalCards));
-        } else {
-          const res = await api.getWorkOrder("WO-20261001-0089");
-          if (res.success && res.data) {
-            const wo = res.data;
-            let stage: KanbanCard["stage"] = "in_progress";
-            let progress = wo.progress_percent || 60;
-
-            if (wo.payment_status === "PAID" || wo.current_status === "PAID" || wo.current_status === "COMPLETED") {
-              stage = "completed";
-              progress = 100;
-            } else if (wo.current_status === "QUALITY_CHECK") {
-              stage = "qc";
-              progress = Math.max(progress, 85);
-            } else if (wo.current_status === "IN_PROGRESS") {
-              stage = "in_progress";
-            } else if (wo.current_status === "QUOTE_APPROVED" || wo.current_status === "WAITING_PARTS") {
-              stage = "approved";
-            } else if (wo.current_status === "QUOTE_SENT") {
-              stage = "quoting";
-            } else if (wo.current_status === "DRAFT" || wo.current_status === "INSPECTION") {
-              stage = "intake";
-            }
-
-            setCards((prev) =>
-              prev.map((c) =>
-                c.orderCode === "WO-20261001-0089"
-                  ? {
-                      ...c,
-                      stage,
-                      progress,
-                      customerName: wo.customer_name || c.customerName,
-                      plateNumber: wo.license_plate || c.plateNumber,
-                    }
-                  : c
-              )
-            );
-          }
-        }
-      } catch (err: any) {
-        console.warn("Lỗi sync kanban:", err.message);
-      }
-    }
-    syncRealOrder();
-  }, []);
+    // 2. Nạp mới nhất từ MongoDB
+    syncRealOrder(false);
+  }, [syncRealOrder]);
 
   const handleDragStart = (id: string) => {
     setDraggedCardId(id);
@@ -309,7 +283,17 @@ export default function WorkshopKanbanPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <button
+            type="button"
+            onClick={() => syncRealOrder(true)}
+            disabled={syncing}
+            className="px-3.5 py-2.5 rounded-xl border border-slate-300 hover:border-amber-400 bg-white hover:bg-amber-50 text-slate-700 font-bold text-xs transition-all flex items-center gap-1.5 shadow-xs active:scale-95 disabled:opacity-50"
+            title="Đồng bộ trực tiếp dữ liệu từ MongoDB"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-amber-500 ${syncing ? "animate-spin" : ""}`} />
+            <span>{syncing ? "Đang nạp..." : "Đồng Bộ Live DB"}</span>
+          </button>
           <Link
             href="/manager/work-orders"
             className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs transition-all flex items-center gap-1.5 shadow-md active:scale-95"

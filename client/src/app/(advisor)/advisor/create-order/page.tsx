@@ -224,7 +224,10 @@ export default function CreateOrderPage() {
       });
 
       if (res.success && res.data) {
-        toast.success(`Khởi tạo thành công Lệnh Sửa Chữa #${res.data.order_code}!`);
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("hihihaha_kanban_cards");
+        }
+        toast.success(`Khởi tạo thành công Lệnh #${res.data.order_code}! Xe đã vào Cột 1 (Tiếp nhận xe) trên bảng Kanban.`);
         setTimeout(() => {
           router.push("/advisor/work-orders");
         }, 800);

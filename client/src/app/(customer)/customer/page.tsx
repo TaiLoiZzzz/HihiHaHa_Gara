@@ -15,9 +15,15 @@ export default function CustomerDashboardPage() {
     async function loadCustomerVehicle() {
       try {
         setLoading(true);
-        const res = await api.getWorkOrder("WO-20261001-0089");
-        if (res.success && res.data) {
-          setOrder(res.data);
+        // Tự động nạp Lệnh sửa chữa thật của chính khách hàng này từ MongoDB
+        const resList = await api.getMyWorkOrders();
+        if (resList.success && Array.isArray(resList.data) && resList.data.length > 0) {
+          setOrder(resList.data[0]);
+        } else {
+          const res = await api.getWorkOrder("WO-20261001-0089");
+          if (res.success && res.data) {
+            setOrder(res.data);
+          }
         }
       } catch (err: any) {
         console.warn("Chưa tải được profile xe:", err.message);
