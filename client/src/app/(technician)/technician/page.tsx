@@ -37,6 +37,8 @@ export default function TechnicianTabletPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [pin, setPin] = useState("");
   const techName = "Phạm Thợ Xưởng (Mã: THO-01)";
+  const [isPaidOrder, setIsPaidOrder] = useState(false);
+  const [isCompletedOrder, setIsCompletedOrder] = useState(false);
 
   // Công việc hiện tại tại Khoang nâng số 02
   const [activeOrder, setActiveOrder] = useState({
@@ -129,6 +131,13 @@ export default function TechnicianTabletPage() {
             assignedAt: "08:30 Hôm nay",
           });
 
+          if (wo.payment_status === "PAID" || wo.current_status === "PAID" || wo.current_status === "DELIVERED") {
+            setIsPaidOrder(true);
+          }
+          if (wo.current_status === "COMPLETED" || wo.current_status === "PAYMENT_PENDING") {
+            setIsCompletedOrder(true);
+          }
+
           // Nạp checklist tasks từ MongoDB nếu đã lưu
           if (Array.isArray(wo.tasks) && wo.tasks.length > 0) {
             setTasks(wo.tasks);
@@ -177,12 +186,37 @@ export default function TechnicianTabletPage() {
 
   const handleClearPin = () => setPin("");
 
+  // KCS Nghiệm thu hoàn tất & Chuyển sang COMPLETED
+  const handleCompleteOrder = async () => {
+    try {
+      const res = await api.updateStatus(
+        activeOrder.orderCode,
+        "COMPLETED",
+        "Kỹ thuật viên đã kiểm định an toàn KCS đạt chuẩn 100%, sẵn sàng bàn giao & quyết toán"
+      );
+      if (res.success) {
+        setIsCompletedOrder(true);
+        toast.success("Đã hoàn tất nghiệm thu KCS! Lệnh sửa chữa chuyển sang COMPLETED - Khách hàng đã có quyền thanh toán.");
+      } else {
+        toast.error((res as any).message || "Không thể chuyển trạng thái");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Lỗi cập nhật trạng thái");
+    }
+  };
+
   // Đồng bộ tiến độ về Backend & Lưu cache vĩnh viễn
   const handleSyncProgress = async (val: number) => {
+    if (isPaidOrder) {
+      toast.error("Lệnh sửa chữa đã quyết toán thanh toán (PAID). Hồ sơ kỹ thuật đã khóa!");
+      return;
+    }
+
     let updatedTasks = tasks;
     if (val === 100) {
       updatedTasks = tasks.map((t) => ({ ...t, status: "done" as const, progress: 100 }));
       setTasks(updatedTasks);
+      setIsCompletedOrder(true);
     }
     localStorage.setItem("tech_progress_" + activeOrder.orderCode, val.toString());
     localStorage.setItem("tech_tasks_" + activeOrder.orderCode, JSON.stringify(updatedTasks));
@@ -202,6 +236,11 @@ export default function TechnicianTabletPage() {
 
   // Cập nhật trạng thái từng task & Lưu vĩnh viễn vào MongoDB + localStorage
   const handleToggleTaskStatus = async (id: string) => {
+    if (isPaidOrder) {
+      toast.error("Lệnh sửa chữa đã quyết toán thanh toán (PAID). Không thể thay đổi công đoạn!");
+      return;
+    }
+
     const nextTasks = tasks.map((t) => {
       if (t.id === id) {
         if (t.status === "pending") return { ...t, status: "in_progress" as const, progress: 50 };
@@ -239,6 +278,11 @@ export default function TechnicianTabletPage() {
 
   // Chụp ảnh từ camera khoang nâng và lưu về MongoDB
   const handleSimulateCapture = async () => {
+    if (isPaidOrder) {
+      toast.error("Lệnh sửa chữa đã quyết toán thanh toán (PAID). Không thể tải thêm ảnh!");
+      return;
+    }
+
     const newPhoto = {
       id: `img-${Date.now()}`,
       stage: "Ảnh nghiệm thu bổ sung",
@@ -366,6 +410,51 @@ export default function TechnicianTabletPage() {
         </div>
       </div>
 
+      {/* Banner Trạng Thái Lệnh - Nếu Đã Thanh Toán hoặc Cần Nghiệm Thu KCS */}
+      {isPaidOrder ? (
+        <div className="p-6 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500/40 text-emerald-900 dark:text-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="w-8 h-8 text-emerald-600 shrink-0" />
+            <div>
+              <h3 className="text-base font-black uppercase">Lệnh Sửa Chữa Đã Quyết Toán & Thanh Toán (PAID)</h3>
+              <p className="text-xs font-medium">Hồ sơ kỹ thuật đã được đóng vĩnh viễn sau khi khách thanh toán thành công. Các công đoạn thi công đã được khóa an toàn.</p>
+            </div>
+          </div>
+          <span className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-mono font-bold text-xs uppercase shrink-0">
+            Hồ Sơ Đã Khóa
+          </span>
+        </div>
+      ) : isCompletedOrder ? (
+        <div className="p-5 rounded-2xl bg-blue-500/10 border border-blue-500/30 text-blue-900 dark:text-blue-200 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="w-6 h-6 text-blue-600 shrink-0" />
+            <div>
+              <h4 className="text-sm font-bold">Đã Nghiệm Thu KCS Hoàn Tất 100% (COMPLETED)</h4>
+              <p className="text-xs text-muted-foreground">Xe đang chờ khách hàng hoàn tất thanh toán quyết toán tại quầy hoặc qua VietQR.</p>
+            </div>
+          </div>
+          <span className="px-3 py-1 rounded-lg bg-blue-600 text-white font-mono font-bold text-xs">CHỜ THANH TOÁN</span>
+        </div>
+      ) : (overallProgress === 100 || tasks.every((t) => t.status === "done")) ? (
+        <div className="p-6 rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <Sparkles className="w-8 h-8 text-amber-500 shrink-0" />
+            <div>
+              <h3 className="text-base font-bold text-foreground">Đã Hoàn Tất 100% Các Hạng Mục Kỹ Thuật!</h3>
+              <p className="text-xs text-muted-foreground">Bấm nút xác nhận để ký nghiệm thu an toàn KCS và kích hoạt quyền thanh toán cho chủ xe.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleCompleteOrder}
+            className="px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-600/30 active:scale-95 flex items-center gap-2 shrink-0 animate-pulse"
+          >
+            <CheckCircle2 className="w-4 h-4 text-white" />
+            Nghiệm Thu KCS & Mở Thanh Toán
+          </button>
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Tiến độ & Danh sách Checklist kỹ thuật (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
@@ -390,6 +479,7 @@ export default function TechnicianTabletPage() {
                 min="0"
                 max="100"
                 step="5"
+                disabled={isPaidOrder}
                 value={overallProgress}
                 onChange={(e) => {
                   setOverallProgress(Number(e.target.value));
@@ -397,7 +487,7 @@ export default function TechnicianTabletPage() {
                 onPointerUp={(e) => {
                   handleSyncProgress(Number((e.target as HTMLInputElement).value));
                 }}
-                className="w-full h-4 bg-muted rounded-lg appearance-none cursor-pointer accent-amber-500"
+                className="w-full h-4 bg-muted rounded-lg appearance-none cursor-pointer accent-amber-500 disabled:opacity-50"
               />
               <div className="flex justify-between text-[11px] font-mono text-muted-foreground px-1">
                 <span>0% Nhận xe</span>
@@ -477,8 +567,9 @@ export default function TechnicianTabletPage() {
 
                     <button
                       type="button"
+                      disabled={isPaidOrder}
                       onClick={() => handleToggleTaskStatus(task.id)}
-                      className={`px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition-colors ${
+                      className={`px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                         task.status === "done"
                           ? "bg-emerald-500 text-white"
                           : task.status === "in_progress"
@@ -520,11 +611,12 @@ export default function TechnicianTabletPage() {
             {/* Nút bấm chụp ảnh to cảm ứng */}
             <button
               type="button"
+              disabled={isPaidOrder}
               onClick={handleSimulateCapture}
-              className="w-full py-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-black font-extrabold text-sm shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-2 active:scale-98"
+              className="w-full py-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-black font-extrabold text-sm shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-2 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Camera className="w-5 h-5" />
-              Chụp & Tải Lên Ảnh Nghiệm Thu
+              {isPaidOrder ? "Đã Khóa Chụp Ảnh (Đơn Đã Thanh Toán)" : "Chụp & Tải Lên Ảnh Nghiệm Thu"}
             </button>
 
             {/* Danh sách ảnh */}

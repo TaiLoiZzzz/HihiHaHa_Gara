@@ -344,7 +344,16 @@ const updateProgressController = async (req, res, next) => {
       return next(new AppError(`Không tìm thấy Lệnh sửa chữa [${order_code}]`, 404, 'WORK_ORDER_NOT_FOUND'));
     }
 
-    // Luu checklist cong viec tasks vao MongoDB
+    // 1. Chan tuyet doi viec sua doi cong doan khi lenh da quyet toan thanh toan
+    if (workOrder.payment_status === 'PAID' || workOrder.current_status === 'PAID' || workOrder.current_status === 'DELIVERED') {
+      return next(new AppError(
+        'Lệnh sửa chữa đã hoàn tất quyết toán thanh toán (PAID). Hồ sơ kỹ thuật đã đóng, không thể tiếp tục chỉnh sửa hoặc cập nhật công đoạn thi công.',
+        400,
+        'ORDER_ALREADY_PAID'
+      ));
+    }
+
+    // 2. Luu checklist cong viec tasks vao MongoDB
     if (Array.isArray(tasks) && tasks.length > 0) {
       workOrder.tasks = tasks;
     }
@@ -360,16 +369,34 @@ const updateProgressController = async (req, res, next) => {
       }
     }
 
-    const progressNote = note || `Thi công công đoạn [${stage_name}] hoàn thành ${percent_complete || 100}%`;
-    if (percent_complete !== undefined) {
-      workOrder.progress_percent = Number(percent_complete);
-    }
+    const progressVal = percent_complete !== undefined ? Number(percent_complete) : workOrder.progress_percent || 0;
+    workOrder.progress_percent = progressVal;
+
+    // Kiem tra tat ca tasks da hoan thanh 100% chua
+    const hasTasks = Array.isArray(workOrder.tasks) && workOrder.tasks.length > 0;
+    const allTasksDone = hasTasks ? workOrder.tasks.every((t) => t.status === 'done') : progressVal >= 100;
+
+    const progressNote = note || `Thi công công đoạn [${stage_name}] hoàn thành ${progressVal}%`;
     workOrder.workflow_timeline.push({
       status: workOrder.current_status,
       updated_by: req.user?.phone_number || 'TECHNICIAN',
       updated_at: new Date(),
       note: progressNote,
     });
+
+    // Neu da hoan tat 100% tat ca cong doan va chua COMPLETED -> tu dong chuyen sang COMPLETED de mo thanh toan
+    if ((allTasksDone || progressVal >= 100) && ['IN_PROGRESS', 'QUALITY_CHECK', 'WAITING_PARTS', 'QUOTE_APPROVED'].includes(workOrder.current_status)) {
+      workOrder.current_status = 'COMPLETED';
+      workOrder.progress_percent = 100;
+      workOrder.workflow_timeline.push({
+        status: 'COMPLETED',
+        updated_by: req.user?.phone_number || 'TECHNICIAN',
+        updated_at: new Date(),
+        note: 'Kỹ thuật viên đã hoàn thành 100% tất cả các công đoạn thi công và nghiệm thu KCS đạt chuẩn. Lệnh sửa chữa chuyển sang Hoàn Tất (COMPLETED) - Sẵn sàng quyết toán thanh toán & bàn giao xe.',
+      });
+    } else if (['WAITING_PARTS', 'QUOTE_APPROVED'].includes(workOrder.current_status)) {
+      workOrder.current_status = 'IN_PROGRESS';
+    }
 
     await workOrder.save();
 

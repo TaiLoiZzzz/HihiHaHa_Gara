@@ -24,6 +24,7 @@ export default function CustomerPaymentPage({ params }: Props) {
   const [paid, setPaid] = useState(false);
   const [totalAmount, setTotalAmount] = useState(2808000);
   const [plateNumber, setPlateNumber] = useState("51K-888.88");
+  const [orderStatus, setOrderStatus] = useState<string>("COMPLETED");
   const [vnpayUrl, setVnpayUrl] = useState<string | null>(null);
 
   // Nạp dữ liệu thật từ WorkOrder
@@ -34,6 +35,9 @@ export default function CustomerPaymentPage({ params }: Props) {
         const res = await api.getWorkOrder(orderCode);
         if (res.success && res.data) {
           const wo = res.data;
+          if (wo.current_status) {
+            setOrderStatus(wo.current_status);
+          }
           if (wo.estimate?.total_amount) {
             setTotalAmount(wo.estimate.total_amount);
           }
@@ -131,75 +135,112 @@ export default function CustomerPaymentPage({ params }: Props) {
           </p>
         </div>
 
-        {/* Khối Mã VietQR Thật Chuẩn Ngân Hàng */}
-        <div className="flex flex-col items-center justify-center space-y-4">
-          <div className="p-6 rounded-3xl bg-white border-2 border-amber-500/40 shadow-xl flex flex-col items-center max-w-sm w-full">
-            {/* Ảnh VietQR chuẩn từ Napas 247 */}
-            <div className="relative bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-              <img
-                src={`https://img.vietqr.io/image/MB-0797526990-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(orderCode)}&accountName=GARA%20HIHIHAHA%20AUTO`}
-                alt="Mã QR Chuyển Khoản VietQR"
-                className="w-64 h-auto object-contain rounded-xl mx-auto"
-                onError={(e) => {
-                  // Fallback nếu offline hoặc lỗi mạng
-                  e.currentTarget.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`2|99|0797526990|MB|${totalAmount}|${orderCode}`)}`;
-                }}
-              />
+        {/* Khối Mã VietQR hoặc Cảnh Báo Quy Trình */}
+        {!(orderStatus === "COMPLETED" || orderStatus === "PAYMENT_PENDING" || orderStatus === "PAID" || paid) ? (
+          <div className="p-8 rounded-3xl bg-amber-50 border-2 border-amber-300 text-center space-y-5">
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-700 mx-auto flex items-center justify-center font-bold">
+              <Clock className="w-8 h-8 animate-spin" />
             </div>
-
-            {/* Bảng Chi Tiết Thông Tin Chuyển Khoản */}
-            <div className="w-full mt-4 pt-4 border-t border-slate-100 space-y-2 text-left text-xs">
-              <div className="flex justify-between items-center py-1 border-b border-slate-50">
-                <span className="text-slate-500 font-medium">Ngân hàng:</span>
-                <span className="font-bold text-slate-800">MB Bank (Quân Đội)</span>
-              </div>
-              <div className="flex justify-between items-center py-1 border-b border-slate-50">
-                <span className="text-slate-500 font-medium">Số tài khoản:</span>
-                <span className="font-mono font-bold text-amber-600 text-sm tracking-wider">0797526990</span>
-              </div>
-              <div className="flex justify-between items-center py-1 border-b border-slate-50">
-                <span className="text-slate-500 font-medium">Chủ thụ hưởng:</span>
-                <span className="font-bold text-slate-800 uppercase">GARA HIHIHAHA AUTO</span>
-              </div>
-              <div className="flex justify-between items-center py-1 border-b border-slate-50">
-                <span className="text-slate-500 font-medium">Số tiền:</span>
-                <span className="font-mono font-bold text-slate-900">{formatCurrencyVND(totalAmount)}</span>
-              </div>
-              <div className="flex justify-between items-center py-1">
-                <span className="text-slate-500 font-medium">Nội dung CK:</span>
-                <span className="font-mono font-extrabold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">{orderCode}</span>
-              </div>
+            <div className="space-y-2 max-w-md mx-auto">
+              <h3 className="text-xl font-black text-amber-950">Chưa Đạt Điều Kiện Thanh Toán</h3>
+              <p className="text-xs text-amber-900 leading-relaxed font-medium">
+                Theo quy chuẩn gara 4S, quý khách chỉ thanh toán sau khi đội ngũ kỹ thuật viên hoàn tất 100% công đoạn sửa chữa và xe đạt nghiệm thu an toàn KCS.
+              </p>
+            </div>
+            <div className="p-4 rounded-2xl bg-white border border-amber-200 text-xs text-slate-700 max-w-md mx-auto flex items-center justify-between">
+              <span>Trạng thái xe hiện tại:</span>
+              <span className="font-mono font-bold px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300">
+                {orderStatus === "IN_PROGRESS"
+                  ? "ĐANG THI CÔNG SỬA CHỮA"
+                  : orderStatus === "WAITING_PARTS"
+                  ? "CHỜ PHỤ TÙNG & XẾP KHOANG"
+                  : orderStatus === "QUOTE_SENT"
+                  ? "CHỜ PHÊ DUYỆT BÁO GIÁ"
+                  : orderStatus}
+              </span>
+            </div>
+            <div className="pt-2">
+              <Link href={`/customer/orders/${orderCode}`}>
+                <button className="px-6 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-amber-400 font-black text-xs uppercase tracking-wider transition shadow-md inline-flex items-center gap-2">
+                  <ArrowLeft className="w-4 h-4 text-amber-400" />
+                  Quay Lại Theo Dõi Tiến Độ Khoang Nâng
+                </button>
+              </Link>
             </div>
           </div>
+        ) : (
+          <>
+            {/* Khối Mã VietQR Thật Chuẩn Ngân Hàng */}
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <div className="p-6 rounded-3xl bg-white border-2 border-amber-500/40 shadow-xl flex flex-col items-center max-w-sm w-full">
+                {/* Ảnh VietQR chuẩn từ Napas 247 */}
+                <div className="relative bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+                  <img
+                    src={`https://img.vietqr.io/image/MB-0797526990-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(orderCode)}&accountName=GARA%20HIHIHAHA%20AUTO`}
+                    alt="Mã QR Chuyển Khoản VietQR"
+                    className="w-64 h-auto object-contain rounded-xl mx-auto"
+                    onError={(e) => {
+                      // Fallback nếu offline hoặc lỗi mạng
+                      e.currentTarget.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`2|99|0797526990|MB|${totalAmount}|${orderCode}`)}`;
+                    }}
+                  />
+                </div>
 
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <Clock className="w-3.5 h-3.5 text-amber-500" />
-            Mã QR tự động cập nhật số tiền & nội dung đơn hàng
-          </div>
-        </div>
+                {/* Bảng Chi Tiết Thông Tin Chuyển Khoản */}
+                <div className="w-full mt-4 pt-4 border-t border-slate-100 space-y-2 text-left text-xs">
+                  <div className="flex justify-between items-center py-1 border-b border-slate-50">
+                    <span className="text-slate-500 font-medium">Ngân hàng:</span>
+                    <span className="font-bold text-slate-800">MB Bank (Quân Đội)</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-slate-50">
+                    <span className="text-slate-500 font-medium">Số tài khoản:</span>
+                    <span className="font-mono font-bold text-amber-600 text-sm tracking-wider">0797526990</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-slate-50">
+                    <span className="text-slate-500 font-medium">Chủ thụ hưởng:</span>
+                    <span className="font-bold text-slate-800 uppercase">GARA HIHIHAHA AUTO</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-slate-50">
+                    <span className="text-slate-500 font-medium">Số tiền:</span>
+                    <span className="font-mono font-bold text-slate-900">{formatCurrencyVND(totalAmount)}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-slate-500 font-medium">Nội dung CK:</span>
+                    <span className="font-mono font-extrabold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">{orderCode}</span>
+                  </div>
+                </div>
+              </div>
 
-        {/* Nút Hành Động Thanh Toán */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-          
-          <button
-            onClick={handleCreateVnpayUrl}
-            disabled={loading || paid}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider transition shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            <CreditCard className="w-4 h-4" />
-            {loading ? "Đang kết nối cổng..." : "Cổng VNPay Sandbox (NCB)"}
-            <ExternalLink className="w-3.5 h-3.5" />
-          </button>
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <Clock className="w-3.5 h-3.5 text-amber-500" />
+                Mã QR tự động cập nhật số tiền & nội dung đơn hàng
+              </div>
+            </div>
 
-          <button
-            onClick={handleConfirmPayment}
-            disabled={loading || paid}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs uppercase tracking-wider transition shadow-amber-glow flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            {paid ? "Đã Thanh Toán Thành Công" : "Xác Nhận Đã Chuyển Khoản"}
-          </button>
-        </div>
+            {/* Nút Hành Động Thanh Toán */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+              
+              <button
+                onClick={handleCreateVnpayUrl}
+                disabled={loading || paid}
+                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider transition shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <CreditCard className="w-4 h-4" />
+                {loading ? "Đang kết nối cổng..." : "Cổng VNPay Sandbox (NCB)"}
+                <ExternalLink className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                onClick={handleConfirmPayment}
+                disabled={loading || paid}
+                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs uppercase tracking-wider transition shadow-amber-glow flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                {paid ? "Đã Thanh Toán Thành Công" : "Xác Nhận Đã Chuyển Khoản"}
+              </button>
+            </div>
+          </>
+        )}
 
         {paid && (
           <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-medium space-y-2 animate-in fade-in">

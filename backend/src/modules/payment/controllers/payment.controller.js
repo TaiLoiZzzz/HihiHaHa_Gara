@@ -25,6 +25,19 @@ const createPaymentUrlController = async (req, res, next) => {
       return next(new AppError('Số tiền thanh toán cho Lệnh sửa chữa không hợp lệ', 400, 'INVALID_AMOUNT'));
     }
 
+    // Kiem tra quy trinh nghiep vu gara: xe phai hoan thanh 100% thi cong & nghiem thu truoc khi mo thanh toan
+    const ALLOWED_PAYMENT_STATUSES = ['COMPLETED', 'PAYMENT_PENDING'];
+    if (!ALLOWED_PAYMENT_STATUSES.includes(workOrder.current_status)) {
+      if (workOrder.payment_status === 'PAID' || workOrder.current_status === 'PAID') {
+        return next(new AppError('Lệnh sửa chữa này đã được quyết toán thanh toán thành công trước đó.', 400, 'ALREADY_PAID'));
+      }
+      return next(new AppError(
+        `Không thể tạo yêu cầu thanh toán: Xe đang ở trạng thái [${workOrder.current_status}]. Quy trình gara yêu cầu kỹ thuật viên hoàn tất 100% các công đoạn thi công và nghiệm thu an toàn (COMPLETED) trước khi thanh toán.`,
+        400,
+        'WORK_ORDER_NOT_COMPLETED'
+      ));
+    }
+
     // 2. tao khoa phan tan phien thanh toan 10 phut tren redis (step 118)
     await createPaymentSessionLock(order_code);
 
@@ -218,6 +231,29 @@ const confirmPaymentController = async (req, res, next) => {
 
     const amount = workOrder.estimate?.total_amount || 0;
     const now = new Date();
+
+    // Kiem tra quy trinh nghiep vu gara: xe phai hoan thanh 100% thi cong & nghiem thu truoc khi quyet toan
+    const ALLOWED_PAYMENT_STATUSES = ['COMPLETED', 'PAYMENT_PENDING'];
+    if (!ALLOWED_PAYMENT_STATUSES.includes(workOrder.current_status)) {
+      if (workOrder.payment_status === 'PAID' || workOrder.current_status === 'PAID') {
+        return sendSuccess(
+          res,
+          {
+            order_code,
+            payment_status: 'PAID',
+            current_status: 'PAID',
+            amount,
+            paid_at: workOrder.paid_at,
+          },
+          'Lệnh sửa chữa này đã được quyết toán thanh toán thành công trước đó.'
+        );
+      }
+      return next(new AppError(
+        `Không thể xác nhận thanh toán: Xe đang ở trạng thái [${workOrder.current_status}]. Quy trình gara yêu cầu kỹ thuật viên hoàn tất 100% các công đoạn thi công và nghiệm thu an toàn (COMPLETED) trước khi thanh toán.`,
+        400,
+        'WORK_ORDER_NOT_COMPLETED'
+      ));
+    }
 
     // 1. Cap nhat WorkOrder trong MongoDB
     workOrder.payment_status = 'PAID';

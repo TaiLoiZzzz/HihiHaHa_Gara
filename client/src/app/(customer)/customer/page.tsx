@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Car, Award, Calendar, FileText, ChevronRight, ShieldCheck, Clock, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
+import { Car, Award, Calendar, FileText, ChevronRight, ShieldCheck, Clock, ArrowRight, Loader2, CheckCircle2, CreditCard } from "lucide-react";
 import { formatCurrencyVND } from "@/lib/utils";
 import { LiquidGlassButton } from "@/components/ui/liquid-glass-button";
 import { api } from "@/lib/api";
@@ -99,28 +99,85 @@ export default function CustomerDashboardPage() {
             </button>
           </Link>
         </div>
-      ) : (
-        <div className="p-8 rounded-3xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-2 border-amber-500/40 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+      ) : order?.current_status === "COMPLETED" || order?.current_status === "PAYMENT_PENDING" ? (
+        <div className="p-8 rounded-3xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border-2 border-emerald-500/40 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 text-xs font-mono font-bold rounded-full bg-amber-500 text-slate-950">
-                {order?.current_status === "QUOTE_SENT" ? "CẦN DUYỆT BÁO GIÁ" : "CHỜ THANH TOÁN"}
+              <span className="px-2.5 py-0.5 text-xs font-mono font-bold rounded-full bg-emerald-600 text-white flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" /> HOÀN TẤT THI CÔNG • SẴN SÀNG THANH TOÁN
               </span>
               <span className="text-xs font-mono font-bold text-slate-500">
                 Mã: {orderCode}
               </span>
             </div>
             <h2 className="text-xl font-bold text-slate-900">
-              Báo Giá Bảo Dưỡng 40.000km & Thay Má Phanh Trước
+              Kỹ Thuật Viên Đã Nghiệm Thu KCS Đạt Chuẩn 100%
             </h2>
             <p className="text-xs text-slate-600">
-              Cố vấn dịch vụ Quang Tùng đã gửi báo giá nhúng VAT 8%. Tổng chi phí dự toán: <strong className="text-amber-600 font-mono text-sm">{formatCurrencyVND(totalAmount)}</strong>.
+              Tất cả các hạng mục bảo dưỡng và thay thế phụ tùng đã hoàn thành. Quý khách vui lòng tiến hành thanh toán quyết toán để nhận xe. Tổng chi phí: <strong className="text-emerald-700 font-mono text-sm">{formatCurrencyVND(totalAmount)}</strong>.
+            </p>
+          </div>
+
+          <Link href={`/customer/payment/${orderCode}`}>
+            <button className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider transition shadow-md shadow-emerald-600/30 active:scale-95 flex items-center gap-2 animate-pulse">
+              <CreditCard className="w-4 h-4 text-white" />
+              Thanh Toán Ngay
+              <ArrowRight className="w-4 h-4 ml-1 text-white" />
+            </button>
+          </Link>
+        </div>
+      ) : order?.current_status === "IN_PROGRESS" || order?.current_status === "QUALITY_CHECK" ? (
+        <div className="p-8 rounded-3xl bg-gradient-to-r from-cyan-500/10 via-cyan-500/5 to-transparent border-2 border-cyan-500/40 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 text-xs font-mono font-bold rounded-full bg-cyan-600 text-white flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                ĐANG THI CÔNG SỬA CHỮA ({order?.progress_percent || 60}%)
+              </span>
+              <span className="text-xs font-mono font-bold text-slate-500">
+                Mã: {orderCode}
+              </span>
+            </div>
+            <h2 className="text-xl font-bold text-slate-900">
+              Đội Ngũ Kỹ Thuật Viên Đang Thi Công Tại Khoang Nâng
+            </h2>
+            <p className="text-xs text-slate-600">
+              Xe đang được thực hiện bảo dưỡng theo các hạng mục quý khách đã phê duyệt. Theo quy chuẩn 4S, nút thanh toán sẽ mở sau khi kỹ thuật viên hoàn tất 100% và kiểm định an toàn KCS.
+            </p>
+          </div>
+
+          <Link href={`/customer/orders/${orderCode}`}>
+            <button className="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-cyan-400 font-black text-xs uppercase tracking-wider transition shadow-md flex items-center gap-2">
+              Xem Tiến Độ Khoang Nâng
+              <ArrowRight className="w-4 h-4 ml-1 text-cyan-400" />
+            </button>
+          </Link>
+        </div>
+      ) : (
+        <div className="p-8 rounded-3xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-2 border-amber-500/40 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 text-xs font-mono font-bold rounded-full bg-amber-500 text-slate-950">
+                {order?.current_status === "WAITING_PARTS" ? "ĐÃ DUYỆT • CHỜ VẬT TƯ & THI CÔNG" : "CẦN DUYỆT BÁO GIÁ ONLINE"}
+              </span>
+              <span className="text-xs font-mono font-bold text-slate-500">
+                Mã: {orderCode}
+              </span>
+            </div>
+            <h2 className="text-xl font-bold text-slate-900">
+              Báo Giá Dịch Vụ Bảo Dưỡng Định Kỳ & Sửa Chữa
+            </h2>
+            <p className="text-xs text-slate-600">
+              {order?.current_status === "WAITING_PARTS"
+                ? "Quý khách đã ký duyệt báo giá. Kho vật tư đang cấp phát và điều phối xe vào khoang nâng thi công."
+                : `Cố vấn dịch vụ đã gửi báo giá chi tiết. Tổng chi phí dự toán: `}
+              <strong className="text-amber-600 font-mono text-sm">{formatCurrencyVND(totalAmount)}</strong>.
             </p>
           </div>
 
           <Link href={`/customer/orders/${orderCode}`}>
             <button className="px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider transition shadow-md shadow-amber-500/20 active:scale-95 flex items-center gap-2">
-              Xem & Ký Duyệt Báo Giá
+              {order?.current_status === "WAITING_PARTS" ? "Xem Chi Tiết Lệnh" : "Xem & Ký Duyệt Báo Giá"}
               <ArrowRight className="w-4 h-4 ml-1 text-slate-950" />
             </button>
           </Link>

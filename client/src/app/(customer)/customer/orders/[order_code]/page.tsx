@@ -139,7 +139,11 @@ export default function WorkOrderDetailPage({ params }: Props) {
   const plateNumber = orderData?.license_plate || "51K-888.88";
   const vehicleModel = orderData?.vehicle_model || "Toyota Camry 2.5Q";
   const customerName = orderData?.customer_name || "Minh Thảo";
-  const isPaid = orderData?.payment_status === "PAID" || orderData?.current_status === "PAID";
+  const currentStatus = orderData?.current_status || (approved ? "WAITING_PARTS" : "QUOTE_SENT");
+  const isPaid = orderData?.payment_status === "PAID" || currentStatus === "PAID" || currentStatus === "DELIVERED";
+  const isCompleted = currentStatus === "COMPLETED" || currentStatus === "PAYMENT_PENDING";
+  const isInProgress = currentStatus === "IN_PROGRESS" || currentStatus === "QUALITY_CHECK";
+  const isWaitingParts = currentStatus === "WAITING_PARTS" || currentStatus === "QUOTE_APPROVED" || currentStatus === "APPROVED";
 
   return (
     <div className="space-y-8 font-sans pb-16">
@@ -154,11 +158,23 @@ export default function WorkOrderDetailPage({ params }: Props) {
             <span className={`px-3 py-1 text-xs font-bold rounded-full ${
               isPaid
                 ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                : approved
+                : isCompleted
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-300 font-extrabold"
+                : isInProgress
+                ? "bg-cyan-100 text-cyan-800 border border-cyan-300"
+                : isWaitingParts
                 ? "bg-blue-100 text-blue-800 border border-blue-300"
                 : "bg-amber-100 text-amber-800 border border-amber-300"
             }`}>
-              {isPaid ? "ĐÃ THANH TOÁN (PAID)" : approved ? "KHÁCH ĐÃ PHÊ DUYỆT" : "CHỜ PHÊ DUYỆT (QUOTE_SENT)"}
+              {isPaid
+                ? "ĐÃ THANH TOÁN (PAID)"
+                : isCompleted
+                ? "HOÀN TẤT THI CÔNG • CHỜ THANH TOÁN (COMPLETED)"
+                : isInProgress
+                ? `ĐANG THI CÔNG SỬA CHỮA (${orderData?.progress_percent || 60}%)`
+                : isWaitingParts
+                ? "ĐÃ DUYỆT • CHỜ VẬT TƯ & XẾP KHOANG"
+                : "CHỜ PHÊ DUYỆT BÁO GIÁ (QUOTE_SENT)"}
             </span>
           </div>
           <p className="text-xs text-slate-600 font-medium">
@@ -171,15 +187,50 @@ export default function WorkOrderDetailPage({ params }: Props) {
             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             <span>ĐÃ THANH TOÁN ({formatCurrencyVND(totalAmount)})</span>
           </div>
-        ) : approved ? (
+        ) : isCompleted ? (
           <Link href={`/customer/payment/${orderCode}`}>
-            <button className="px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider transition shadow-md shadow-amber-500/20 active:scale-95 flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-slate-950" />
-              Thanh Toán Ngay ({formatCurrencyVND(totalAmount)})
+            <button className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider transition shadow-md shadow-emerald-600/30 active:scale-95 flex items-center gap-2 animate-pulse">
+              <CreditCard className="w-4 h-4 text-white" />
+              Thanh Toán Quyết Toán Ngay ({formatCurrencyVND(totalAmount)})
             </button>
           </Link>
+        ) : isInProgress ? (
+          <div className="px-4 py-2.5 rounded-2xl bg-cyan-50 border border-cyan-200 text-cyan-800 font-bold text-xs flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 animate-ping" />
+            <span>KỸ THUẬT VIÊN ĐANG THI CÔNG ({orderData?.progress_percent || 60}%)</span>
+          </div>
+        ) : isWaitingParts ? (
+          <div className="px-4 py-2.5 rounded-2xl bg-blue-50 border border-blue-200 text-blue-800 font-bold text-xs flex items-center gap-2">
+            <Clock className="w-4 h-4 text-blue-600" />
+            <span>ĐÃ DUYỆT BÁO GIÁ • CHỜ VẬT TƯ & THI CÔNG</span>
+          </div>
         ) : null}
       </div>
+
+      {/* Cảnh báo tiến độ / Giải thích quy trình chuẩn */}
+      {!isPaid && !isCompleted && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center gap-3">
+          <Clock className="w-5 h-5 text-amber-600 shrink-0" />
+          <div>
+            <strong>Quy chuẩn dịch vụ gara 4S:</strong> Quý khách chỉ thanh toán sau khi đội ngũ kỹ thuật viên hoàn thành 100% các công đoạn sửa chữa và xe đạt nghiệm thu an toàn KCS. Nút thanh toán sẽ tự động kích hoạt ngay khi xe hoàn tất.
+          </div>
+        </div>
+      )}
+      {isCompleted && !isPaid && (
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-xs text-emerald-800 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <div>
+              <strong>Kỹ thuật viên đã hoàn tất sửa chữa 100% & Nghiệm thu KCS đạt chuẩn!</strong> Quý khách có thể tiến hành quyết toán thanh toán ngay bây giờ.
+            </div>
+          </div>
+          <Link href={`/customer/payment/${orderCode}`}>
+            <button className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider transition shrink-0">
+              Thanh Toán Ngay
+            </button>
+          </Link>
+        </div>
+      )}
 
       {/* Bảng Báo Giá Động Từng Phần (Granular Approval) */}
       <div className="p-8 rounded-3xl bg-white dark:bg-brand-cardDark border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6">
