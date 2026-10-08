@@ -1,4 +1,5 @@
 const WorkOrder = require('../models/work-order.model');
+const Customer = require('../../auth/models/customer.model');
 const { calculateEstimateService } = require('../services/estimate.service');
 const { allocatePartsService, deallocatePartsService } = require('../../inventory/services/inventory.service');
 const { broadcastProgressUpdated } = require('../../../sockets');
@@ -25,7 +26,7 @@ const ALLOWED_TRANSITIONS = {
 // step 96: tao lenh sua chua moi voi ma WO-YYYYMMDD-XXXX
 const createWorkOrderController = async (req, res, next) => {
   try {
-    const { license_plate, customer_phone, customer_name, vehicle_model, items } = req.body;
+    const { license_plate, customer_phone, customer_name, customer_email, vehicle_model, items } = req.body;
 
     if (!license_plate || !customer_phone) {
       return next(new AppError('Vui lòng nhập đầy đủ biển số xe và số điện thoại khách hàng', 400, 'BAD_REQUEST'));
@@ -33,6 +34,7 @@ const createWorkOrderController = async (req, res, next) => {
 
     const normalizedPlate = license_plate.trim().toUpperCase().replace(/\s+/g, '');
     const normalizedPhone = customer_phone.trim().replace(/\s+/g, '');
+    const cleanEmail = customer_email?.trim().toLowerCase();
 
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
@@ -46,6 +48,7 @@ const createWorkOrderController = async (req, res, next) => {
       license_plate: normalizedPlate,
       customer_phone: normalizedPhone,
       customer_name: customer_name || 'Khách hàng',
+      customer_email: cleanEmail,
       vehicle_model: vehicle_model || 'Toyota Camry 2.5Q',
       current_status: initialStatus,
       estimate: estimateData,
@@ -57,6 +60,45 @@ const createWorkOrderController = async (req, res, next) => {
         },
       ],
     });
+
+    // Dong bo ho so khach hang & xe vao MongoDB Customer collection
+    try {
+      let existingCust = await Customer.findOne({
+        $or: [
+          { phone_number: normalizedPhone },
+          { 'vehicles_owned.license_plate': normalizedPlate },
+        ],
+      });
+
+      if (existingCust) {
+        if (cleanEmail) existingCust.email = cleanEmail;
+        if (customer_name?.trim()) existingCust.full_name = customer_name.trim();
+        const hasPlate = existingCust.vehicles_owned?.some(v => v.license_plate === normalizedPlate);
+        if (!hasPlate) {
+          existingCust.vehicles_owned.push({
+            license_plate: normalizedPlate,
+            model_name: vehicle_model || 'Xe dịch vụ',
+            vin: 'VN' + Date.now().toString().slice(-8),
+          });
+        }
+        await existingCust.save();
+      } else {
+        await Customer.create({
+          full_name: customer_name?.trim() || 'Khách Hàng',
+          phone_number: normalizedPhone,
+          email: cleanEmail || 'tailoi1606@gmail.com',
+          vehicles_owned: [
+            {
+              license_plate: normalizedPlate,
+              model_name: vehicle_model || 'Toyota Camry 2.5Q',
+              vin: 'VN' + Date.now().toString().slice(-8),
+            },
+          ],
+        });
+      }
+    } catch (custErr) {
+      console.warn('Lỗi đồng bộ hồ sơ khách hàng khi tạo lệnh:', custErr.message);
+    }
 
     return sendSuccess(res, workOrder, 'Khởi tạo Lệnh sửa chữa và lập báo giá thành công', 201);
   } catch (err) {

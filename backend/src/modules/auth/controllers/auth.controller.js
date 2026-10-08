@@ -17,6 +17,39 @@ const maskEmail = (email) => {
   return `${maskedName}@${domain}`;
 };
 
+// controller tra cuu nhanh ho so chu xe de ho tro UI tu dong hien thi email da lien ket
+const lookupCustomerController = async (req, res, next) => {
+  try {
+    const { license_plate, phone_number } = req.query;
+    if (!license_plate && !phone_number) {
+      return sendSuccess(res, { found: false });
+    }
+
+    const normalizedPlate = license_plate?.trim().toUpperCase().replace(/\s+/g, '');
+    const normalizedPhone = phone_number?.trim().replace(/\s+/g, '');
+
+    const query = [];
+    if (normalizedPhone) query.push({ phone_number: normalizedPhone });
+    if (normalizedPlate) query.push({ 'vehicles_owned.license_plate': normalizedPlate });
+
+    const customer = await Customer.findOne({ $or: query });
+
+    if (!customer) {
+      return sendSuccess(res, { found: false });
+    }
+
+    return sendSuccess(res, {
+      found: true,
+      full_name: customer.full_name,
+      email: customer.email,
+      masked_email: customer.email ? maskEmail(customer.email) : null,
+      has_email: Boolean(customer.email),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // controller xu ly yeu cau gui otp (uc-01)
 const requestOtpController = async (req, res, next) => {
   try {
@@ -47,27 +80,74 @@ const requestOtpController = async (req, res, next) => {
       });
     }
 
-    // 2. neu chua co thi tu dong tao ho so khach hang moi
+    // 2. Xu ly luu tru & cap nhat ho so khach hang
     if (!customer) {
+      // Day la khach hang hoan toan moi
+      if (!inputEmail) {
+        return res.status(200).json({
+          success: false,
+          require_email: true,
+          message: 'Biển số xe hoặc Số điện thoại chưa có trong hệ thống. Vui lòng nhập địa chỉ Gmail để nhận mã OTP lần đầu!',
+        });
+      }
+
+      if (!inputEmail.includes('@') || !inputEmail.includes('.')) {
+        return next(new AppError('Địa chỉ email không đúng định dạng. Vui lòng nhập đúng địa chỉ Gmail!', 400, 'INVALID_EMAIL'));
+      }
+
       customer = await Customer.create({
         full_name: 'Khách Hàng',
         phone_number: normalizedPhone,
-        email: inputEmail || 'tailoi1606@gmail.com',
+        email: inputEmail,
         vehicles_owned: [
           {
             license_plate: normalizedPlate,
-            model_name: 'Toyota Camry 2.5Q',
+            model_name: 'Xe dịch vụ',
             vin: 'VN' + Date.now().toString().slice(-8),
           },
         ],
       });
-    } else if (inputEmail && customer.email !== inputEmail) {
-      // cap nhat email moi neu nguoi dung nhap gmail
-      customer.email = inputEmail;
-      await customer.save();
+    } else {
+      // Khach hang da ton tai trong he thong:
+      // Neu nguoi dung co nhap email moi hop le thi cap nhat ngay vao DB
+      if (inputEmail && inputEmail.includes('@') && inputEmail.includes('.') && customer.email !== inputEmail) {
+        customer.email = inputEmail;
+        await customer.save();
+      }
+
+      // Neu khach hang cu chua co email ma form chua gui email
+      if (!customer.email) {
+        if (!inputEmail) {
+          return res.status(200).json({
+            success: false,
+            require_email: true,
+            message: 'Hồ sơ xe chưa có địa chỉ Gmail nhận mã OTP. Vui lòng nhập địa chỉ Gmail!',
+          });
+        }
+        customer.email = inputEmail;
+        await customer.save();
+      }
+
+      // Neu xe chua co trong danh sach vehicles_owned thi cap nhat them
+      const hasPlate = customer.vehicles_owned?.some(v => v.license_plate === normalizedPlate);
+      if (!hasPlate) {
+        customer.vehicles_owned.push({
+          license_plate: normalizedPlate,
+          model_name: 'Xe dịch vụ',
+          vin: 'VN' + Date.now().toString().slice(-8),
+        });
+        await customer.save();
+      }
     }
 
-    const targetEmail = customer.email || inputEmail || 'tailoi1606@gmail.com';
+    const targetEmail = customer.email;
+    if (!targetEmail) {
+      return res.status(200).json({
+        success: false,
+        require_email: true,
+        message: 'Không tìm thấy địa chỉ Gmail nhận mã. Vui lòng nhập địa chỉ Gmail!',
+      });
+    }
 
     // 3. sinh ma otp 6 so ngau nhien va bam sha256
     const otpCode = generateSecureOtp();
@@ -79,13 +159,15 @@ const requestOtpController = async (req, res, next) => {
 
     // luu hash otp va reset attempts count
     await redis.set(otpKey, hashedOtp, 'EX', 300); // ttl 5 phut
-    await redis.set(cooldownKey, '1', 'EX', 60); // ttl 60s cooldown
+    await redis.set(cooldownKey, '1', 'EX', 15); // ttl 15s cooldown
     await redis.del(attemptsKey);
 
-    // 4. gui email otp bat dong bo
-    sendOtpEmail(targetEmail, otpCode, customer.full_name).catch((err) => {
-      console.error('Background Email send error:', err.message);
-    });
+    // 4. gui email otp thuc te qua Gmail SMTP
+    try {
+      await sendOtpEmail(targetEmail, otpCode, customer.full_name);
+    } catch (mailErr) {
+      console.error('Lỗi khi gửi email OTP:', mailErr.message);
+    }
 
     // 5. phan hoi email cho client
     const maskedEmailStr = maskEmail(targetEmail);
@@ -98,9 +180,9 @@ const requestOtpController = async (req, res, next) => {
         email: targetEmail,
         masked_email: maskedEmailStr,
         expires_in_seconds: 300,
-        cooldown_seconds: 60,
+        cooldown_seconds: 15,
       },
-      `Mã OTP đã được gửi đến email ${targetEmail}. (Mã kiểm tra nhanh: 123456)`
+      `Mã OTP đã được gửi thành công đến hòm thư Gmail [${targetEmail}]`
     );
   } catch (err) {
     next(err);
@@ -353,6 +435,7 @@ const staffLoginController = async (req, res, next) => {
 
 module.exports = {
   maskEmail,
+  lookupCustomerController,
   requestOtpController,
   verifyOtpController,
   devLoginController,

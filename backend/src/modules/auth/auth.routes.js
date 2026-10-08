@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {
+  lookupCustomerController,
   requestOtpController,
   verifyOtpController,
   devLoginController,
@@ -12,6 +13,9 @@ const { sendSuccess } = require('../../utils/response');
 router.get('/health', (req, res) => {
   return sendSuccess(res, { module: 'auth' }, 'Phân hệ Xác thực (Auth) đang hoạt động');
 });
+
+// endpoint tra cuu ho so chu xe & kiem tra email da lien ket
+router.get('/lookup-customer', lookupCustomerController);
 
 // endpoint yeu cau gui otp qua gmail (uc-01)
 router.post('/request-otp', otpRateLimiter, requestOtpController);

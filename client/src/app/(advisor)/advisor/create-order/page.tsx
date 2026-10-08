@@ -19,6 +19,7 @@ import {
   Fuel,
   Wrench,
   Package,
+  Mail,
 } from "lucide-react";
 import { formatVND } from "@/lib/utils";
 import { toast } from "sonner";
@@ -42,6 +43,7 @@ export default function CreateOrderPage() {
   const [plateNumber, setPlateNumber] = useState("51K-888.88");
   const [customerName, setCustomerName] = useState("Minh Thảo");
   const [phone, setPhone] = useState("0912345678");
+  const [customerEmail, setCustomerEmail] = useState("tailoi1606@gmail.com");
   const [carModel, setCarModel] = useState("Toyota Camry 2.5Q (2022)");
   const [odo, setOdo] = useState("42500");
   const [fuelLevel, setFuelLevel] = useState("65");
@@ -56,6 +58,7 @@ export default function CreateOrderPage() {
     if (upper.includes("51K-888.88") || upper.includes("88888")) {
       setCustomerName("Minh Thảo");
       setPhone("0912345678");
+      setCustomerEmail("tailoi1606@gmail.com");
       setCarModel("Toyota Camry 2.5Q (2022)");
     }
   };
@@ -146,6 +149,7 @@ export default function CreateOrderPage() {
         license_plate: plateNumber,
         customer_phone: phone,
         customer_name: customerName,
+        customer_email: customerEmail,
         vehicle_model: carModel,
         items: items.map((it) => ({
           name: it.name,
@@ -251,6 +255,23 @@ export default function CreateOrderPage() {
                     onChange={(e) => setPhone(e.target.value)}
                     className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm font-mono font-semibold placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 shadow-xs transition"
                     placeholder="0908888888"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-1.5 flex items-center justify-between">
+                  <span>Email Khách Hàng (Gmail)</span>
+                  <span className="text-[10px] text-amber-600 font-semibold lowercase">Gửi OTP & báo giá</span>
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+                  <input
+                    type="email"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm font-semibold placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 shadow-xs transition"
+                    placeholder="khachhang@gmail.com"
                   />
                 </div>
               </div>

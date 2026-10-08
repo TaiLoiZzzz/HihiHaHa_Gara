@@ -7,6 +7,7 @@ const WorkOrderSchema = new mongoose.Schema(
     license_plate: { type: String, required: true, index: true, uppercase: true },
     customer_phone: { type: String, required: true },
     customer_name: { type: String, required: true },
+    customer_email: { type: String },
     vehicle_model: { type: String, required: true },
     current_status: {
       type: String,

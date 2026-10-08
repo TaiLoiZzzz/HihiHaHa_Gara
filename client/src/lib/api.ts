@@ -137,6 +137,19 @@ export const api = {
     return data;
   },
 
+  // 1.1. Tra cứu nhanh hồ sơ khách hàng & kiểm tra email liên kết
+  lookupCustomer: async (license_plate?: string, phone_number?: string) => {
+    try {
+      const params = new URLSearchParams();
+      if (license_plate) params.append("license_plate", license_plate);
+      if (phone_number) params.append("phone_number", phone_number);
+      const res = await fetch(`${API_BASE_URL}/auth/lookup-customer?${params.toString()}`);
+      return await res.json();
+    } catch (e) {
+      return { success: false, data: { found: false } };
+    }
+  },
+
   // 2. Yêu cầu mã OTP cho khách hàng (hỗ trợ nhập email trực tiếp)
   requestOtp: async (phone_number: string, license_plate: string, email?: string) => {
     const res = await fetch(`${API_BASE_URL}/auth/request-otp`, {
@@ -185,6 +198,7 @@ export const api = {
     license_plate: string;
     customer_phone: string;
     customer_name?: string;
+    customer_email?: string;
     vehicle_model?: string;
     items?: any[];
   }) =>
