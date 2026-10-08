@@ -435,6 +435,72 @@ const updateProgressController = async (req, res, next) => {
   }
 };
 
+// controller quan doc phan cong ky thuat vien & khoang nang
+const assignWorkOrderController = async (req, res, next) => {
+  try {
+    const { order_code } = req.params;
+    const { technician_name, technician_id, bay, priority, estimated_time } = req.body;
+
+    const workOrder = await WorkOrder.findOne({ order_code });
+    if (!workOrder) {
+      return next(new AppError(`Không tìm thấy Lệnh sửa chữa [${order_code}]`, 404, 'WORK_ORDER_NOT_FOUND'));
+    }
+
+    if (technician_name) {
+      const techId = technician_id || '0988888803';
+      const existingIdx = workOrder.assigned_technicians?.findIndex(
+        (t) => t.technician_id === techId || t.technician_name === technician_name
+      ) ?? -1;
+
+      if (!workOrder.assigned_technicians) {
+        workOrder.assigned_technicians = [];
+      }
+
+      if (existingIdx >= 0) {
+        workOrder.assigned_technicians[existingIdx].technician_name = technician_name;
+      } else {
+        workOrder.assigned_technicians.push({
+          technician_id: techId,
+          technician_name: technician_name,
+          assigned_at: new Date(),
+        });
+      }
+    }
+
+    if (bay) {
+      workOrder.bay = bay;
+    }
+
+    if (priority) {
+      workOrder.priority = priority;
+    }
+
+    if (estimated_time) {
+      workOrder.estimated_finish_time = estimated_time;
+    }
+
+    workOrder.workflow_timeline.push({
+      status: workOrder.current_status,
+      updated_by: req.user?.full_name || req.user?.phone_number || 'QUẢN ĐỐC',
+      updated_at: new Date(),
+      note: `Quản đốc phân công [${technician_name || 'Kỹ thuật viên'}] phụ trách tại [${bay || 'Khoang nâng'}]`,
+    });
+
+    await workOrder.save();
+
+    broadcastProgressUpdated(order_code, {
+      stage_name: 'PHÂN CÔNG KHOANG NÂNG',
+      percent_complete: workOrder.progress_percent || 10,
+      updated_by: req.user?.full_name || 'QUẢN ĐỐC',
+      note: `Đã phân công ${technician_name} tại ${bay}`,
+    });
+
+    return sendSuccess(res, workOrder, `Phân công kỹ thuật viên [${technician_name}] cho lệnh #${order_code} thành công`);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createWorkOrderController,
   getWorkOrderDetailsController,
@@ -443,4 +509,5 @@ module.exports = {
   customerApproveEstimateController,
   updateWorkOrderStatusController,
   updateProgressController,
+  assignWorkOrderController,
 };

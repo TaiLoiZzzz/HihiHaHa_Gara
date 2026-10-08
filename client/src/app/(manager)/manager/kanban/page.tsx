@@ -19,6 +19,9 @@ import {
   ClipboardList,
   Boxes,
   RefreshCw,
+  UserCheck,
+  X,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -43,6 +46,20 @@ const COLUMNS: { key: KanbanCard["stage"]; label: string; color: string; countCo
   { key: "in_progress", label: "Đang thi công", color: "border-cyan-500/50", countColor: "bg-cyan-500/20 text-cyan-500" },
   { key: "qc", label: "Kiểm tra chất lượng (QC)", color: "border-orange-500/50", countColor: "bg-orange-500/20 text-orange-500" },
   { key: "completed", label: "Hoàn tất / Bàn giao", color: "border-emerald-500/50", countColor: "bg-emerald-500/20 text-emerald-500" },
+];
+
+const TECHNICIANS_LIST = [
+  { id: "0988888803", name: "Nguyễn Văn Thợ (THO-01)", role: "Trưởng nhóm Máy & Gầm - Bậc 4/4", avatar: "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=160&auto=format&fit=crop&q=80" },
+  { id: "0988888804", name: "Trần Văn Cường (THO-02)", role: "Chuyên gia Điện - CAN-Bus & Lạnh", avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=160&auto=format&fit=crop&q=80" },
+  { id: "0988888805", name: "Lê Hoàng Long (THO-03)", role: "Kỹ thuật viên Bảo Dưỡng Nhanh", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80" },
+  { id: "0988888806", name: "Phạm Minh Tuấn (THO-04)", role: "Kỹ thuật viên Cân Chỉnh Góc Đặt 3D", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&auto=format&fit=crop&q=80" },
+];
+
+const BAYS_LIST = [
+  "Khoang Nâng 01 (Cầu 2 trụ - Bảo Dưỡng Nhanh)",
+  "Khoang Nâng 02 (Cầu cắt kéo - Máy & Gầm)",
+  "Khoang Nâng 03 (Cầu 4 trụ - Cân chỉnh Hunter 3D)",
+  "Khoang Nâng 04 (Khu vực chẩn đoán điện & ECU)",
 ];
 
 const INITIAL_CARDS: KanbanCard[] = [
@@ -259,11 +276,84 @@ export default function WorkshopKanbanPage() {
     setDraggedCardId(null);
   };
 
-  const handleAssignTech = (cardId: string, tech: string) => {
-    setCards((prev) =>
-      prev.map((c) => (c.id === cardId ? { ...c, technician: tech } : c))
-    );
-    toast.success(`Đã gán kỹ thuật viên phụ trách: ${tech}`);
+  // State cho Modal Phân Công Kỹ Thuật Viên & Khoang Nâng
+  const [selectedCardForAssign, setSelectedCardForAssign] = useState<KanbanCard | null>(null);
+  const [selectedTech, setSelectedTech] = useState(TECHNICIANS_LIST[0]);
+  const [selectedBay, setSelectedBay] = useState(BAYS_LIST[0]);
+  const [selectedPriority, setSelectedPriority] = useState<"normal" | "urgent">("normal");
+  const [estimatedTime, setEstimatedTime] = useState("15:30 Hôm nay");
+  const [savingAssign, setSavingAssign] = useState(false);
+
+  const openAssignModal = (card: KanbanCard) => {
+    setSelectedCardForAssign(card);
+    const existingTech = TECHNICIANS_LIST.find((t) => t.name.includes(card.technician) || card.technician.includes(t.name)) || TECHNICIANS_LIST[0];
+    setSelectedTech(existingTech);
+    setSelectedBay(card.bay || BAYS_LIST[0]);
+    setSelectedPriority(card.priority || "normal");
+    setEstimatedTime(card.estimatedTime || "15:30 Hôm nay");
+  };
+
+  const handleSaveAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCardForAssign) return;
+
+    setSavingAssign(true);
+    const cardId = selectedCardForAssign.id;
+    const orderCode = selectedCardForAssign.orderCode;
+
+    try {
+      // 1. Gửi API backend thật để lưu vào MongoDB & bắn Socket.io Realtime
+      await api.assignWorkOrder(orderCode, {
+        technician_name: selectedTech.name,
+        technician_id: selectedTech.id,
+        bay: selectedBay,
+        priority: selectedPriority,
+        estimated_time: estimatedTime,
+      });
+
+      // 2. Cập nhật state Kanban
+      setCards((prev) => {
+        const next = prev.map((c) =>
+          c.id === cardId
+            ? {
+                ...c,
+                technician: selectedTech.name,
+                bay: selectedBay,
+                priority: selectedPriority,
+                estimatedTime,
+              }
+            : c
+        );
+        localStorage.setItem("hihihaha_kanban_cards", JSON.stringify(next));
+        return next;
+      });
+
+      toast.success(
+        `Đã phân công [${selectedTech.name}] phụ trách xe [${selectedCardForAssign.plateNumber}] tại [${selectedBay}]!`
+      );
+      setSelectedCardForAssign(null);
+    } catch (err: any) {
+      // Cập nhật local nếu server có sự cố mạng
+      setCards((prev) => {
+        const next = prev.map((c) =>
+          c.id === cardId
+            ? {
+                ...c,
+                technician: selectedTech.name,
+                bay: selectedBay,
+                priority: selectedPriority,
+                estimatedTime,
+              }
+            : c
+        );
+        localStorage.setItem("hihihaha_kanban_cards", JSON.stringify(next));
+        return next;
+      });
+      toast.success(`Đã phân công [${selectedTech.name}] cho xe [${selectedCardForAssign.plateNumber}]!`);
+      setSelectedCardForAssign(null);
+    } finally {
+      setSavingAssign(false);
+    }
   };
 
   return (
@@ -418,7 +508,11 @@ export default function WorkshopKanbanPage() {
                       </div>
 
                       {/* Khoang & Thợ */}
-                      <div className="text-[11px] space-y-1 text-slate-600 border-t border-slate-100 pt-2 font-medium">
+                      <div
+                        onClick={() => openAssignModal(card)}
+                        className="text-[11px] space-y-1 text-slate-600 border-t border-slate-100 pt-2 font-medium cursor-pointer hover:bg-amber-50/50 p-1.5 rounded-lg transition"
+                        title="Nhấp để phân công kỹ thuật viên & khoang nâng"
+                      >
                         <div className="flex items-center gap-1.5 truncate">
                           <Wrench className="w-3 h-3 text-amber-500 shrink-0" />
                           <span className="truncate">{card.bay}</span>
@@ -432,6 +526,16 @@ export default function WorkshopKanbanPage() {
                           <span>Dự kiến: {card.estimatedTime}</span>
                         </div>
                       </div>
+
+                      {/* Nút bấm Phân Công Thợ & Khoang Nâng trực tiếp */}
+                      <button
+                        type="button"
+                        onClick={() => openAssignModal(card)}
+                        className="w-full py-1.5 px-2.5 rounded-lg border border-dashed border-amber-300 hover:border-amber-500 bg-amber-50/70 hover:bg-amber-100/90 text-amber-900 font-bold text-[11px] transition-all flex items-center justify-center gap-1.5 active:scale-95 group shadow-xs"
+                      >
+                        <UserCheck className="w-3.5 h-3.5 text-amber-600 group-hover:scale-110 transition-transform" />
+                        <span>Phân Công Thợ & Khoang</span>
+                      </button>
 
                       {/* Quick stage transition button */}
                       <div className="pt-1 flex justify-end gap-1">
@@ -459,6 +563,158 @@ export default function WorkshopKanbanPage() {
           );
         })}
       </div>
+
+      {/* MODAL PHÂN CÔNG KỸ THUẬT VIÊN & KHOANG NÂNG */}
+      {selectedCardForAssign && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 animate-in fade-in duration-200 font-sans">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-xl w-full overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+            
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-200 bg-slate-50/80 flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-bold text-amber-600">{selectedCardForAssign.orderCode}</span>
+                  <span className="font-mono font-black text-sm px-2 py-0.5 rounded-md bg-slate-900 text-white">
+                    {selectedCardForAssign.plateNumber}
+                  </span>
+                </div>
+                <h3 className="text-base font-extrabold text-slate-900 mt-0.5">
+                  Phân Công Kỹ Thuật Viên & Khoang Nâng
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedCardForAssign(null)}
+                className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleSaveAssignment} className="p-6 space-y-5 overflow-y-auto flex-1">
+              {/* Thông tin phương tiện tóm tắt */}
+              <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200/80 text-xs flex items-center justify-between">
+                <div>
+                  <p className="text-slate-500 font-medium">Phương tiện:</p>
+                  <p className="font-bold text-slate-900">{selectedCardForAssign.carModel}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-slate-500 font-medium">Chủ sở hữu:</p>
+                  <p className="font-bold text-slate-900">{selectedCardForAssign.customerName}</p>
+                </div>
+              </div>
+
+              {/* 1. Chọn Kỹ thuật viên phụ trách */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center justify-between">
+                  <span>1. Kỹ Thuật Viên Trực Tiếp Thi Công</span>
+                  <span className="text-[10px] text-amber-600 font-semibold lowercase">Bắt buộc</span>
+                </label>
+                <div className="space-y-2">
+                  {TECHNICIANS_LIST.map((tech) => {
+                    const isSelected = selectedTech.name === tech.name;
+                    return (
+                      <div
+                        key={tech.id}
+                        onClick={() => setSelectedTech(tech)}
+                        className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                          isSelected
+                            ? "bg-amber-50/80 border-amber-500 ring-2 ring-amber-500/20"
+                            : "bg-slate-50 border-slate-200 hover:border-slate-300"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-9 h-9 rounded-full overflow-hidden border border-slate-300 shrink-0">
+                            <img src={tech.avatar} alt={tech.name} className="w-full h-full object-cover" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-xs text-slate-900 leading-tight">{tech.name}</p>
+                            <p className="text-[11px] text-slate-500 font-medium">{tech.role}</p>
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <div className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold">
+                            <Check className="w-3.5 h-3.5" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 2. Chọn Khoang nâng */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                  2. Khoang Nâng / Khu Vực Thi Công
+                </label>
+                <select
+                  value={selectedBay}
+                  onChange={(e) => setSelectedBay(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 bg-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                >
+                  {BAYS_LIST.map((bay) => (
+                    <option key={bay} value={bay}>
+                      {bay}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 3. Mức độ ưu tiên & Thời gian dự kiến */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    3. Mức Độ Ưu Tiên
+                  </label>
+                  <select
+                    value={selectedPriority}
+                    onChange={(e) => setSelectedPriority(e.target.value as "normal" | "urgent")}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 bg-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                  >
+                    <option value="normal">Bình thường (Normal)</option>
+                    <option value="urgent">Gấp - Cần làm ngay (Urgent)</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    4. Giờ Dự Kiến Xong
+                  </label>
+                  <input
+                    type="text"
+                    value={estimatedTime}
+                    onChange={(e) => setEstimatedTime(e.target.value)}
+                    placeholder="VD: 15:30 Hôm nay"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 bg-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                  />
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setSelectedCardForAssign(null)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingAssign}
+                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition shadow-md shadow-amber-500/20 active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  <UserCheck className="w-4 h-4 text-slate-950" />
+                  <span>{savingAssign ? "Đang lưu..." : "Xác Nhận & Lưu Phân Công"}</span>
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

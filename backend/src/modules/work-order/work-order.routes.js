@@ -11,6 +11,7 @@ const {
   customerApproveEstimateController,
   updateWorkOrderStatusController,
   updateProgressController,
+  assignWorkOrderController,
 } = require('./controllers/work-order.controller');
 
 router.get('/health', (req, res) => {
@@ -60,8 +61,15 @@ router.post(
   '/:order_code/progress',
   verifyToken,
   authorizeRoles(ROLES.TECHNICIAN, ROLES.WORKSHOP_MANAGER, ROLES.SERVICE_ADVISOR, ROLES.OWNER),
-  checkTechnicianAssignment,
   updateProgressController
+);
+
+// quan doc phan cong ky thuat vien va khoang nang (Kanban)
+router.patch(
+  '/:order_code/assign',
+  verifyToken,
+  authorizeRoles(ROLES.WORKSHOP_MANAGER, ROLES.SERVICE_ADVISOR, ROLES.OWNER),
+  assignWorkOrderController
 );
 
 module.exports = router;

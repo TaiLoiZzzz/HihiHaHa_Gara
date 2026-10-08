@@ -52,6 +52,9 @@ const WorkOrderSchema = new mongoose.Schema(
         assigned_at: { type: Date, default: Date.now },
       },
     ],
+    bay: { type: String, default: 'Chưa xếp khoang' },
+    priority: { type: String, enum: ['normal', 'urgent'], default: 'normal' },
+    estimated_finish_time: { type: String },
     estimate: {
       approval_status: {
         type: String,

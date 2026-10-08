@@ -216,6 +216,20 @@ export const api = {
       body: JSON.stringify({ items }),
     }),
 
+  // 5.3. Quản đốc phân công Kỹ thuật viên & Khoang nâng trên Kanban
+  assignWorkOrder: (orderCode: string, payload: {
+    technician_name: string;
+    technician_id?: string;
+    bay?: string;
+    priority?: "normal" | "urgent";
+    estimated_time?: string;
+  }) =>
+    fetchApi<{ success: boolean; data: any }>(`/work-orders/${orderCode}/assign`, {
+      method: "PATCH",
+      roleFallback: "WORKSHOP_MANAGER",
+      body: JSON.stringify(payload),
+    }),
+
   // 6. Lấy kho phụ tùng OEM có hỗ trợ phân trang & tìm kiếm
   getInventory: (limit = 15, page = 1, category?: string, search?: string) => {
     let url = `/inventory?limit=${limit}&page=${page}`;
