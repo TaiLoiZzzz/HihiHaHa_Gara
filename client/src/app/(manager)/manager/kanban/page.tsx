@@ -23,6 +23,7 @@ import {
   X,
   Check,
   Phone,
+  Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -330,6 +331,20 @@ export default function WorkshopKanbanPage() {
   const [savingAssign, setSavingAssign] = useState(false);
 
   const openAssignModal = (card: KanbanCard) => {
+    // QUY TRÌNH CHUẨN GARA: Quản đốc chỉ được phân công khi xe đã được khách duyệt báo giá (approved) hoặc điều phối lại khi đang làm (in_progress)
+    if (card.stage === "intake") {
+      toast.error("Không thể phân công: Xe đang ở bước Tiếp Nhận / Khám Xe. Cần lập bảng báo giá trước!");
+      return;
+    }
+    if (card.stage === "quoting") {
+      toast.error("Không thể phân công: Báo giá đang chờ khách hàng duyệt trực tuyến. Cần có sự đồng ý của khách trước!");
+      return;
+    }
+    if (card.stage === "qc" || card.stage === "completed") {
+      toast.error("Không thể phân công: Xe đã hoàn thành công đoạn thi công tại khoang nâng!");
+      return;
+    }
+
     setSelectedCardForAssign(card);
     const existingTech = TECHNICIANS_LIST.find((t) => t.name.includes(card.technician) || card.technician.includes(t.name)) || TECHNICIANS_LIST[0];
     setSelectedTech(existingTech);
@@ -666,42 +681,94 @@ export default function WorkshopKanbanPage() {
                         </div>
                       </div>
 
-                      {/* Nút Phân Công & Nút Mở Tablet Thợ Trực Tiếp */}
+                      {/* Nút Hành Động Theo Đúng Từng Bước Quy Trình Chuẩn */}
                       {(() => {
                         const matchedTech = TECHNICIANS_LIST.find((t) =>
                           card.technician.includes(t.name.split(" ")[0]) || card.technician.includes(t.name)
                         );
                         const techQuery = matchedTech ? `&tech=${matchedTech.id}` : "";
-                        const hasTech = !card.technician.includes("Chưa");
 
-                        return hasTech ? (
-                          <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                        // BƯỚC 1: Tiếp nhận xe -> Chưa có báo giá duyệt, KHÓA PHÂN CÔNG
+                        if (card.stage === "intake") {
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => toast.info("Xe đang ở bước Tiếp Nhận: Cần lập báo giá và gửi khách duyệt trước khi phân công thợ!")}
+                              className="w-full py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold text-[10px] border border-slate-200 flex items-center justify-center gap-1 transition"
+                            >
+                              <Lock className="w-3 h-3 text-slate-400" />
+                              <span>Tiếp nhận • Chưa lập báo giá</span>
+                            </button>
+                          );
+                        }
+
+                        // BƯỚC 2: Chờ duyệt báo giá -> Khách chưa ký, KHÓA PHÂN CÔNG
+                        if (card.stage === "quoting") {
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => toast.warning("Báo giá đang chờ khách hàng duyệt trực tuyến: Cần sự đồng ý của khách trước khi phân công thợ!")}
+                              className="w-full py-1.5 px-2 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-[10px] border border-purple-200 flex items-center justify-center gap-1 transition"
+                            >
+                              <Clock className="w-3 h-3 text-purple-500" />
+                              <span>Chờ khách duyệt báo giá</span>
+                            </button>
+                          );
+                        }
+
+                        // BƯỚC 3: Đã duyệt / Chờ vật tư -> ĐÂY LÀ BƯỚC DUY NHẤT ĐƯỢC PHÂN CÔNG CHÍNH THỨC!
+                        if (card.stage === "approved") {
+                          return (
                             <button
                               type="button"
                               onClick={() => openAssignModal(card)}
-                              className="py-1.5 px-1.5 rounded-lg border border-dashed border-amber-300 hover:border-amber-500 bg-amber-50/70 hover:bg-amber-100/90 text-amber-900 font-bold text-[10px] transition-all flex items-center justify-center gap-1 active:scale-95 group shadow-xs"
+                              className="w-full py-2 px-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[11px] uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/25 active:scale-95 animate-pulse"
                             >
-                              <UserCheck className="w-3 h-3 text-amber-600 group-hover:scale-110 transition-transform" />
-                              <span className="truncate">Đổi Thợ/Khoang</span>
+                              <UserCheck className="w-4 h-4 text-slate-950" />
+                              <span>⚡ Phân Công Thợ & Khoang</span>
                             </button>
-                            <Link
-                              href={`/technician?order=${card.orderCode}${techQuery}`}
-                              className="py-1.5 px-1.5 rounded-lg border border-slate-200 hover:border-slate-800 bg-slate-900 hover:bg-slate-800 text-white font-bold text-[10px] transition-all flex items-center justify-center gap-1 active:scale-95 shadow-xs text-center"
-                              title="Mở trực tiếp trên Tablet Khoang Kỹ Thuật Viên"
-                            >
-                              <Wrench className="w-3 h-3 text-amber-400 shrink-0" />
-                              <span className="truncate">Tablet Thợ →</span>
-                            </Link>
+                          );
+                        }
+
+                        // BƯỚC 4: Đang thi công -> Cho phép điều phối đổi thợ & Mở nhanh Tablet
+                        if (card.stage === "in_progress") {
+                          return (
+                            <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                              <button
+                                type="button"
+                                onClick={() => openAssignModal(card)}
+                                className="py-1.5 px-1.5 rounded-lg border border-dashed border-amber-300 hover:border-amber-500 bg-amber-50/70 hover:bg-amber-100/90 text-amber-900 font-bold text-[10px] transition-all flex items-center justify-center gap-1 active:scale-95 group shadow-xs"
+                                title="Đổi thợ hoặc khoang nếu cần"
+                              >
+                                <UserCheck className="w-3 h-3 text-amber-600 group-hover:scale-110 transition-transform" />
+                                <span className="truncate">Đổi Thợ/Khoang</span>
+                              </button>
+                              <Link
+                                href={`/technician?order=${card.orderCode}${techQuery}`}
+                                className="py-1.5 px-1.5 rounded-lg border border-slate-200 hover:border-slate-800 bg-slate-900 hover:bg-slate-800 text-white font-bold text-[10px] transition-all flex items-center justify-center gap-1 active:scale-95 shadow-xs text-center"
+                                title="Mở trực tiếp trên Tablet Khoang Kỹ Thuật Viên"
+                              >
+                                <Wrench className="w-3 h-3 text-amber-400 shrink-0" />
+                                <span className="truncate">Tablet Thợ →</span>
+                              </Link>
+                            </div>
+                          );
+                        }
+
+                        // BƯỚC 5: Kiểm tra chất lượng QC
+                        if (card.stage === "qc") {
+                          return (
+                            <div className="w-full py-1.5 px-2 rounded-lg bg-orange-50 text-orange-700 font-bold text-[10px] border border-orange-200 text-center">
+                              Kiểm tra chất lượng KCS 100%
+                            </div>
+                          );
+                        }
+
+                        // BƯỚC 6: Hoàn tất & Bàn giao
+                        return (
+                          <div className="w-full py-1.5 px-2 rounded-lg bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200 text-center">
+                            ✓ Đã hoàn tất & Bàn giao
                           </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => openAssignModal(card)}
-                            className="w-full py-1.5 px-2.5 rounded-lg border border-dashed border-amber-300 hover:border-amber-500 bg-amber-50/70 hover:bg-amber-100/90 text-amber-900 font-bold text-[11px] transition-all flex items-center justify-center gap-1.5 active:scale-95 group shadow-xs"
-                          >
-                            <UserCheck className="w-3.5 h-3.5 text-amber-600 group-hover:scale-110 transition-transform" />
-                            <span>Phân Công Thợ & Khoang</span>
-                          </button>
                         );
                       })()}
 

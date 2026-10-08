@@ -546,6 +546,45 @@ const assignWorkOrderController = async (req, res, next) => {
       return next(new AppError(`Không tìm thấy Lệnh sửa chữa [${order_code}]`, 404, 'WORK_ORDER_NOT_FOUND'));
     }
 
+    // QUY TRÌNH CHUẨN GARA: Quản đốc chỉ được phân công Kỹ thuật viên & Khoang nâng tại bước "ĐÃ DUYỆT BÁO GIÁ / CHỜ VẬT TƯ" (hoặc điều chuyển khi đang thi công)
+    const ASSIGNABLE_STATUSES = ['QUOTE_APPROVED', 'WAITING_PARTS', 'APPROVED', 'IN_PROGRESS'];
+    if (!ASSIGNABLE_STATUSES.includes(workOrder.current_status)) {
+      if (['DRAFT', 'INSPECTION'].includes(workOrder.current_status)) {
+        return next(
+          new AppError(
+            `Chưa thể phân công: Xe đang ở bước Tiếp Nhận / Khám Xe. Cần lập bảng báo giá và được khách hàng duyệt trước khi Quản đốc phân công thợ và khoang nâng!`,
+            400,
+            'CANNOT_ASSIGN_INSPECTION_STAGE'
+          )
+        );
+      }
+      if (workOrder.current_status === 'QUOTE_SENT') {
+        return next(
+          new AppError(
+            `Chưa thể phân công: Báo giá đang chờ khách hàng ký duyệt trực tuyến (QUOTE_SENT). Chỉ khi khách hàng đồng ý duyệt báo giá thì Quản đốc mới được phân công thợ thi công!`,
+            400,
+            'CANNOT_ASSIGN_PENDING_APPROVAL'
+          )
+        );
+      }
+      if (['QUALITY_CHECK', 'COMPLETED', 'PAYMENT_PENDING', 'PAID', 'DELIVERED'].includes(workOrder.current_status)) {
+        return next(
+          new AppError(
+            `Không thể phân công: Lệnh sửa chữa đã hoàn tất thi công hoặc đang ở khâu nghiệm thu KCS / Thanh toán / Bàn giao.`,
+            400,
+            'CANNOT_ASSIGN_COMPLETED_STAGE'
+          )
+        );
+      }
+      return next(
+        new AppError(
+          `Không thể phân công thợ tại bước [${workOrder.current_status}]. Quản đốc chỉ được phân công khi xe ở bước "Đã duyệt báo giá / Chờ vật tư"!`,
+          400,
+          'INVALID_STAGE_FOR_ASSIGNMENT'
+        )
+      );
+    }
+
     if (technician_name) {
       const techId = technician_id || '0988888803';
       const MAX_TECH_WORKLOAD = 3;

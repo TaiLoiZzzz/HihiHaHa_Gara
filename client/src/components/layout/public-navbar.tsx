@@ -15,6 +15,7 @@ export function PublicNavbar() {
     { label: "Trang Chủ", href: "/" },
     { label: "Dịch Vụ & Bảng Giá", href: "/services" },
     { label: "Cẩm Nang Xe Ô Tô", href: "/blog" },
+    { label: "Hướng Dẫn (Help)", href: "/help" },
   ];
 
   return (

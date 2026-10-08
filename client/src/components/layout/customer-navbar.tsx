@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Car, FileText, CreditCard } from "lucide-react";
+import { LogOut, Car, FileText, CreditCard, HelpCircle } from "lucide-react";
 import { getCurrentUser, clearSession, UserSession, api } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -44,6 +44,7 @@ export function CustomerNavbar() {
     { label: "Hồ Sơ Xe", href: "/customer", icon: Car },
     { label: "Lệnh Đang Sửa", href: `/customer/orders/${activeOrderCode}`, icon: FileText },
     { label: "Thanh Toán QR", href: `/customer/payment/${activeOrderCode}`, icon: CreditCard },
+    { label: "Hướng Dẫn", href: "/help/customer", icon: HelpCircle },
   ];
 
   return (
