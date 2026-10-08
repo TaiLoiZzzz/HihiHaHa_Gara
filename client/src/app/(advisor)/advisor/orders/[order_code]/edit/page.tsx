@@ -216,6 +216,69 @@ export default function EditOrderEstimatePage() {
     toast.success(`Đã thêm ${part.partCode} qua gợi ý Neo4j Graph!`);
   };
 
+  // Áp dụng chẩn đoán AI vào bảng báo giá
+  const handleApplyAiDiagnosis = (
+    parts: any[],
+    laborCost: number,
+    explanation: string,
+    suggestedAction: string
+  ) => {
+    const newItems: EstimateItem[] = [];
+
+    parts.forEach((p, idx) => {
+      const exists = items.some((it) => it.code === p.part_code);
+      if (!exists) {
+        newItems.push({
+          id: `ai-part-${Date.now()}-${idx}`,
+          name: p.part_name,
+          code: p.part_code,
+          type: "part",
+          quantity: 1,
+          unitPrice: Number(p.unit_price) || 0,
+          isOemSubstitute: true,
+        });
+      }
+    });
+
+    if (laborCost > 0) {
+      newItems.push({
+        id: `ai-labor-${Date.now()}`,
+        name: suggestedAction ? `Công: ${suggestedAction}` : "Công bảo dưỡng & thay thế linh kiện theo AI",
+        code: `LAB-AI-${Date.now().toString().slice(-4)}`,
+        type: "labor",
+        quantity: 1,
+        unitPrice: laborCost,
+      });
+    }
+
+    if (newItems.length > 0) {
+      setItems((prev) => [...prev, ...newItems]);
+      toast.success(`Đã tự động nạp ${newItems.length} hạng mục (phụ tùng + tiền công) vào Báo giá!`);
+    } else {
+      toast.info("Các hạng mục này đã có sẵn trong bảng báo giá.");
+    }
+  };
+
+  const handleApplySinglePart = (part: any, laborCost: number) => {
+    if (items.some((i) => i.code === part.part_code)) {
+      toast.warning(`Phụ tùng ${part.part_code} đã có trong báo giá!`);
+      return;
+    }
+
+    const newItem: EstimateItem = {
+      id: `ai-part-${Date.now()}`,
+      name: part.part_name,
+      code: part.part_code,
+      type: "part",
+      quantity: 1,
+      unitPrice: Number(part.unit_price) || 0,
+      isOemSubstitute: true,
+    };
+
+    setItems((prev) => [...prev, newItem]);
+    toast.success(`Đã thêm phụ tùng ${part.part_name} vào báo giá!`);
+  };
+
   const handleSimulateNeo4jRun = () => {
     setIsSearchingNeo4j(true);
     setTimeout(() => {
@@ -277,7 +340,13 @@ export default function EditOrderEstimatePage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <GraphRagAiModal />
+          <GraphRagAiModal
+            vehicleModel={carModel}
+            initialSymptoms={orderData?.estimate?.notes || "Đạp phanh nghe tiếng rít kim loại ken két ở 2 bánh trước"}
+            onApplyAll={handleApplyAiDiagnosis}
+            onApplyPart={handleApplySinglePart}
+            triggerLabel="⚡ AI Chẩn Đoán & Bổ Sung Báo Giá"
+          />
           <button
             onClick={handleSaveOrder}
             disabled={saving}

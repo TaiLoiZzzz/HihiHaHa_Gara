@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { GraphRagAiModal } from "@/components/technician/graph-rag-ai-modal";
 
 interface TaskItem {
   id: string;
@@ -357,7 +356,6 @@ export default function TechnicianTabletPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <GraphRagAiModal />
           <button
             type="button"
             onClick={() => setIsAuthenticated(false)}

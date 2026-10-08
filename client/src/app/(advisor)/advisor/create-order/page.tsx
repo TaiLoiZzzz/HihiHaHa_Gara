@@ -136,6 +136,69 @@ export default function CreateOrderPage() {
     );
   };
 
+  // Áp dụng toàn bộ chẩn đoán AI vào bảng báo giá
+  const handleApplyAiDiagnosis = (
+    parts: any[],
+    laborCost: number,
+    explanation: string,
+    suggestedAction: string
+  ) => {
+    const newItems: OrderItem[] = [];
+
+    // 1. Phụ tùng đề xuất
+    parts.forEach((p, idx) => {
+      const exists = items.some((it) => it.code === p.part_code);
+      if (!exists) {
+        newItems.push({
+          id: `ai-part-${Date.now()}-${idx}`,
+          name: p.part_name,
+          code: p.part_code,
+          type: "part",
+          quantity: 1,
+          unitPrice: Number(p.unit_price) || 0,
+        });
+      }
+    });
+
+    // 2. Tiền công thợ
+    if (laborCost > 0) {
+      newItems.push({
+        id: `ai-labor-${Date.now()}`,
+        name: suggestedAction ? `Công: ${suggestedAction}` : "Công bảo dưỡng & thay thế linh kiện theo AI",
+        code: `LAB-AI-${Date.now().toString().slice(-4)}`,
+        type: "labor",
+        quantity: 1,
+        unitPrice: laborCost,
+      });
+    }
+
+    if (newItems.length > 0) {
+      setItems((prev) => [...prev, ...newItems]);
+      toast.success(`Đã tự động nạp ${newItems.length} hạng mục (phụ tùng + tiền công) vào Báo giá!`);
+    } else {
+      toast.info("Các hạng mục này đã có sẵn trong bảng báo giá.");
+    }
+  };
+
+  // Áp dụng 1 phụ tùng đơn lẻ
+  const handleApplySinglePart = (part: any, laborCost: number) => {
+    const exists = items.some((it) => it.code === part.part_code);
+    if (exists) {
+      toast.info(`Phụ tùng [${part.part_code}] đã có trong bảng báo giá.`);
+      return;
+    }
+    const newItem: OrderItem = {
+      id: `ai-part-${Date.now()}`,
+      name: part.part_name,
+      code: part.part_code,
+      type: "part",
+      quantity: 1,
+      unitPrice: Number(part.unit_price) || 0,
+    };
+    setItems((prev) => [...prev, newItem]);
+    toast.success(`Đã thêm phụ tùng ${part.part_name} vào báo giá!`);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!plateNumber || !customerName || !phone) {
@@ -193,7 +256,13 @@ export default function CreateOrderPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <GraphRagAiModal />
+          <GraphRagAiModal
+            vehicleModel={carModel}
+            initialSymptoms={customerRequests}
+            onApplyAll={handleApplyAiDiagnosis}
+            onApplyPart={handleApplySinglePart}
+            triggerLabel="⚡ AI Chẩn Đoán & Tự Động Lập Báo Giá"
+          />
         </div>
       </div>
 
@@ -340,11 +409,18 @@ export default function CreateOrderPage() {
 
           {/* Card 2: Hạng mục báo giá sơ bộ */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
               <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                 <ClipboardList className="w-4 h-4 text-amber-500" />
                 Danh Mục Báo Giá Dự Kiến ({items.length} hạng mục)
               </h2>
+              <GraphRagAiModal
+                vehicleModel={carModel}
+                initialSymptoms={customerRequests}
+                onApplyAll={handleApplyAiDiagnosis}
+                onApplyPart={handleApplySinglePart}
+                triggerLabel="✨ Gợi Ý Phụ Tùng Bằng AI"
+              />
             </div>
 
             {/* List */}

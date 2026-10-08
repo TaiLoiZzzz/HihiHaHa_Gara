@@ -21,7 +21,6 @@ import {
   FileText,
 } from "lucide-react";
 import { formatVND } from "@/lib/utils";
-import { GraphRagAiModal } from "@/components/technician/graph-rag-ai-modal";
 
 export default function OwnerDashboardPage() {
   const [timeRange, setTimeRange] = useState<"day" | "week" | "month" | "quarter">("month");
@@ -102,7 +101,6 @@ export default function OwnerDashboardPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <GraphRagAiModal />
           <div className="flex items-center bg-muted/60 p-1 rounded-xl border text-xs">
             {(["day", "week", "month", "quarter"] as const).map((r) => (
               <button

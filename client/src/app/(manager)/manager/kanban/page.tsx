@@ -18,7 +18,6 @@ import {
   Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
-import { GraphRagAiModal } from "@/components/technician/graph-rag-ai-modal";
 
 interface KanbanCard {
   id: string;
@@ -309,7 +308,6 @@ export default function WorkshopKanbanPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <GraphRagAiModal />
           <Link
             href="/advisor/create-order"
             className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs transition-all flex items-center gap-1.5 shadow-md shadow-amber-500/20 active:scale-95"

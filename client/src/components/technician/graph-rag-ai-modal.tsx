@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
-import { Sparkles, Bot, AlertTriangle, CheckCircle2, Wrench, X, RefreshCw, Layers } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Sparkles, Bot, AlertTriangle, CheckCircle2, Wrench, X, RefreshCw, Layers, PlusCircle, CheckCheck } from "lucide-react";
 import { LiquidGlassButton } from "@/components/ui/liquid-glass-button";
 import { formatCurrencyVND } from "@/lib/utils";
 import { fetchApi } from "@/lib/api";
 import { toast } from "sonner";
 
-interface RecommendedPart {
+export interface RecommendedPart {
   part_code: string;
   part_name: string;
   category: string;
@@ -22,7 +22,7 @@ interface RecommendedPart {
   confidence_score: number;
 }
 
-interface DiagnosisResponse {
+export interface DiagnosisResponse {
   success: boolean;
   vehicle_model: string;
   symptoms_input: string;
@@ -33,11 +33,13 @@ interface DiagnosisResponse {
   suggested_action: string;
 }
 
-interface GraphRagAiModalProps {
+export interface GraphRagAiModalProps {
   isOpen?: boolean;
   onClose?: () => void;
   vehicleModel?: string;
+  initialSymptoms?: string;
   onApplyPart?: (part: RecommendedPart, laborCost: number) => void;
+  onApplyAll?: (parts: RecommendedPart[], laborCost: number, explanation: string, suggestedAction: string) => void;
   triggerLabel?: string;
 }
 
@@ -45,13 +47,22 @@ export function GraphRagAiModal({
   isOpen,
   onClose,
   vehicleModel = "Toyota Camry 2.5Q",
+  initialSymptoms = "Đạp phanh nghe tiếng rít kim loại ken két ở 2 bánh trước",
   onApplyPart,
-  triggerLabel = "Trợ Lý AI Graph-RAG",
+  onApplyAll,
+  triggerLabel = "⚡ AI Chẩn Đoán & Gợi Ý Báo Giá",
 }: GraphRagAiModalProps) {
   const [internalOpen, setInternalOpen] = useState(false);
-  const [symptoms, setSymptoms] = useState("Đạp phanh nghe tiếng rít kim loại ken két ở 2 bánh trước");
+  const [symptoms, setSymptoms] = useState(initialSymptoms);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DiagnosisResponse | null>(null);
+
+  // Cập nhật symptoms khi initialSymptoms thay đổi từ form
+  useEffect(() => {
+    if (initialSymptoms) {
+      setSymptoms(initialSymptoms);
+    }
+  }, [initialSymptoms]);
 
   const isControlled = typeof isOpen === "boolean";
   const showModal = isControlled ? isOpen : internalOpen;
@@ -67,9 +78,9 @@ export function GraphRagAiModal({
       <button
         type="button"
         onClick={() => setInternalOpen(true)}
-        className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/15 to-amber-500/25 hover:from-amber-500/25 hover:to-amber-500/35 border border-amber-500/30 text-amber-600 dark:text-amber-400 font-semibold text-xs transition-all shadow-sm flex items-center gap-1.5"
+        className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-amber-500/15 to-amber-600/20 hover:from-amber-500/30 hover:to-amber-600/30 border border-amber-500/40 text-amber-900 font-extrabold text-xs transition-all shadow-sm flex items-center gap-1.5 active:scale-95"
       >
-        <Sparkles className="w-3.5 h-3.5 animate-pulse text-amber-500" />
+        <Sparkles className="w-3.5 h-3.5 animate-pulse text-amber-600" />
         {triggerLabel}
       </button>
     );
@@ -77,7 +88,7 @@ export function GraphRagAiModal({
 
   const handleDiagnose = async () => {
     if (!symptoms.trim()) {
-      toast.error("Vui lòng nhập mô tả triệu chứng hư hỏng của xe");
+      toast.error("Vui lòng nhập mô tả triệu chứng hoặc yêu cầu kiểm tra của khách");
       return;
     }
 
@@ -106,43 +117,43 @@ export function GraphRagAiModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl p-6 transition-all">
+      <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white border border-slate-200 shadow-2xl p-6 transition-all font-sans text-slate-900">
         
-        {/* Header Modal */}
-        <div className="flex items-center justify-between pb-4 border-b border-zinc-200 dark:border-zinc-800">
+        {/* Header Modal - Dành riêng cho Cố Vấn Dịch Vụ */}
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/30 text-amber-500 dark:text-amber-400">
+            <div className="p-2.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600">
               <Bot className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                  Trợ Lý AI Chẩn Đoán Graph-RAG
+                <h3 className="text-base sm:text-lg font-black text-slate-900">
+                  Trợ Lý AI Lập Báo Giá & Chẩn Đoán (Cố Vấn Dịch Vụ)
                 </h3>
-                <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                  Zero-Hallucination
+                <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  Grounded Kho Thật
                 </span>
               </div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Đối soát đồ thị liên kết Neo4j & Xác thực tồn kho thực tế MongoDB
+              <p className="text-xs text-slate-500">
+                Đối soát Đồ thị Tri thức Ô tô Neo4j & Xác thực tồn kho thực tế MongoDB
               </p>
             </div>
           </div>
           <button
             onClick={handleClose}
-            className="p-2 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Input Triệu chứng */}
+        {/* Input Triệu chứng & Thông tin xe */}
         <div className="mt-5 space-y-3">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-zinc-700 dark:text-zinc-300">
-              Phương tiện: <span className="text-amber-600 dark:text-amber-400">{vehicleModel}</span>
+            <span className="font-bold text-slate-700">
+              Dòng xe tiếp nhận: <span className="text-amber-700 font-extrabold">{vehicleModel}</span>
             </span>
-            <span className="text-zinc-400">Hỗ trợ mô tả tiếng Việt tự nhiên</span>
+            <span className="text-slate-400 text-[11px]">Hỗ trợ tiếng Việt tự nhiên</span>
           </div>
 
           <div className="relative">
@@ -150,8 +161,8 @@ export function GraphRagAiModal({
               rows={3}
               value={symptoms}
               onChange={(e) => setSymptoms(e.target.value)}
-              placeholder="Nhập triệu chứng xe (Ví dụ: Đạp phanh kêu ken két, máy rung khi dừng đèn đỏ...)"
-              className="w-full p-3.5 text-sm rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition resize-none font-sans"
+              placeholder="Nhập triệu chứng xe (Ví dụ: Đạp phanh kêu ken két, máy rung khi dừng đèn đỏ, có mùi khét...)"
+              className="w-full p-3.5 text-sm rounded-2xl border border-slate-300 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition resize-none font-sans font-medium"
             />
           </div>
 
@@ -164,13 +175,13 @@ export function GraphRagAiModal({
             >
               {loading ? (
                 <>
-                  <RefreshCw className="w-4 h-4 animate-spin text-zinc-950" />
-                  Đang quét Đồ thị Tri thức Neo4j...
+                  <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
+                  Đang quét Đồ thị Tri thức Neo4j & Kho...
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4 text-zinc-950" />
-                  Phân Tích AI Graph-RAG
+                  <Sparkles className="w-4 h-4 text-slate-950" />
+                  Phân Tích AI Graph-RAG & Tìm Phụ Tùng
                 </>
               )}
             </LiquidGlassButton>
@@ -180,80 +191,120 @@ export function GraphRagAiModal({
         {/* Kết quả phân tích */}
         {result && (
           <div className="mt-6 space-y-5 animate-in slide-in-from-bottom-3 duration-300">
-            {/* Hộp giải thích AI */}
-            <div className="p-4 rounded-xl bg-amber-500/5 dark:bg-amber-400/5 border border-amber-500/20 text-xs leading-relaxed space-y-2">
-              <div className="flex items-center justify-between font-semibold text-amber-700 dark:text-amber-400">
+            {/* Hộp giải thích AI & Đề xuất */}
+            <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs leading-relaxed space-y-2">
+              <div className="flex items-center justify-between font-bold text-amber-900">
                 <span className="flex items-center gap-1.5">
-                  <Layers className="w-4 h-4" /> Báo cáo Chẩn đoán Kỹ thuật
+                  <Layers className="w-4 h-4 text-amber-600" /> Báo cáo Chẩn đoán Kỹ thuật
                 </span>
-                <span className="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/30 text-[11px]">
+                <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-300 text-[11px] font-mono">
                   Độ tin cậy: {result.confidence_overall}
                 </span>
               </div>
-              <p className="text-zinc-700 dark:text-zinc-300">{result.explanation}</p>
-              <div className="pt-1 font-medium text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5">
-                <Wrench className="w-3.5 h-3.5 text-amber-500" />
-                Đề xuất xử lý: {result.suggested_action}
+              <p className="text-slate-700 font-medium">{result.explanation}</p>
+              
+              <div className="pt-2 border-t border-amber-200/60 flex flex-wrap items-center justify-between gap-2">
+                <div className="font-semibold text-slate-800 flex items-center gap-1.5">
+                  <Wrench className="w-3.5 h-3.5 text-amber-600" />
+                  Đề xuất xử lý: <strong className="text-slate-950">{result.suggested_action}</strong>
+                </div>
+                <div className="font-bold text-slate-900 bg-white px-2.5 py-1 rounded-lg border border-amber-300">
+                  Ước tính tiền công: <span className="font-mono text-amber-700">{formatCurrencyVND(result.estimated_labor_cost)}</span>
+                </div>
               </div>
             </div>
 
+            {/* Thanh tác vụ: NẠP TẤT CẢ VÀO BÁO GIÁ */}
+            {onApplyAll && (
+              <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="text-xs text-emerald-950">
+                  <div className="font-bold flex items-center gap-1.5">
+                    <CheckCheck className="w-4 h-4 text-emerald-600" />
+                    Lập Báo Giá Tự Động 1-Click
+                  </div>
+                  <div className="text-[11px] text-emerald-700">
+                    Tự động đưa {result.recommended_parts.length} phụ tùng và 1 mục tiền công thợ vào bảng báo giá
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onApplyAll(
+                      result.recommended_parts,
+                      result.estimated_labor_cost,
+                      result.explanation,
+                      result.suggested_action
+                    );
+                    handleClose();
+                  }}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase tracking-wider transition shadow-sm active:scale-95 flex items-center justify-center gap-1.5"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  Áp Dụng Tất Cả Vào Báo Giá
+                </button>
+              </div>
+            )}
+
             {/* Danh sách phụ tùng gợi ý Grounded */}
             <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                Phụ tùng tương thích xác thực từ Kho ({result.recommended_parts.length})
-              </h4>
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                  Phụ tùng tương thích xác thực từ Kho ({result.recommended_parts.length})
+                </h4>
+                <span className="text-[11px] text-slate-500 font-medium">Bấm chọn từng món nếu chỉ muốn bổ sung lẻ</span>
+              </div>
 
               <div className="space-y-2.5">
                 {result.recommended_parts.map((part) => (
                   <div
                     key={part.part_code}
-                    className="p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/70 hover:border-amber-500/40 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                    className="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-amber-400 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold">
+                        <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 font-bold border border-slate-200">
                           {part.part_code}
                         </span>
-                        <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                        <span className="text-sm font-bold text-slate-900">
                           {part.part_name}
                         </span>
                       </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
-                        <span>Cụm: <strong className="text-zinc-700 dark:text-zinc-300">{part.subsystem}</strong></span>
-                        <span>Khung gầm: <strong className="text-amber-600 dark:text-amber-400">{part.shared_platform}</strong></span>
-                        <span>Kệ kho: <strong className="text-zinc-700 dark:text-zinc-300">{part.location_rack}</strong></span>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                        <span>Cụm: <strong className="text-slate-700">{part.subsystem}</strong></span>
+                        <span>Khung gầm: <strong className="text-amber-700">{part.shared_platform}</strong></span>
+                        <span>Kệ kho: <strong className="text-slate-700 font-mono">{part.location_rack}</strong></span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-4 self-end sm:self-center">
                       <div className="text-right">
-                        <div className="text-sm font-bold text-amber-600 dark:text-amber-400 font-mono">
+                        <div className="text-sm font-bold text-amber-700 font-mono">
                           {formatCurrencyVND(part.unit_price)}
                         </div>
-                        <div className="text-[11px] flex items-center gap-1 justify-end">
+                        <div className="text-[11px] flex items-center gap-1 justify-end font-medium">
                           {part.is_in_stock ? (
-                            <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                              <CheckCircle2 className="w-3 h-3" /> Khả dụng: {part.available_quantity} {part.unit}
+                            <span className="text-emerald-700 flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Khả dụng: {part.available_quantity} {part.unit}
                             </span>
                           ) : (
-                            <span className="text-rose-600 dark:text-rose-400 flex items-center gap-1">
-                              <AlertTriangle className="w-3 h-3" /> Hết hàng (Cần đặt)
+                            <span className="text-rose-600 flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3 text-rose-500" /> Hết hàng (Cần đặt)
                             </span>
                           )}
                         </div>
                       </div>
 
                       <button
+                        type="button"
                         onClick={() => {
                           if (onApplyPart) {
                             onApplyPart(part, result.estimated_labor_cost);
                           }
-                          toast.success(`Đã chọn phụ tùng ${part.part_code} vào Lệnh sửa chữa!`);
                           handleClose();
                         }}
-                        className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 hover:bg-amber-500 hover:text-zinc-950 dark:hover:bg-amber-400 dark:hover:text-zinc-950 transition"
+                        className="px-3 py-1.5 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 transition active:scale-95 shadow-xs flex items-center gap-1"
                       >
-                        1-Click Chọn
+                        <PlusCircle className="w-3.5 h-3.5" /> Thêm Món Này
                       </button>
                     </div>
                   </div>

@@ -20,7 +20,6 @@ import {
   Search,
   ExternalLink
 } from "lucide-react";
-import { GraphRagAiModal } from "@/components/technician/graph-rag-ai-modal";
 
 export default function HomePage() {
   const [quickSymptom, setQuickSymptom] = useState("");
@@ -114,7 +113,12 @@ export default function HomePage() {
                 <ArrowRight className="w-4 h-4 text-slate-950" />
               </Link>
 
-              <GraphRagAiModal triggerLabel="Bác Sĩ Bắt Bệnh Xe Bằng AI" />
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-sm font-bold shadow-xs transition-all transform active:scale-95"
+              >
+                Tra Cứu Hồ Sơ Xe Của Bạn
+              </Link>
             </div>
 
             {/* 4 Chỉ số vàng */}

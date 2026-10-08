@@ -19,7 +19,6 @@ import {
 import { formatVND } from "@/lib/utils";
 import { api, fetchApi } from "@/lib/api";
 import { toast } from "sonner";
-import { GraphRagAiModal } from "@/components/technician/graph-rag-ai-modal";
 
 interface InventoryItem {
   _id?: string;
@@ -182,7 +181,6 @@ export default function WorkshopInventoryPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <GraphRagAiModal />
           <button
             onClick={loadInventory}
             disabled={loading}
