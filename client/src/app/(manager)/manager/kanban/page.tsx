@@ -154,17 +154,38 @@ const STAGE_TO_STATUS: Record<KanbanCard["stage"], string> = {
   completed: "COMPLETED",
 };
 
+export interface TechWorkload {
+  id: string;
+  name: string;
+  role: string;
+  avatar: string;
+  current_orders_count: number;
+  max_orders: number;
+  is_full: boolean;
+  orders: any[];
+}
+
 export default function WorkshopKanbanPage() {
-  const [cards, setCards] = useState<KanbanCard[]>(INITIAL_CARDS);
+  const [cards, setCards] = useState<KanbanCard[]>([]);
+  const [workloads, setWorkloads] = useState<TechWorkload[]>([]);
+  const [filterTechId, setFilterTechId] = useState<string | null>(null);
   const [draggedCardId, setDraggedCardId] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
 
-  // Đồng bộ trạng thái lệnh thật từ MongoDB & Khôi phục vị trí thẻ
+  // Đồng bộ trạng thái lệnh thật từ MongoDB & Tải công việc thợ
   const syncRealOrder = React.useCallback(async (showToast = false) => {
     try {
       setSyncing(true);
-      const resList = await api.getMyWorkOrders();
-      if (resList.success && Array.isArray(resList.data) && resList.data.length > 0) {
+      const [resList, resWorkload] = await Promise.all([
+        api.getMyWorkOrders({ all: true }),
+        api.getTechniciansWorkload().catch(() => ({ success: false, data: [] })),
+      ]);
+
+      if (resWorkload.success && Array.isArray(resWorkload.data)) {
+        setWorkloads(resWorkload.data);
+      }
+
+      if (resList.success && Array.isArray(resList.data)) {
         const mappedCards: KanbanCard[] = resList.data.map((wo: any, idx: number) => {
           let stage: KanbanCard["stage"] = "in_progress";
           let progress = typeof wo.progress_percent === "number" ? wo.progress_percent : 0;
@@ -190,28 +211,30 @@ export default function WorkshopKanbanPage() {
             progress = 10;
           }
 
+          const assignedTechName =
+            wo.assigned_technicians?.[0]?.technician_name ||
+            wo.assigned_technician?.full_name ||
+            "Chưa gán thợ";
+
+          const assignedBay = wo.bay || "Chưa xếp khoang";
+
           return {
             id: `db-card-${wo.order_code || idx}`,
             orderCode: wo.order_code,
             plateNumber: wo.license_plate || "51K-888.88",
             carModel: wo.vehicle_model || "Toyota Camry 2.5Q",
-            customerName: wo.customer_name || "Minh Thảo",
-            technician: wo.assigned_technician?.full_name || "Nguyễn Văn Thợ (THO-01)",
-            bay: "Khoang Nâng 02",
+            customerName: wo.customer_name || "Khách Hàng",
+            technician: assignedTechName,
+            bay: assignedBay,
             progress,
             stage,
-            estimatedTime: "Hôm nay",
+            estimatedTime: wo.estimated_finish_time || "Hôm nay",
             priority: (wo.priority || "normal") as "normal" | "urgent",
           };
         });
 
-        // Đảm bảo không bỏ sót thẻ demo nào
-        const extraCards = INITIAL_CARDS.filter(
-          (c) => !mappedCards.some((mc: any) => mc.orderCode === c.orderCode)
-        );
-        const finalCards = [...mappedCards, ...extraCards];
-        setCards(finalCards);
-        localStorage.setItem("hihihaha_kanban_cards", JSON.stringify(finalCards));
+        setCards(mappedCards);
+        localStorage.setItem("hihihaha_kanban_cards", JSON.stringify(mappedCards));
 
         if (showToast) {
           toast.success(`Đã đồng bộ Live ${mappedCards.length} xe từ cơ sở dữ liệu MongoDB!`);
@@ -245,28 +268,41 @@ export default function WorkshopKanbanPage() {
     e.preventDefault();
   };
 
+  // Kéo thả thẻ xe có kiểm tra điều kiện nghiệp vụ chặt chẽ
   const handleMoveCard = async (cardId: string, targetStage: KanbanCard["stage"]) => {
     const card = cards.find((c) => c.id === cardId);
     if (!card) return;
+    if (card.stage === targetStage) return;
 
-    const updatedCards = cards.map((c) => {
-      if (c.id === cardId) {
-        const updated = { ...c, stage: targetStage };
-        if (targetStage === "completed") updated.progress = 100;
-        return updated;
+    // KIỂM TRA ĐIỀU KIỆN CHẶT CHẼ TRƯỚC KHI CHO PHÉP KÉO (CLIENT GUARDS)
+    if (targetStage === "in_progress") {
+      const hasTech = !card.technician.includes("Chưa");
+      const hasBay = !card.bay.includes("Chưa");
+      if (!hasTech || !hasBay) {
+        toast.error("Chưa đủ điều kiện: Cần phân công Thợ & Khoang nâng trước khi kéo sang Đang thi công!");
+        openAssignModal(card);
+        return;
       }
-      return c;
-    });
+    }
 
-    setCards(updatedCards);
-    localStorage.setItem("hihihaha_kanban_cards", JSON.stringify(updatedCards));
+    if (targetStage === "qc" || targetStage === "completed") {
+      if (card.progress < 100) {
+        toast.error(
+          `Chưa thể hoàn tất: Tiến độ thi công tại khoang chưa đạt 100% (Hiện tại: ${card.progress}%). Kỹ thuật viên phải hoàn tất tất cả các hạng mục!`
+        );
+        return;
+      }
+    }
 
     const nextStatus = STAGE_TO_STATUS[targetStage] || "IN_PROGRESS";
     try {
       await api.updateStatus(card.orderCode, nextStatus, `Quản đốc chuyển lệnh sang cột ${targetStage} trên Kanban`);
-      toast.success(`Đã chuyển lệnh #${card.orderCode} sang [${COLUMNS.find((col) => col.key === targetStage)?.label}] và lưu MongoDB!`);
+      toast.success(`Đã chuyển lệnh #${card.orderCode} sang [${COLUMNS.find((col) => col.key === targetStage)?.label}]!`);
+      await syncRealOrder(false);
     } catch (err: any) {
-      toast.success(`Đã chuyển lệnh #${card.orderCode} sang cột: ${COLUMNS.find((col) => col.key === targetStage)?.label}`);
+      toast.error(err.message || "Không thể chuyển trạng thái do chưa thỏa mãn điều kiện quy trình!");
+      // Đồng bộ lại vị trí ban đầu
+      await syncRealOrder(false);
     }
   };
 
@@ -425,10 +461,88 @@ export default function WorkshopKanbanPage() {
         </div>
       </div>
 
+      {/* Theo Dõi Tải Công Việc Đội Ngũ Kỹ Thuật Viên (Workload Monitor) */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+              <UserCheck className="w-4 h-4 text-amber-500" />
+              Theo Dõi Tải Công Việc Kỹ Thuật Viên (Giới hạn tối đa 3 xe/thợ)
+            </h3>
+            <p className="text-xs text-slate-500">
+              Chủ Gara & Quản Đốc giám sát số lượng xe mỗi thợ đang phụ trách. Nhấp vào thợ để lọc nhanh các xe tương ứng.
+            </p>
+          </div>
+          {filterTechId && (
+            <button
+              type="button"
+              onClick={() => setFilterTechId(null)}
+              className="text-xs font-bold text-amber-700 hover:text-amber-800 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg border border-amber-300 transition"
+            >
+              ✕ Bỏ lọc thợ (Xem tất cả xe)
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {TECHNICIANS_LIST.map((tech) => {
+            const wl = workloads.find((w) => w.id === tech.id);
+            const count = wl ? wl.current_orders_count : cards.filter((c) => c.technician.includes(tech.name.split(" ")[0]) && c.stage === "in_progress").length;
+            const isFull = count >= 3;
+            const isSelected = filterTechId === tech.id;
+
+            return (
+              <div
+                key={tech.id}
+                onClick={() => setFilterTechId(isSelected ? null : tech.id)}
+                className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                  isSelected
+                    ? "border-amber-500 bg-amber-50/80 ring-2 ring-amber-500/20"
+                    : isFull
+                    ? "border-red-200 bg-red-50/40 hover:border-red-300"
+                    : "border-slate-200 bg-slate-50/60 hover:border-slate-300"
+                }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <img src={tech.avatar} alt={tech.name} className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-200" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-800 truncate">{tech.name}</p>
+                    <p className="text-[10px] text-slate-500 truncate">{tech.role}</p>
+                  </div>
+                </div>
+
+                <div className="text-right shrink-0">
+                  <span
+                    className={`inline-block px-2 py-0.5 rounded text-[10px] font-mono font-black ${
+                      isFull
+                        ? "bg-red-500 text-white"
+                        : count > 0
+                        ? "bg-amber-500 text-white"
+                        : "bg-emerald-100 text-emerald-800"
+                    }`}
+                  >
+                    {count}/3 xe
+                  </span>
+                  <p className="text-[10px] text-slate-400 mt-0.5 font-medium">
+                    {isFull ? "ĐẦY TẢI" : count > 0 ? "ĐANG LÀM" : "RẢNH RỖI"}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* 6 Columns Kanban Board */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 items-start min-h-[620px] overflow-x-auto pb-4">
         {COLUMNS.map((col) => {
-          const colCards = cards.filter((c) => c.stage === col.key);
+          const displayedCards = filterTechId
+            ? cards.filter((c) => {
+                const selectedTechName = TECHNICIANS_LIST.find((t) => t.id === filterTechId)?.name.split(" ")[0] || "";
+                return c.technician.includes(selectedTechName);
+              })
+            : cards;
+          const colCards = displayedCards.filter((c) => c.stage === col.key);
 
           return (
             <div
@@ -614,12 +728,24 @@ export default function WorkshopKanbanPage() {
                 <div className="space-y-2">
                   {TECHNICIANS_LIST.map((tech) => {
                     const isSelected = selectedTech.name === tech.name;
+                    const wl = workloads.find((w) => w.id === tech.id);
+                    const count = wl ? wl.current_orders_count : 0;
+                    const isFull = count >= 3;
+
                     return (
                       <div
                         key={tech.id}
-                        onClick={() => setSelectedTech(tech)}
+                        onClick={() => {
+                          if (isFull) {
+                            toast.error(`Kỹ thuật viên [${tech.name}] đã đạt tải tối đa 3/3 xe! Vui lòng chọn thợ khác.`);
+                            return;
+                          }
+                          setSelectedTech(tech);
+                        }}
                         className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-                          isSelected
+                          isFull
+                            ? "opacity-50 bg-slate-100 border-slate-200 cursor-not-allowed"
+                            : isSelected
                             ? "bg-amber-50/80 border-amber-500 ring-2 ring-amber-500/20"
                             : "bg-slate-50 border-slate-200 hover:border-slate-300"
                         }`}
@@ -633,11 +759,26 @@ export default function WorkshopKanbanPage() {
                             <p className="text-[11px] text-slate-500 font-medium">{tech.role}</p>
                           </div>
                         </div>
-                        {isSelected && (
-                          <div className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold">
-                            <Check className="w-3.5 h-3.5" />
-                          </div>
-                        )}
+
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                              isFull
+                                ? "bg-red-500 text-white"
+                                : count > 0
+                                ? "bg-amber-500/20 text-amber-700"
+                                : "bg-emerald-100 text-emerald-700"
+                            }`}
+                          >
+                            {isFull ? "ĐẦY TẢI (3/3)" : `${count}/3 xe`}
+                          </span>
+
+                          {isSelected && !isFull && (
+                            <div className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold">
+                              <Check className="w-3.5 h-3.5" />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })}

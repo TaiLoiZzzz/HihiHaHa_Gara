@@ -221,6 +221,26 @@ const getCustomerWorkOrdersController = async (req, res, next) => {
       if (req.query.customer_phone) {
         query.customer_phone = req.query.customer_phone.trim();
       }
+      if (req.query.technician_id) {
+        const tid = req.query.technician_id.trim();
+        query['assigned_technicians'] = {
+          $elemMatch: {
+            $or: [
+              { technician_id: tid },
+              { technician_name: new RegExp(tid, 'i') },
+            ],
+          },
+        };
+      } else if (req.user?.role === 'TECHNICIAN' && !req.query.all) {
+        query['assigned_technicians'] = {
+          $elemMatch: {
+            $or: [
+              { technician_id: req.user.phone_number },
+              { technician_name: new RegExp(req.user.full_name || '', 'i') },
+            ],
+          },
+        };
+      }
     }
 
     const workOrders = await WorkOrder.find(query).sort({ createdAt: -1 });
@@ -308,15 +328,89 @@ const updateWorkOrderStatusController = async (req, res, next) => {
     }
 
     const currentStatus = workOrder.current_status;
-    const isManagerOrOwner = req.user?.role === 'WORKSHOP_MANAGER' || req.user?.role === 'OWNER';
-    if (!isManagerOrOwner && !ALLOWED_TRANSITIONS[currentStatus]?.includes(next_status)) {
+
+    // 1. Kiem tra tinh hop le cua luong State Machine
+    if (!ALLOWED_TRANSITIONS[currentStatus]?.includes(next_status) && currentStatus !== next_status) {
       return next(
         new AppError(
-          `Không thể chuyển trạng thái Lệnh sửa chữa từ [${currentStatus}] sang [${next_status}]`,
+          `Quy trình không hợp lệ: Không thể chuyển từ [${currentStatus}] sang [${next_status}]. Phải tuân thủ đúng trình tự quy trình!`,
           400,
           'INVALID_STATUS_TRANSITION'
         )
       );
+    }
+
+    // 2. CAC RANG BUOC NGHIEP VU CHAT CHE (BUSINESS GUARDS):
+    // Dieu kien sang QUOTE_SENT (Cho duyet bao gia): Phai co it nhat 1 hang muc bao gia
+    if (next_status === 'QUOTE_SENT') {
+      const itemsCount = workOrder.estimate?.items?.length || 0;
+      if (itemsCount === 0) {
+        return next(
+          new AppError(
+            'Chưa có hạng mục báo giá nào. Vui lòng lập danh sách vật tư/tiền công trước khi phát hành báo giá!',
+            400,
+            'EMPTY_ESTIMATE'
+          )
+        );
+      }
+    }
+
+    // Dieu kien sang QUOTE_APPROVED / WAITING_PARTS: Khach hang phai ky duyet bao gia
+    if (next_status === 'QUOTE_APPROVED' || next_status === 'APPROVED' || next_status === 'WAITING_PARTS') {
+      if (workOrder.estimate?.approval_status !== 'APPROVED') {
+        return next(
+          new AppError(
+            'Khách hàng chưa ký duyệt bảng báo giá. Không thể tự ý chuyển sang bước Đã duyệt!',
+            400,
+            'CUSTOMER_NOT_APPROVED'
+          )
+        );
+      }
+    }
+
+    // Dieu kien sang IN_PROGRESS (Dang thi cong): Phai co Thợ và Khoang nang
+    if (next_status === 'IN_PROGRESS') {
+      const hasTech = Array.isArray(workOrder.assigned_technicians) && workOrder.assigned_technicians.length > 0;
+      const hasBay = workOrder.bay && workOrder.bay !== 'Chưa xếp khoang';
+      if (!hasTech || !hasBay) {
+        return next(
+          new AppError(
+            'Chưa đủ điều kiện thi công: Vui lòng phân công Kỹ thuật viên và Khoang nâng cho lệnh này trước!',
+            400,
+            'MISSING_TECH_OR_BAY'
+          )
+        );
+      }
+    }
+
+    // Dieu kien sang QUALITY_CHECK / COMPLETED: Phai hoan thanh 100% cong doan
+    if (next_status === 'QUALITY_CHECK' || next_status === 'COMPLETED') {
+      const isProgress100 = (workOrder.progress_percent || 0) >= 100;
+      const hasTasks = Array.isArray(workOrder.tasks) && workOrder.tasks.length > 0;
+      const allTasksDone = hasTasks ? workOrder.tasks.every((t) => t.status === 'done') : isProgress100;
+
+      if (!isProgress100 && !allTasksDone) {
+        return next(
+          new AppError(
+            `Chưa đủ điều kiện hoàn tất: Kỹ thuật viên chưa hoàn thành 100% công đoạn thi công tại khoang (Tiến độ: ${workOrder.progress_percent || 0}%). Không thể kéo sang Hoàn tất!`,
+            400,
+            'TASKS_NOT_COMPLETED'
+          )
+        );
+      }
+    }
+
+    // Dieu kien sang PAID: Phai thanh toan xong
+    if (next_status === 'PAID') {
+      if (workOrder.payment_status !== 'PAID') {
+        return next(
+          new AppError(
+            'Lệnh sửa chữa chưa được ghi nhận thanh toán thành công qua cổng thanh toán.',
+            400,
+            'PAYMENT_NOT_VERIFIED'
+          )
+        );
+      }
     }
 
     // step 113: neu chuyen sang CANCELLED thi tu dong hoan tra ton kho
@@ -327,8 +421,9 @@ const updateWorkOrderStatusController = async (req, res, next) => {
     workOrder.current_status = next_status;
     workOrder.workflow_timeline.push({
       status: next_status,
-      updated_by: req.user?.phone_number || 'STAFF',
-      note: note || `Chuyển trạng thái sang ${next_status}`,
+      updated_by: req.user?.full_name || req.user?.phone_number || 'QUẢN ĐỐC',
+      updated_at: new Date(),
+      note: note || `Quản đốc chuyển trạng thái sang ${next_status}`,
     });
 
     await workOrder.save();
@@ -448,6 +543,25 @@ const assignWorkOrderController = async (req, res, next) => {
 
     if (technician_name) {
       const techId = technician_id || '0988888803';
+      const MAX_TECH_WORKLOAD = 3;
+
+      // Kiem tra so xe dang thi cong ma tho nay dang phu trach
+      const currentActiveCount = await WorkOrder.countDocuments({
+        order_code: { $ne: order_code },
+        'assigned_technicians.technician_id': techId,
+        current_status: { $in: ['QUOTE_APPROVED', 'WAITING_PARTS', 'IN_PROGRESS', 'QUALITY_CHECK'] },
+      });
+
+      if (currentActiveCount >= MAX_TECH_WORKLOAD) {
+        return next(
+          new AppError(
+            `Kỹ thuật viên [${technician_name}] đã đạt tải tối đa (${currentActiveCount}/${MAX_TECH_WORKLOAD} xe đang thi công). Vui lòng hoàn tất xe hiện tại hoặc chọn kỹ thuật viên khác!`,
+            400,
+            'TECH_WORKLOAD_LIMIT_EXCEEDED'
+          )
+        );
+      }
+
       const existingIdx = workOrder.assigned_technicians?.findIndex(
         (t) => t.technician_id === techId || t.technician_name === technician_name
       ) ?? -1;
@@ -479,12 +593,23 @@ const assignWorkOrderController = async (req, res, next) => {
       workOrder.estimated_finish_time = estimated_time;
     }
 
-    workOrder.workflow_timeline.push({
-      status: workOrder.current_status,
-      updated_by: req.user?.full_name || req.user?.phone_number || 'QUẢN ĐỐC',
-      updated_at: new Date(),
-      note: `Quản đốc phân công [${technician_name || 'Kỹ thuật viên'}] phụ trách tại [${bay || 'Khoang nâng'}]`,
-    });
+    // Tu dong chuyen sang IN_PROGRESS (Dang thi cong) neu lenh da duoc duyet va da co tho + khoang
+    if (['QUOTE_APPROVED', 'WAITING_PARTS', 'APPROVED'].includes(workOrder.current_status) && workOrder.bay && workOrder.bay !== 'Chưa xếp khoang') {
+      workOrder.current_status = 'IN_PROGRESS';
+      workOrder.workflow_timeline.push({
+        status: 'IN_PROGRESS',
+        updated_by: req.user?.full_name || 'QUẢN ĐỐC',
+        updated_at: new Date(),
+        note: `Đã phân công [${technician_name}] tại [${bay || workOrder.bay}]. Lệnh tự động chuyển sang Đang thi công (IN_PROGRESS)`,
+      });
+    } else {
+      workOrder.workflow_timeline.push({
+        status: workOrder.current_status,
+        updated_by: req.user?.full_name || req.user?.phone_number || 'QUẢN ĐỐC',
+        updated_at: new Date(),
+        note: `Quản đốc phân công [${technician_name || 'Kỹ thuật viên'}] phụ trách tại [${bay || 'Khoang nâng'}]`,
+      });
+    }
 
     await workOrder.save();
 
@@ -501,6 +626,45 @@ const assignWorkOrderController = async (req, res, next) => {
   }
 };
 
+// controller truy van tai cong viec cua doi ngu ky thuat vien
+const getTechniciansWorkloadController = async (req, res, next) => {
+  try {
+    const TECHS = [
+      { id: '0988888803', name: 'Nguyễn Văn Thợ (THO-01)', role: 'Trưởng nhóm Máy & Gầm - Bậc 4/4', avatar: 'https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=160&auto=format&fit=crop&q=80' },
+      { id: '0988888804', name: 'Trần Văn Cường (THO-02)', role: 'Chuyên gia Điện - CAN-Bus & Lạnh', avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=160&auto=format&fit=crop&q=80' },
+      { id: '0988888805', name: 'Lê Hoàng Long (THO-03)', role: 'Kỹ thuật viên Bảo Dưỡng Nhanh', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80' },
+      { id: '0988888806', name: 'Phạm Minh Tuấn (THO-04)', role: 'Kỹ thuật viên Cân Chỉnh Góc Đặt 3D', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&auto=format&fit=crop&q=80' },
+    ];
+
+    const activeOrders = await WorkOrder.find({
+      current_status: { $in: ['QUOTE_APPROVED', 'WAITING_PARTS', 'IN_PROGRESS', 'QUALITY_CHECK'] },
+    }).lean();
+
+    const workload = TECHS.map((tech) => {
+      const assigned = activeOrders.filter((o) =>
+        o.assigned_technicians?.some((t) => t.technician_id === tech.id || t.technician_name?.includes(tech.name.split(' ')[0]))
+      );
+      return {
+        ...tech,
+        current_orders_count: assigned.length,
+        max_orders: 3,
+        is_full: assigned.length >= 3,
+        orders: assigned.map((o) => ({
+          order_code: o.order_code,
+          license_plate: o.license_plate,
+          bay: o.bay,
+          current_status: o.current_status,
+          progress_percent: o.progress_percent,
+        })),
+      };
+    });
+
+    return sendSuccess(res, workload, 'Lấy báo cáo tải công việc kỹ thuật viên thành công');
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createWorkOrderController,
   getWorkOrderDetailsController,
@@ -510,4 +674,5 @@ module.exports = {
   updateWorkOrderStatusController,
   updateProgressController,
   assignWorkOrderController,
+  getTechniciansWorkloadController,
 };

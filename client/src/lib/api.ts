@@ -187,10 +187,24 @@ export const api = {
       roleFallback: "CUSTOMER",
     }),
 
-  // 5. Lấy danh sách Lệnh của tôi
-  getMyWorkOrders: () =>
-    fetchApi<{ success: boolean; data: any[] }>(`/work-orders/my-orders`, {
+  // 5. Lấy danh sách Lệnh của tôi (hỗ trợ lọc theo thợ / xe)
+  getMyWorkOrders: (params?: { technician_id?: string; license_plate?: string; all?: boolean }) => {
+    let url = `/work-orders/my-orders`;
+    const q = new URLSearchParams();
+    if (params?.technician_id) q.set("technician_id", params.technician_id);
+    if (params?.license_plate) q.set("license_plate", params.license_plate);
+    if (params?.all) q.set("all", "true");
+    const qs = q.toString();
+    if (qs) url += `?${qs}`;
+    return fetchApi<{ success: boolean; data: any[] }>(url, {
       roleFallback: "SERVICE_ADVISOR",
+    });
+  },
+
+  // 5.0. Quản đốc & Chủ gara theo dõi tải công việc kỹ thuật viên
+  getTechniciansWorkload: () =>
+    fetchApi<{ success: boolean; data: any[] }>(`/work-orders/technicians-workload`, {
+      roleFallback: "WORKSHOP_MANAGER",
     }),
 
   // 5.1. Khởi tạo Lệnh sửa chữa mới lên MongoDB

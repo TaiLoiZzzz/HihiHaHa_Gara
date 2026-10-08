@@ -12,6 +12,7 @@ const {
   updateWorkOrderStatusController,
   updateProgressController,
   assignWorkOrderController,
+  getTechniciansWorkloadController,
 } = require('./controllers/work-order.controller');
 
 router.get('/health', (req, res) => {
@@ -28,6 +29,14 @@ router.post(
 
 // khach hang va nhan vien truy van danh sach lenh
 router.get('/my-orders', verifyToken, getCustomerWorkOrdersController);
+
+// quan doc & chu gara truy van tai cong viec cua doi ngu ky thuat vien
+router.get(
+  '/technicians-workload',
+  verifyToken,
+  authorizeRoles(ROLES.WORKSHOP_MANAGER, ROLES.OWNER, ROLES.SERVICE_ADVISOR),
+  getTechniciansWorkloadController
+);
 
 // chi tiet lenh sua chua theo order_code
 router.get('/:order_code', verifyToken, getWorkOrderDetailsController);
