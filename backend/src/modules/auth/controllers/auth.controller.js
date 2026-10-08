@@ -21,21 +21,24 @@ const maskEmail = (email) => {
 const lookupCustomerController = async (req, res, next) => {
   try {
     const { license_plate, phone_number } = req.query;
-    if (!license_plate && !phone_number) {
-      return sendSuccess(res, { found: false });
+    if (!license_plate || !phone_number) {
+      return sendSuccess(res, { found: false, message: 'Vui lòng cung cấp cả biển số xe và số điện thoại' });
     }
 
-    const normalizedPlate = license_plate?.trim().toUpperCase().replace(/\s+/g, '');
-    const normalizedPhone = phone_number?.trim().replace(/\s+/g, '');
+    const normalizedPlate = license_plate.trim().toUpperCase().replace(/\s+/g, '');
+    const normalizedPhone = phone_number.trim().replace(/\s+/g, '');
 
-    const query = [];
-    if (normalizedPhone) query.push({ phone_number: normalizedPhone });
-    if (normalizedPlate) query.push({ 'vehicles_owned.license_plate': normalizedPlate });
-
-    const customer = await Customer.findOne({ $or: query });
+    // Kiem tra chinh xac ca bien so va sdt trong cung 1 ho so khach hang
+    const customer = await Customer.findOne({
+      phone_number: normalizedPhone,
+      'vehicles_owned.license_plate': normalizedPlate,
+    });
 
     if (!customer) {
-      return sendSuccess(res, { found: false });
+      return sendSuccess(res, { 
+        found: false,
+        message: `Không tìm thấy hồ sơ xe [${normalizedPlate}] gắn với số điện thoại [${normalizedPhone}] trong hệ thống gara` 
+      });
     }
 
     return sendSuccess(res, {
@@ -61,83 +64,42 @@ const requestOtpController = async (req, res, next) => {
       return next(new AppError('Vui lòng nhập số điện thoại và biển số xe', 400, 'BAD_REQUEST'));
     }
 
-    // 1. truy van doi soat tren mongodb customer
-    let customer = req.customer;
+    // 1. truy van doi soat CHINH XAC theo CA SĐT VA BIEN SO XE tren mongodb customer (AND)
+    let customer = await Customer.findOne({
+      phone_number: normalizedPhone,
+      'vehicles_owned.license_plate': normalizedPlate,
+    });
+
+    // 2. Neu khong tim thay trong database: BAO LOI RO RANG, TUYET DOI KHONG TU TAO KHACH HANG
     if (!customer) {
-      customer = await Customer.findOne({
-        phone_number: normalizedPhone,
-        'vehicles_owned.license_plate': normalizedPlate,
-      });
+      return next(
+        new AppError(
+          `Hồ sơ xe [${normalizedPlate}] gắn với số điện thoại [${normalizedPhone}] không tồn tại trong hệ thống gara. Vui lòng kiểm tra lại thông tin hoặc liên hệ Cố vấn dịch vụ để được tiếp nhận xe vào gara!`,
+          404,
+          'VEHICLE_CUSTOMER_NOT_FOUND'
+        )
+      );
     }
 
-    // fallback tim theo sdt hoac bien so
-    if (!customer) {
-      customer = await Customer.findOne({
-        $or: [
-          { phone_number: normalizedPhone },
-          { 'vehicles_owned.license_plate': normalizedPlate }
-        ]
-      });
-    }
-
-    // 2. Xu ly luu tru & cap nhat ho so khach hang
-    if (!customer) {
-      // Day la khach hang hoan toan moi
+    // 3. Khach hang da ton tai trong he thong:
+    // Neu khach hang chua co email ma form chua gui email thi yeu cau bo sung email
+    if (!customer.email) {
       if (!inputEmail) {
         return res.status(200).json({
           success: false,
           require_email: true,
-          message: 'Biển số xe hoặc Số điện thoại chưa có trong hệ thống. Vui lòng nhập địa chỉ Gmail để nhận mã OTP lần đầu!',
+          message: 'Hồ sơ xe chưa có địa chỉ Gmail nhận mã OTP. Vui lòng nhập địa chỉ Gmail để nhận mã OTP!',
         });
       }
-
       if (!inputEmail.includes('@') || !inputEmail.includes('.')) {
         return next(new AppError('Địa chỉ email không đúng định dạng. Vui lòng nhập đúng địa chỉ Gmail!', 400, 'INVALID_EMAIL'));
       }
-
-      customer = await Customer.create({
-        full_name: 'Khách Hàng',
-        phone_number: normalizedPhone,
-        email: inputEmail,
-        vehicles_owned: [
-          {
-            license_plate: normalizedPlate,
-            model_name: 'Xe dịch vụ',
-            vin: 'VN' + Date.now().toString().slice(-8),
-          },
-        ],
-      });
-    } else {
-      // Khach hang da ton tai trong he thong:
-      // Neu nguoi dung co nhap email moi hop le thi cap nhat ngay vao DB
-      if (inputEmail && inputEmail.includes('@') && inputEmail.includes('.') && customer.email !== inputEmail) {
-        customer.email = inputEmail;
-        await customer.save();
-      }
-
-      // Neu khach hang cu chua co email ma form chua gui email
-      if (!customer.email) {
-        if (!inputEmail) {
-          return res.status(200).json({
-            success: false,
-            require_email: true,
-            message: 'Hồ sơ xe chưa có địa chỉ Gmail nhận mã OTP. Vui lòng nhập địa chỉ Gmail!',
-          });
-        }
-        customer.email = inputEmail;
-        await customer.save();
-      }
-
-      // Neu xe chua co trong danh sach vehicles_owned thi cap nhat them
-      const hasPlate = customer.vehicles_owned?.some(v => v.license_plate === normalizedPlate);
-      if (!hasPlate) {
-        customer.vehicles_owned.push({
-          license_plate: normalizedPlate,
-          model_name: 'Xe dịch vụ',
-          vin: 'VN' + Date.now().toString().slice(-8),
-        });
-        await customer.save();
-      }
+      customer.email = inputEmail;
+      await customer.save();
+    } else if (inputEmail && inputEmail.includes('@') && inputEmail.includes('.') && customer.email !== inputEmail) {
+      // Cho phep cap nhat Gmail moi neu nguoi dung chu dong doi
+      customer.email = inputEmail;
+      await customer.save();
     }
 
     const targetEmail = customer.email;
@@ -249,22 +211,13 @@ const verifyOtpController = async (req, res, next) => {
     await redis.del(otpKey);
     await redis.del(attemptsKey);
 
-    let customer = await Customer.findOne({
+    const customer = await Customer.findOne({
       phone_number: normalizedPhone,
       'vehicles_owned.license_plate': normalizedPlate,
     });
 
     if (!customer) {
-      customer = await Customer.findOne({
-        $or: [
-          { phone_number: normalizedPhone },
-          { 'vehicles_owned.license_plate': normalizedPlate }
-        ]
-      });
-    }
-
-    if (!customer) {
-      return next(new AppError('Không tìm thấy thông tin khách hàng sở hữu xe', 404, 'CUSTOMER_NOT_FOUND'));
+      return next(new AppError(`Không tìm thấy hồ sơ xe [${normalizedPlate}] gắn với số điện thoại [${normalizedPhone}] trong hệ thống gara`, 404, 'CUSTOMER_NOT_FOUND'));
     }
 
     // 4. tao cap token jwt (accessToken 2h, refreshToken 7d)

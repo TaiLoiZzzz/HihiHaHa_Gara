@@ -14,20 +14,11 @@ const otpRateLimiter = async (req, res, next) => {
     const normalizedPlate = license_plate.trim().toUpperCase().replace(/\s+/g, '');
     const normalizedPhone = phone_number.trim().replace(/\s+/g, '');
 
-    // tim customer de lay email kiem tra rate limit
-    let customer = await Customer.findOne({
+    // tim customer chinh xac theo ca so dien thoai va bien so xe
+    const customer = await Customer.findOne({
       phone_number: normalizedPhone,
       'vehicles_owned.license_plate': normalizedPlate,
     });
-
-    if (!customer) {
-      customer = await Customer.findOne({
-        $or: [
-          { phone_number: normalizedPhone },
-          { 'vehicles_owned.license_plate': normalizedPlate }
-        ]
-      });
-    }
 
     const email = customer?.email || inputEmail?.trim().toLowerCase();
 
