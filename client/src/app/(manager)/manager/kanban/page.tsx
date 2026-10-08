@@ -16,6 +16,8 @@ import {
   Sparkles,
   ShieldCheck,
   Wrench,
+  ClipboardList,
+  Boxes,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -309,10 +311,16 @@ export default function WorkshopKanbanPage() {
 
         <div className="flex items-center gap-3">
           <Link
-            href="/advisor/create-order"
-            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs transition-all flex items-center gap-1.5 shadow-md shadow-amber-500/20 active:scale-95"
+            href="/manager/work-orders"
+            className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs transition-all flex items-center gap-1.5 shadow-md active:scale-95"
           >
-            <Plus className="w-4 h-4 text-slate-950" /> Tiếp Nhận Xe Mới
+            <ClipboardList className="w-4 h-4 text-amber-400" /> Danh Sách Lệnh Sửa Chữa
+          </Link>
+          <Link
+            href="/manager/inventory"
+            className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs transition-all flex items-center gap-1.5 shadow-md shadow-purple-600/20 active:scale-95"
+          >
+            <Boxes className="w-4 h-4 text-white" /> Kho Phụ Tùng OEM
           </Link>
         </div>
       </div>

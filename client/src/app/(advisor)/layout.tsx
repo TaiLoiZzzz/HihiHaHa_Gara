@@ -9,7 +9,7 @@ export default function AdvisorLayout({
 }) {
   return (
     <div className="flex flex-col min-h-screen bg-brand-light dark:bg-brand-dark transition-colors">
-      <StaffNavbar currentRoleTitle="CỐ VẤN DỊCH VỤ (SERVICE ADVISOR)" />
+      <StaffNavbar role="advisor" />
       <main className="flex-1 py-10 px-6 max-w-7xl mx-auto w-full">
         {children}
       </main>
