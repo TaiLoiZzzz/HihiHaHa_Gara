@@ -493,6 +493,11 @@ const updateProgressController = async (req, res, next) => {
     if ((allTasksDone || progressVal >= 100) && ['IN_PROGRESS', 'QUALITY_CHECK', 'WAITING_PARTS', 'QUOTE_APPROVED'].includes(workOrder.current_status)) {
       workOrder.current_status = 'COMPLETED';
       workOrder.progress_percent = 100;
+      if (Array.isArray(workOrder.assigned_technicians)) {
+        workOrder.assigned_technicians.forEach((t) => {
+          t.completed_at = new Date();
+        });
+      }
       workOrder.workflow_timeline.push({
         status: 'COMPLETED',
         updated_by: req.user?.phone_number || 'TECHNICIAN',
@@ -665,6 +670,55 @@ const getTechniciansWorkloadController = async (req, res, next) => {
   }
 };
 
+// controller lay thong tin toan dien ve xe cua rieng mot ky thuat vien (Dang lam, Lich su da xong, Xe hang doi)
+const getTechnicianDashboardController = async (req, res, next) => {
+  try {
+    const { tech_id } = req.params;
+    const techId = tech_id || req.user?.phone_number;
+
+    // 1. Xe dang phu trach thi cong (Active: 0..3 xe)
+    const activeOrders = await WorkOrder.find({
+      'assigned_technicians.technician_id': techId,
+      current_status: { $in: ['QUOTE_APPROVED', 'WAITING_PARTS', 'IN_PROGRESS', 'QUALITY_CHECK'] },
+    }).sort({ updatedAt: -1 }).lean();
+
+    // 2. Lich su xe da hoan thanh cua rieng tho nay (Completed History)
+    const completedOrders = await WorkOrder.find({
+      'assigned_technicians.technician_id': techId,
+      current_status: { $in: ['COMPLETED', 'PAYMENT_PENDING', 'PAID', 'DELIVERED'] },
+    }).sort({ updatedAt: -1 }).lean();
+
+    // 3. Hang doi cac xe dang cho thi cong / cho xuat vat tu trong gara (Queue)
+    const waitingQueue = await WorkOrder.find({
+      current_status: { $in: ['INSPECTION', 'QUOTE_SENT', 'QUOTE_APPROVED', 'WAITING_PARTS'] },
+    }).sort({ createdAt: 1 }).limit(10).lean();
+
+    // 4. Thong ke hieu suat cua tho
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const todayCompleted = completedOrders.filter((o) => new Date(o.updatedAt) >= today);
+
+    return sendSuccess(
+      res,
+      {
+        active_orders: activeOrders,
+        completed_orders: completedOrders,
+        waiting_queue: waitingQueue,
+        stats: {
+          active_count: activeOrders.length,
+          max_allowed: 3,
+          total_completed: completedOrders.length,
+          today_completed: todayCompleted.length,
+        },
+      },
+      'Lấy thông tin điều phối & lịch sử kỹ thuật viên thành công'
+    );
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createWorkOrderController,
   getWorkOrderDetailsController,
@@ -675,4 +729,5 @@ module.exports = {
   updateProgressController,
   assignWorkOrderController,
   getTechniciansWorkloadController,
+  getTechnicianDashboardController,
 };

@@ -13,6 +13,7 @@ const {
   updateProgressController,
   assignWorkOrderController,
   getTechniciansWorkloadController,
+  getTechnicianDashboardController,
 } = require('./controllers/work-order.controller');
 
 router.get('/health', (req, res) => {
@@ -36,6 +37,13 @@ router.get(
   verifyToken,
   authorizeRoles(ROLES.WORKSHOP_MANAGER, ROLES.OWNER, ROLES.SERVICE_ADVISOR),
   getTechniciansWorkloadController
+);
+
+// ky thuat vien & quan doc xem toan dien xe dang lam, lich su da xong va hang doi xe cho thi cong
+router.get(
+  '/technicians/:tech_id/dashboard',
+  verifyToken,
+  getTechnicianDashboardController
 );
 
 // chi tiet lenh sua chua theo order_code

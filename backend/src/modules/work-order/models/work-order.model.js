@@ -50,6 +50,7 @@ const WorkOrderSchema = new mongoose.Schema(
         technician_id: { type: String, required: true },
         technician_name: { type: String },
         assigned_at: { type: Date, default: Date.now },
+        completed_at: { type: Date },
       },
     ],
     bay: { type: String, default: 'Chưa xếp khoang' },

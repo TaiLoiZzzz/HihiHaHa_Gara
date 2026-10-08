@@ -11,10 +11,18 @@ import {
   Lock,
   FileCheck,
   Sliders,
-  ChevronDown,
+  ChevronRight,
   UserCheck,
   AlertCircle,
   RefreshCw,
+  Clock,
+  History,
+  ListTodo,
+  TrendingUp,
+  Award,
+  Layers,
+  ArrowRight,
+  Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -29,33 +37,36 @@ interface TaskItem {
 }
 
 const TECHNICIANS = [
-  { id: "0988888803", name: "Nguyễn Văn Thợ (THO-01)", role: "Trưởng nhóm Máy & Gầm - Bậc 4/4", pin: "1357" },
-  { id: "0988888804", name: "Trần Văn Cường (THO-02)", role: "Chuyên gia Điện - CAN-Bus & Lạnh", pin: "1234" },
-  { id: "0988888805", name: "Lê Hoàng Long (THO-03)", role: "Kỹ thuật viên Bảo Dưỡng Nhanh", pin: "1111" },
-  { id: "0988888806", name: "Phạm Minh Tuấn (THO-04)", role: "Kỹ thuật viên Cân Chỉnh Góc Đặt 3D", pin: "2222" },
+  { id: "0988888803", name: "Nguyễn Văn Thợ (THO-01)", role: "Trưởng nhóm Máy & Gầm - Bậc 4/4", pin: "1357", avatar: "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=160&auto=format&fit=crop&q=80" },
+  { id: "0988888804", name: "Trần Văn Cường (THO-02)", role: "Chuyên gia Điện - CAN-Bus & Lạnh", pin: "1234", avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=160&auto=format&fit=crop&q=80" },
+  { id: "0988888805", name: "Lê Hoàng Long (THO-03)", role: "Kỹ thuật viên Bảo Dưỡng Nhanh", pin: "1111", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80" },
+  { id: "0988888806", name: "Phạm Minh Tuấn (THO-04)", role: "Kỹ thuật viên Cân Chỉnh Góc Đặt 3D", pin: "2222", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&auto=format&fit=crop&q=80" },
 ];
 
 export default function TechnicianTabletPage() {
-  // Trạng thái chọn Kỹ Thuật Viên hiện tại
+  // 1. Quản lý danh tính thợ & Màn hình khóa PIN
   const [selectedTech, setSelectedTech] = useState(TECHNICIANS[0]);
   const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [pin, setPin] = useState("");
-  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Danh sách TẤT CẢ các xe được phân công cho Kỹ thuật viên này (Tối đa 3 xe)
-  const [assignedOrders, setAssignedOrders] = useState<any[]>([]);
-  const [activeOrderCode, setActiveOrderCode] = useState<string>("");
+  // 2. Tab chính trên Tablet: 'active' (Xe đang thi công), 'waiting' (Hàng đợi xe chờ), 'history' (Lịch sử riêng của thợ)
+  const [mainTab, setMainTab] = useState<"active" | "waiting" | "history">("active");
 
-  // Dữ liệu chi tiết của xe đang chọn thực hiện thi công
-  const [activeOrder, setActiveOrder] = useState<any>({
-    orderCode: "",
-    plateNumber: "---",
-    carModel: "Đang tải...",
-    customerName: "---",
-    bay: "Khoang Nâng",
-    current_status: "IN_PROGRESS",
+  // 3. Dữ liệu Dashboard toàn diện của riêng thợ này
+  const [activeOrders, setActiveOrders] = useState<any[]>([]);
+  const [completedOrders, setCompletedOrders] = useState<any[]>([]);
+  const [waitingQueue, setWaitingQueue] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    active_count: 0,
+    max_allowed: 3,
+    total_completed: 0,
+    today_completed: 0,
   });
 
+  // 4. Xe cụ thể đang được chọn làm việc tại khoang
+  const [activeOrderCode, setActiveOrderCode] = useState<string>("");
+  const [activeOrder, setActiveOrder] = useState<any>(null);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [overallProgress, setOverallProgress] = useState(0);
   const [inspectionPhotos, setInspectionPhotos] = useState<
@@ -65,27 +76,25 @@ export default function TechnicianTabletPage() {
   const [isPaidOrder, setIsPaidOrder] = useState(false);
   const [isCompletedOrder, setIsCompletedOrder] = useState(false);
 
-  // 1. Tải danh sách các xe được phân công cho Kỹ thuật viên
-  const loadAssignedOrders = useCallback(async (techId: string, preferredOrderCode?: string) => {
+  // Tải dữ liệu toàn diện của Kỹ thuật viên (Xe đang làm + Lịch sử cá nhân + Hàng đợi)
+  const loadTechnicianData = useCallback(async (techId: string, preferredOrderCode?: string) => {
     try {
-      setLoadingOrders(true);
-      const res = await api.getMyWorkOrders({ all: true });
-      if (res.success && Array.isArray(res.data)) {
-        const myOrders = res.data.filter((wo: any) =>
-          wo.assigned_technicians?.some(
-            (t: any) => t.technician_id === techId || t.technician_name?.includes(selectedTech.name.split(" ")[0])
-          )
-        );
+      setLoading(true);
+      const res = await api.getTechnicianDashboard(techId);
+      if (res.success && res.data) {
+        const { active_orders, completed_orders, waiting_queue, stats: techStats } = res.data;
+        setActiveOrders(active_orders || []);
+        setCompletedOrders(completed_orders || []);
+        setWaitingQueue(waiting_queue || []);
+        setStats(techStats || { active_count: 0, max_allowed: 3, total_completed: 0, today_completed: 0 });
 
-        setAssignedOrders(myOrders);
-
-        // Chọn xe mặc định nếu có
-        if (myOrders.length > 0) {
-          const target = preferredOrderCode && myOrders.some((o: any) => o.order_code === preferredOrderCode)
+        // Tự động chọn xe đang làm nếu có
+        if (active_orders && active_orders.length > 0) {
+          const target = preferredOrderCode && active_orders.some((o: any) => o.order_code === preferredOrderCode)
             ? preferredOrderCode
-            : myOrders[0].order_code;
+            : active_orders[0].order_code;
           setActiveOrderCode(target);
-          loadOrderDetails(target);
+          await loadOrderDetails(target);
         } else {
           setActiveOrderCode("");
           setActiveOrder(null);
@@ -95,13 +104,13 @@ export default function TechnicianTabletPage() {
         }
       }
     } catch (err: any) {
-      console.warn("Lỗi tải danh sách xe của thợ:", err.message);
+      console.warn("Lỗi tải thông tin thợ:", err.message);
     } finally {
-      setLoadingOrders(false);
+      setLoading(false);
     }
-  }, [selectedTech]);
+  }, []);
 
-  // 2. Tải chi tiết một lệnh sửa chữa cụ thể
+  // Tải chi tiết một Lệnh sửa chữa cụ thể
   const loadOrderDetails = async (orderCode: string) => {
     try {
       const res = await api.getWorkOrder(orderCode);
@@ -115,13 +124,14 @@ export default function TechnicianTabletPage() {
           bay: wo.bay || "Khoang Nâng",
           current_status: wo.current_status,
           priority: wo.priority,
+          estimate: wo.estimate,
         });
 
         setIsPaidOrder(wo.payment_status === "PAID" || wo.current_status === "PAID" || wo.current_status === "DELIVERED");
         setIsCompletedOrder(wo.current_status === "COMPLETED" || wo.current_status === "PAYMENT_PENDING");
         setOverallProgress(wo.progress_percent || 0);
 
-        // Nạp checklist tasks từ MongoDB nếu có, hoặc tự động tạo từ Báo giá
+        // Nạp checklist tasks từ MongoDB nếu có, hoặc tạo động từ Báo giá
         if (Array.isArray(wo.tasks) && wo.tasks.length > 0) {
           setTasks(wo.tasks);
         } else if (wo.estimate?.items && wo.estimate.items.length > 0) {
@@ -129,15 +139,15 @@ export default function TechnicianTabletPage() {
             id: `task-${idx + 1}`,
             name: it.name,
             code: it.part_code || `TASK-${idx + 1}`,
-            spec: it.type === "PART" ? "Linh kiện chính hãng OEM" : "Tiền công tiêu chuẩn gara 4S",
+            spec: it.type === "PART" ? "Linh kiện OEM chính hãng" : "Quy trình gara 4S tiêu chuẩn",
             status: "pending" as const,
             progress: 0,
           }));
           setTasks(generatedTasks);
         } else {
           setTasks([
-            { id: "t1", name: "Kiểm tra hệ thống gầm & máy", code: "INSPECT-01", spec: "Theo dõi rò rỉ", status: "pending", progress: 0 },
-            { id: "t2", name: "Thi công thay thế phụ tùng", code: "REPAIR-01", spec: "Siết ốc đúng lực quy định", status: "pending", progress: 0 },
+            { id: "t1", name: "Khám xe & Kiểm tra hệ thống gầm máy", code: "INSPECT-01", spec: "Theo dõi rò rỉ", status: "pending", progress: 0 },
+            { id: "t2", name: "Thi công lắp đặt linh kiện thay thế", code: "REPAIR-01", spec: "Siết ốc đúng lực quy định", status: "pending", progress: 0 },
           ]);
         }
 
@@ -146,7 +156,7 @@ export default function TechnicianTabletPage() {
           setInspectionPhotos(
             wo.inspection_photos.map((p: any, i: number) => ({
               id: `img-${i}`,
-              stage: "Ảnh nghiệm thu khoang",
+              stage: "Nghiệm thu khoang",
               timestamp: new Date(p.uploaded_at || Date.now()).toLocaleTimeString("vi-VN", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -165,16 +175,16 @@ export default function TechnicianTabletPage() {
   };
 
   useEffect(() => {
-    loadAssignedOrders(selectedTech.id);
-  }, [selectedTech, loadAssignedOrders]);
+    loadTechnicianData(selectedTech.id);
+  }, [selectedTech, loadTechnicianData]);
 
-  // Đổi Kỹ thuật viên
+  // Đổi tài khoản Thợ
   const handleSelectTech = (tech: typeof TECHNICIANS[0]) => {
     setSelectedTech(tech);
-    toast.success(`Đã chuyển sang tài khoản thợ [${tech.name}]`);
+    toast.success(`Đã chuyển sang tài khoản: [${tech.name}]`);
   };
 
-  // Đồng bộ tiến độ về Backend & Tự động hoàn tất khi 100%
+  // Đồng bộ tiến độ về Backend
   const handleSyncProgress = async (val: number) => {
     if (!activeOrder?.orderCode) return;
     if (isPaidOrder) {
@@ -199,8 +209,6 @@ export default function TechnicianTabletPage() {
         note: `Kỹ thuật viên [${selectedTech.name}] cập nhật tiến độ lên ${val}%`,
       });
       toast.success(`Đã lưu tiến độ ${val}% cho xe [${activeOrder.plateNumber}]!`);
-      // Cập nhật lại danh sách xe
-      loadAssignedOrders(selectedTech.id, activeOrder.orderCode);
     } catch (err: any) {
       toast.error(err.message || "Lỗi đồng bộ tiến độ");
     }
@@ -243,27 +251,45 @@ export default function TechnicianTabletPage() {
           }] (${updated.progress}%)`,
         });
         toast.success(`Đã cập nhật công đoạn [${updated.name}]!`);
-        loadAssignedOrders(selectedTech.id, activeOrder.orderCode);
       } catch (err: any) {
         toast.error(err.message || "Lỗi cập nhật công đoạn");
       }
     }
   };
 
-  // KCS Nghiệm thu hoàn tất & Chuyển sang COMPLETED
+  // KCS NGHIỆM THU HOÀN TẤT -> TỰ ĐỘNG LƯU VÀO LỊCH SỬ CỦA THỢ & CHUYỂN SANG XE KHÁC
   const handleCompleteOrder = async () => {
     if (!activeOrder?.orderCode) return;
+    const completedPlate = activeOrder.plateNumber;
+    const currentCode = activeOrder.orderCode;
+
     try {
       const res = await api.updateStatus(
-        activeOrder.orderCode,
+        currentCode,
         "COMPLETED",
-        `Kỹ thuật viên [${selectedTech.name}] đã hoàn tất 100% công đoạn và ký nghiệm thu KCS đạt chuẩn.`
+        `Kỹ thuật viên [${selectedTech.name}] đã hoàn tất 100% công đoạn thi công và ký nghiệm thu KCS đạt chuẩn.`
       );
       if (res.success) {
         setIsCompletedOrder(true);
         setOverallProgress(100);
-        toast.success(`Đã nghiệm thu KCS hoàn tất xe [${activeOrder.plateNumber}]! Khách hàng đã có quyền thanh toán.`);
-        loadAssignedOrders(selectedTech.id, activeOrder.orderCode);
+
+        toast.success(
+          `🎉 Đã hoàn tất xe [${completedPlate}] và lưu vào Lịch Sử của [${selectedTech.name}]! Khách hàng đã mở cổng thanh toán.`
+        );
+
+        // Nạp lại toàn bộ dữ liệu thợ: xe này sẽ nhảy sang Lịch sử, tải thợ giảm 1 xe
+        await loadTechnicianData(selectedTech.id);
+
+        // Kiểm tra xem thợ còn xe nào đang làm khác không để tự động chuyển sang
+        const remaining = activeOrders.filter((o) => o.order_code !== currentCode);
+        if (remaining.length > 0) {
+          toast.info(`Tự động chuyển sang xe tiếp theo: [${remaining[0].license_plate}]`);
+          setActiveOrderCode(remaining[0].order_code);
+          await loadOrderDetails(remaining[0].order_code);
+        } else {
+          // Nếu hết xe đang làm, tự động chuyển sang Tab Lịch Sử hoặc Hàng Đợi
+          setMainTab("history");
+        }
       }
     } catch (err: any) {
       toast.error(err.message || "Lỗi hoàn tất nghiệm thu");
@@ -388,37 +414,38 @@ export default function TechnicianTabletPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pb-16 font-sans">
-      {/* Header Điều Khiển Tablet */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-3xl border bg-card shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-black">
-            <Wrench className="w-6 h-6" />
-          </div>
+      {/* Header Điều Khiển Tablet & Đổi Thợ */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-3xl border border-slate-200 bg-white shadow-xs">
+        <div className="flex items-center gap-3.5">
+          <img
+            src={selectedTech.avatar}
+            alt={selectedTech.name}
+            className="w-12 h-12 rounded-2xl object-cover border-2 border-amber-500/40 shadow-xs shrink-0"
+          />
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-black tracking-tight text-foreground">HIHIHAHA.TECH</h1>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-600 border border-amber-500/30">
-                Tablet Khoang Nâng
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-lg font-black tracking-tight text-slate-900">{selectedTech.name}</h1>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                {selectedTech.role}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Kỹ thuật viên: <strong className="text-foreground">{selectedTech.name}</strong> ({selectedTech.role})
+            <p className="text-xs text-slate-500 mt-0.5">
+              Hệ thống Tablet Khoang Nâng • Cập nhật tiến độ & Nghiệm thu KCS Realtime
             </p>
           </div>
         </div>
 
-        {/* Bộ chuyển đổi Thợ & Khóa PIN */}
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Dropdown đổi thợ */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-muted-foreground hidden sm:inline">Đổi Thợ:</span>
+        {/* Dropdown Đổi Thợ & Nút Khóa PIN */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-2xl border border-slate-200">
+            <span className="text-xs font-bold text-slate-600 pl-2 hidden sm:inline">Chuyển Thợ:</span>
             <select
               value={selectedTech.id}
               onChange={(e) => {
                 const target = TECHNICIANS.find((t) => t.id === e.target.value);
                 if (target) handleSelectTech(target);
               }}
-              className="px-3 py-2 rounded-xl border bg-background text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs"
+              className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs"
             >
               {TECHNICIANS.map((t) => (
                 <option key={t.id} value={t.id}>
@@ -430,337 +457,586 @@ export default function TechnicianTabletPage() {
 
           <button
             type="button"
-            onClick={() => loadAssignedOrders(selectedTech.id, activeOrderCode)}
-            className="p-2 rounded-xl border bg-background hover:bg-muted text-foreground transition-all shadow-xs"
-            title="Tải lại danh sách xe"
+            onClick={() => loadTechnicianData(selectedTech.id, activeOrderCode)}
+            className="p-2.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-all shadow-xs"
+            title="Đồng bộ lại dữ liệu"
           >
-            <RefreshCw className={`w-4 h-4 ${loadingOrders ? "animate-spin text-amber-500" : ""}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-amber-500" : ""}`} />
           </button>
 
           <button
             type="button"
             onClick={() => setIsAuthenticated(false)}
-            className="px-3 py-2 rounded-xl border bg-background hover:bg-muted text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
+            className="px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs text-slate-700"
           >
             <Lock className="w-3.5 h-3.5" /> Khóa PIN
           </button>
         </div>
       </div>
 
-      {/* DANH SÁCH TẤT CẢ CÁC XE ĐƯỢC GIAO CHO THỢ NÀY (Assigned Vehicles Switcher) */}
-      <div className="rounded-3xl border bg-card p-5 shadow-xs space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+      {/* 4 Thẻ Thống Kê Năng Suất Của Riêng Thợ Này */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Xe Đang Phụ Trách</p>
             <Car className="w-4 h-4 text-amber-500" />
-            <h2 className="text-sm font-black uppercase tracking-wider text-foreground">
-              Xe Được Phân Công Cho Bạn ({assignedOrders.length}/3 Xe Đang Nhận)
-            </h2>
           </div>
-          <span className="text-xs font-mono font-bold text-muted-foreground">
-            {assignedOrders.length >= 3 ? (
-              <span className="text-red-500 font-black">ĐẦY TẢI TỐI ĐA</span>
-            ) : (
-              <span>Còn nhận được {3 - assignedOrders.length} xe</span>
-            )}
-          </span>
+          <p className="text-2xl font-black font-mono mt-1 text-slate-900">
+            {stats.active_count}/{stats.max_allowed} <span className="text-xs font-sans text-slate-500 font-semibold">xe</span>
+          </p>
+          <p className="text-[11px] text-slate-400 mt-0.5">
+            {stats.active_count >= 3 ? "Đạt tải tối đa (3/3)" : `Còn nhận thêm ${3 - stats.active_count} xe`}
+          </p>
         </div>
 
-        {assignedOrders.length === 0 ? (
-          <div className="p-8 text-center rounded-2xl border border-dashed bg-muted/20 space-y-2">
-            <AlertCircle className="w-8 h-8 text-amber-500 mx-auto" />
-            <p className="text-sm font-bold text-foreground">
-              Hiện tại [{selectedTech.name}] chưa được phân công xe nào trên khoang nâng!
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Vui lòng đợi Quản Đốc điều phối xe từ Bảng Kanban, hoặc đổi sang thợ khác để kiểm tra xe đang làm.
-            </p>
+        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Xong Hôm Nay</p>
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {assignedOrders.map((ord) => {
-              const isActive = activeOrder?.orderCode === ord.order_code;
-              return (
-                <div
-                  key={ord.order_code}
-                  onClick={() => {
-                    setActiveOrderCode(ord.order_code);
-                    loadOrderDetails(ord.order_code);
-                  }}
-                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-2 shadow-xs ${
-                    isActive
-                      ? "border-amber-500 bg-amber-50/80 dark:bg-amber-500/10 ring-2 ring-amber-500/30"
-                      : "bg-background hover:border-slate-300"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono font-black text-sm px-2.5 py-0.5 rounded-md bg-slate-900 text-white">
-                      {ord.license_plate}
-                    </span>
-                    <span
-                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
-                        (ord.progress_percent || 0) === 100
-                          ? "bg-emerald-100 text-emerald-800"
-                          : "bg-amber-100 text-amber-800"
-                      }`}
-                    >
-                      {ord.progress_percent || 0}% Xong
-                    </span>
-                  </div>
+          <p className="text-2xl font-black font-mono mt-1 text-emerald-600">
+            {stats.today_completed} <span className="text-xs font-sans text-slate-500 font-semibold">xe</span>
+          </p>
+          <p className="text-[11px] text-slate-400 mt-0.5">Nghiệm thu đạt chuẩn 100%</p>
+        </div>
 
-                  <div>
-                    <p className="text-xs font-bold text-foreground truncate">{ord.vehicle_model}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">{ord.customer_name}</p>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-1 border-t text-[11px]">
-                    <span className="text-amber-600 font-bold">{ord.bay || "Khoang nâng"}</span>
-                    <span className="text-muted-foreground font-mono font-medium">{ord.order_code}</span>
-                  </div>
-                </div>
-              );
-            })}
+        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Tổng Xe Đã Hoàn Tất</p>
+            <Award className="w-4 h-4 text-purple-500" />
           </div>
-        )}
+          <p className="text-2xl font-black font-mono mt-1 text-purple-600">
+            {stats.total_completed} <span className="text-xs font-sans text-slate-500 font-semibold">xe</span>
+          </p>
+          <p className="text-[11px] text-slate-400 mt-0.5">Lịch sử tích lũy tay nghề</p>
+        </div>
+
+        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Xe Đang Chờ Xưởng</p>
+            <Clock className="w-4 h-4 text-blue-500" />
+          </div>
+          <p className="text-2xl font-black font-mono mt-1 text-blue-600">
+            {waitingQueue.length} <span className="text-xs font-sans text-slate-500 font-semibold">xe</span>
+          </p>
+          <p className="text-[11px] text-slate-400 mt-0.5">Hàng đợi chờ vào cầu nâng</p>
+        </div>
       </div>
 
-      {/* CHI TIẾT XE ĐANG ĐƯỢC CHỌN THI CÔNG */}
-      {activeOrder && activeOrder.orderCode ? (
-        <>
-          {/* Banner Trạng Thái Lệnh */}
-          {isPaidOrder ? (
-            <div className="p-6 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500/40 text-emerald-900 dark:text-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="w-8 h-8 text-emerald-600 shrink-0" />
-                <div>
-                  <h3 className="text-base font-black uppercase">Lệnh Sửa Chữa Đã Quyết Toán & Thanh Toán (PAID)</h3>
-                  <p className="text-xs font-medium">Hồ sơ kỹ thuật đã được đóng vĩnh viễn sau khi khách thanh toán thành công.</p>
-                </div>
+      {/* THANH CHUYỂN TAB CHÍNH: 1. Xe Đang Làm - 2. Hàng Đợi Xe Chờ - 3. Lịch Sử Của Thợ */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+        <button
+          type="button"
+          onClick={() => setMainTab("active")}
+          className={`px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 ${
+            mainTab === "active"
+              ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
+              : "bg-white hover:bg-slate-100 text-slate-600 border border-slate-200"
+          }`}
+        >
+          <Wrench className="w-4 h-4" />
+          Xe Đang Nhận Thi Công ({activeOrders.length})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMainTab("waiting")}
+          className={`px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 ${
+            mainTab === "waiting"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+              : "bg-white hover:bg-slate-100 text-slate-600 border border-slate-200"
+          }`}
+        >
+          <Clock className="w-4 h-4" />
+          Hàng Đợi Xe Trong Xưởng ({waitingQueue.length})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMainTab("history")}
+          className={`px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 ${
+            mainTab === "history"
+              ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
+              : "bg-white hover:bg-slate-100 text-slate-600 border border-slate-200"
+          }`}
+        >
+          <History className="w-4 h-4" />
+          Lịch Sử Đã Hoàn Thành Của Riêng Tôi ({completedOrders.length})
+        </button>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* TAB 1: XE ĐANG THI CÔNG & BÀN LÀM VIỆC TABLET */}
+      {/* ========================================================================= */}
+      {mainTab === "active" && (
+        <div className="space-y-6">
+          {/* Thanh chuyển đổi các xe đang nhận */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Car className="w-4 h-4 text-amber-500" />
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                  Chọn Xe Đang Làm Việc Tại Khoang ({activeOrders.length} xe)
+                </h3>
               </div>
-              <span className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-mono font-bold text-xs uppercase shrink-0">
-                Hồ Sơ Đã Khóa
+              <span className="text-xs font-mono font-bold text-slate-500">
+                {activeOrders.length >= 3 ? (
+                  <span className="text-red-500 font-black">ĐẦY TẢI TỐI ĐA (3/3)</span>
+                ) : (
+                  <span>Còn nhận được {3 - activeOrders.length} xe</span>
+                )}
               </span>
             </div>
-          ) : isCompletedOrder ? (
-            <div className="p-5 rounded-2xl bg-blue-500/10 border border-blue-500/30 text-blue-900 dark:text-blue-200 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="w-6 h-6 text-blue-600 shrink-0" />
-                <div>
-                  <h4 className="text-sm font-bold">Đã Nghiệm Thu KCS Hoàn Tất 100% (COMPLETED)</h4>
-                  <p className="text-xs text-muted-foreground">Xe đang chờ khách hàng hoàn tất thanh toán quyết toán tại quầy hoặc qua VietQR.</p>
-                </div>
+
+            {activeOrders.length === 0 ? (
+              <div className="p-8 text-center rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 space-y-3">
+                <AlertCircle className="w-8 h-8 text-amber-500 mx-auto" />
+                <p className="text-sm font-bold text-slate-800">
+                  Hiện tại [{selectedTech.name}] chưa có xe nào đang thi công!
+                </p>
+                <p className="text-xs text-slate-500 max-w-md mx-auto">
+                  Bạn có thể xem tab &quot;Hàng Đợi Xe Trong Xưởng&quot; để nắm bắt các xe sắp vào khoang, hoặc xem tab &quot;Lịch Sử&quot; để kiểm tra các xe đã hoàn thành trước đó.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setMainTab("waiting")}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-xs"
+                >
+                  Xem Hàng Đợi Xe Trong Xưởng →
+                </button>
               </div>
-              <span className="px-3 py-1 rounded-lg bg-blue-600 text-white font-mono font-bold text-xs">CHỜ THANH TOÁN</span>
-            </div>
-          ) : overallProgress === 100 || tasks.every((t) => t.status === "done") ? (
-            <div className="p-6 rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
-              <div className="flex items-center gap-3">
-                <Sparkles className="w-8 h-8 text-amber-500 shrink-0" />
-                <div>
-                  <h3 className="text-base font-bold text-foreground">Đã Hoàn Tất 100% Các Hạng Mục Kỹ Thuật!</h3>
-                  <p className="text-xs text-muted-foreground">Bấm nút xác nhận để ký nghiệm thu an toàn KCS và kích hoạt quyền thanh toán cho chủ xe.</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleCompleteOrder}
-                className="px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-600/30 active:scale-95 flex items-center gap-2 shrink-0 animate-pulse"
-              >
-                <CheckCircle2 className="w-4 h-4 text-white" />
-                Nghiệm Thu KCS & Mở Thanh Toán
-              </button>
-            </div>
-          ) : null}
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Cột trái: Tiến độ & Checklist (7 cols) */}
-            <div className="lg:col-span-7 space-y-6">
-              {/* Slider Tiến Độ Thực Tế */}
-              <div className="rounded-3xl border bg-card p-6 shadow-xs space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="font-bold text-base flex items-center gap-2 text-foreground">
-                      <Sliders className="w-4 h-4 text-amber-500" />
-                      Tiến Độ Thi Công Xe [{activeOrder.plateNumber}]
-                    </h2>
-                    <p className="text-xs text-muted-foreground">
-                      Gạt thanh trượt để đồng bộ trực tiếp lên màn hình khách hàng & bảng điều phối Kanban
-                    </p>
-                  </div>
-                  <span className="text-2xl font-black font-mono text-amber-500">{overallProgress}%</span>
-                </div>
-
-                <div className="space-y-2">
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="5"
-                    disabled={isPaidOrder}
-                    value={overallProgress}
-                    onChange={(e) => setOverallProgress(Number(e.target.value))}
-                    onPointerUp={(e) => handleSyncProgress(Number((e.target as HTMLInputElement).value))}
-                    className="w-full h-4 bg-muted rounded-lg appearance-none cursor-pointer accent-amber-500 disabled:opacity-50"
-                  />
-                  <div className="flex justify-between text-[11px] font-mono text-muted-foreground px-1">
-                    <span>0% Nhận xe</span>
-                    <span>25% Tháo dỡ</span>
-                    <span>50% Lắp mới</span>
-                    <span>75% Siết lực</span>
-                    <span>100% Xong KCS</span>
-                  </div>
-                </div>
-
-                {/* Quick Buttons */}
-                <div className="grid grid-cols-4 gap-2 pt-2">
-                  {[25, 50, 75, 100].map((val) => (
-                    <button
-                      key={val}
-                      type="button"
-                      disabled={isPaidOrder}
-                      onClick={() => {
-                        setOverallProgress(val);
-                        handleSyncProgress(val);
-                      }}
-                      className={`py-2 rounded-xl text-xs font-mono font-bold border transition-colors ${
-                        overallProgress === val
-                          ? "bg-amber-500 text-black border-amber-500"
-                          : "bg-background hover:bg-muted text-foreground"
-                      }`}
-                    >
-                      {val}%
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Checklist Hạng Mục Của Xe */}
-              <div className="rounded-3xl border bg-card p-6 shadow-xs space-y-4">
-                <h2 className="font-bold text-base flex items-center gap-2 text-foreground">
-                  <FileCheck className="w-4 h-4 text-amber-500" />
-                  Checklist Công Việc Cần Thi Công ({tasks.length} hạng mục)
-                </h2>
-
-                <div className="space-y-3">
-                  {tasks.map((task) => (
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {activeOrders.map((ord) => {
+                  const isActive = activeOrder?.orderCode === ord.order_code;
+                  return (
                     <div
-                      key={task.id}
-                      className={`p-4 rounded-2xl border transition-all ${
-                        task.status === "done"
-                          ? "bg-emerald-500/5 border-emerald-500/30"
-                          : task.status === "in_progress"
-                          ? "bg-amber-500/5 border-amber-500/40"
-                          : "bg-background"
+                      key={ord.order_code}
+                      onClick={() => {
+                        setActiveOrderCode(ord.order_code);
+                        loadOrderDetails(ord.order_code);
+                      }}
+                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-2 shadow-xs ${
+                        isActive
+                          ? "border-amber-500 bg-amber-50/90 ring-2 ring-amber-500/30"
+                          : "border-slate-200 bg-slate-50/60 hover:border-slate-300 hover:bg-slate-100"
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono font-black text-sm px-2.5 py-0.5 rounded-md bg-slate-900 text-white">
+                          {ord.license_plate}
+                        </span>
+                        <span
+                          className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                            (ord.progress_percent || 0) === 100
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          {ord.progress_percent || 0}% Xong
+                        </span>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-bold text-slate-900 truncate">{ord.vehicle_model}</p>
+                        <p className="text-[11px] text-slate-500 truncate">Khách: {ord.customer_name}</p>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-200 text-[11px]">
+                        <span className="text-amber-600 font-bold">{ord.bay || "Khoang nâng"}</span>
+                        <span className="text-slate-500 font-mono font-medium">{ord.order_code}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Chi tiết xe đang chọn để thi công */}
+          {activeOrder && activeOrder.orderCode ? (
+            <>
+              {/* Banner Trạng Thái */}
+              {isPaidOrder ? (
+                <div className="p-6 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500/40 text-emerald-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="w-8 h-8 text-emerald-600 shrink-0" />
+                    <div>
+                      <h3 className="text-base font-black uppercase">Xe Đã Hoàn Tất Quyết Toán & Thanh Toán (PAID)</h3>
+                      <p className="text-xs font-medium text-emerald-800">Hồ sơ kỹ thuật đã đóng vĩnh viễn sau khi khách thanh toán thành công.</p>
+                    </div>
+                  </div>
+                  <span className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-mono font-bold text-xs uppercase shrink-0">
+                    Hồ Sơ Đã Khóa
+                  </span>
+                </div>
+              ) : isCompletedOrder ? (
+                <div className="p-5 rounded-2xl bg-blue-50 border border-blue-200 text-blue-900 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="w-6 h-6 text-blue-600 shrink-0" />
+                    <div>
+                      <h4 className="text-sm font-bold">Đã Nghiệm Thu KCS Hoàn Tất 100% (COMPLETED)</h4>
+                      <p className="text-xs text-blue-700">Xe đang chờ khách hàng thanh toán qua VietQR/VNPay. Bạn có thể chuyển qua xe khác để tiếp tục làm.</p>
+                    </div>
+                  </div>
+                  <span className="px-3 py-1 rounded-lg bg-blue-600 text-white font-mono font-bold text-xs">CHỜ THANH TOÁN</span>
+                </div>
+              ) : overallProgress === 100 || tasks.every((t) => t.status === "done") ? (
+                <div className="p-6 rounded-2xl bg-amber-50 border-2 border-amber-400 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+                  <div className="flex items-center gap-3">
+                    <Sparkles className="w-8 h-8 text-amber-500 shrink-0" />
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">Đã Hoàn Tất 100% Công Đoạn Kỹ Thuật!</h3>
+                      <p className="text-xs text-slate-600">
+                        Bấm nút xác nhận để ký nghiệm thu an toàn KCS: Xe sẽ được lưu vào Lịch Sử của bạn và tự động mở thanh toán cho khách.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCompleteOrder}
+                    className="px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-600/30 active:scale-95 flex items-center gap-2 shrink-0 animate-pulse"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-white" />
+                    Nghiệm Thu KCS & Lưu Lịch Sử
+                  </button>
+                </div>
+              ) : null}
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Cột trái: Tiến độ & Checklist (7 cols) */}
+                <div className="lg:col-span-7 space-y-6">
+                  {/* Slider Tiến Độ Thực Tế */}
+                  <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="font-bold text-base flex items-center gap-2 text-slate-900">
+                          <Sliders className="w-4 h-4 text-amber-500" />
+                          Tiến Độ Thi Công Xe [{activeOrder.plateNumber}]
+                        </h2>
+                        <p className="text-xs text-slate-500">
+                          Gạt thanh trượt để đồng bộ trực tiếp lên màn hình khách hàng & bảng điều phối Kanban
+                        </p>
+                      </div>
+                      <span className="text-2xl font-black font-mono text-amber-500">{overallProgress}%</span>
+                    </div>
+
+                    <div className="space-y-2">
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="5"
+                        disabled={isPaidOrder}
+                        value={overallProgress}
+                        onChange={(e) => setOverallProgress(Number(e.target.value))}
+                        onPointerUp={(e) => handleSyncProgress(Number((e.target as HTMLInputElement).value))}
+                        className="w-full h-4 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-amber-500 disabled:opacity-50"
+                      />
+                      <div className="flex justify-between text-[11px] font-mono text-slate-500 px-1">
+                        <span>0% Nhận xe</span>
+                        <span>25% Tháo dỡ</span>
+                        <span>50% Lắp mới</span>
+                        <span>75% Siết lực</span>
+                        <span>100% Xong KCS</span>
+                      </div>
+                    </div>
+
+                    {/* Quick Buttons */}
+                    <div className="grid grid-cols-4 gap-2 pt-2">
+                      {[25, 50, 75, 100].map((val) => (
+                        <button
+                          key={val}
+                          type="button"
+                          disabled={isPaidOrder}
+                          onClick={() => {
+                            setOverallProgress(val);
+                            handleSyncProgress(val);
+                          }}
+                          className={`py-2 rounded-xl text-xs font-mono font-bold border transition-colors ${
+                            overallProgress === val
+                              ? "bg-amber-500 text-slate-950 border-amber-500"
+                              : "bg-white hover:bg-slate-100 text-slate-700 border-slate-200"
+                          }`}
+                        >
+                          {val}%
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Checklist Hạng Mục Của Xe */}
+                  <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+                    <h2 className="font-bold text-base flex items-center gap-2 text-slate-900">
+                      <FileCheck className="w-4 h-4 text-amber-500" />
+                      Checklist Công Việc Cần Thi Công ({tasks.length} hạng mục)
+                    </h2>
+
+                    <div className="space-y-3">
+                      {tasks.map((task) => (
+                        <div
+                          key={task.id}
+                          className={`p-4 rounded-2xl border transition-all ${
+                            task.status === "done"
+                              ? "bg-emerald-50/60 border-emerald-300"
+                              : task.status === "in_progress"
+                              ? "bg-amber-50/60 border-amber-300"
+                              : "bg-white border-slate-200"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span
+                                  className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                    task.status === "done"
+                                      ? "bg-emerald-100 text-emerald-800"
+                                      : task.status === "in_progress"
+                                      ? "bg-amber-100 text-amber-800"
+                                      : "bg-slate-100 text-slate-600"
+                                  }`}
+                                >
+                                  {task.status === "done"
+                                    ? "Đã hoàn thành"
+                                    : task.status === "in_progress"
+                                    ? "Đang thi công"
+                                    : "Chưa bắt đầu"}
+                                </span>
+                                <span className="text-[10px] font-mono text-slate-500">{task.code}</span>
+                              </div>
+                              <p className="font-semibold text-sm text-slate-900">{task.name}</p>
+                              <p className="text-xs text-slate-600 font-mono mt-1 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
+                                ⚙️ {task.spec}
+                              </p>
+                            </div>
+
+                            <button
+                              type="button"
+                              disabled={isPaidOrder}
+                              onClick={() => handleToggleTaskStatus(task.id)}
+                              className={`px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                                 task.status === "done"
-                                  ? "bg-emerald-500/10 text-emerald-600"
+                                  ? "bg-emerald-600 text-white"
                                   : task.status === "in_progress"
-                                  ? "bg-amber-500/10 text-amber-600"
-                                  : "bg-muted text-muted-foreground"
+                                  ? "bg-amber-500 text-slate-950 hover:bg-amber-600"
+                                  : "bg-slate-100 hover:bg-slate-200 text-slate-800"
                               }`}
                             >
                               {task.status === "done"
-                                ? "Đã hoàn thành"
+                                ? "✓ Xong"
                                 : task.status === "in_progress"
-                                ? "Đang thi công"
-                                : "Chưa bắt đầu"}
-                            </span>
-                            <span className="text-[10px] font-mono text-muted-foreground">{task.code}</span>
+                                ? "Đang làm..."
+                                : "Bắt đầu"}
+                            </button>
                           </div>
-                          <p className="font-semibold text-sm text-foreground">{task.name}</p>
-                          <p className="text-xs text-muted-foreground font-mono mt-1 bg-muted/40 p-1.5 rounded-lg border">
-                            ⚙️ {task.spec}
-                          </p>
                         </div>
-
-                        <button
-                          type="button"
-                          disabled={isPaidOrder}
-                          onClick={() => handleToggleTaskStatus(task.id)}
-                          className={`px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                            task.status === "done"
-                              ? "bg-emerald-600 text-white"
-                              : task.status === "in_progress"
-                              ? "bg-amber-500 text-black hover:bg-amber-600"
-                              : "bg-muted hover:bg-muted/80 text-foreground"
-                          }`}
-                        >
-                          {task.status === "done"
-                            ? "✓ Xong"
-                            : task.status === "in_progress"
-                            ? "Đang làm..."
-                            : "Bắt đầu"}
-                        </button>
-                      </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+                </div>
+
+                {/* Cột phải: Ảnh Nghiệm Thu (5 cols) */}
+                <div className="lg:col-span-5 space-y-6">
+                  <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold text-base flex items-center gap-2 text-slate-900">
+                          <Camera className="w-4 h-4 text-amber-500" />
+                          Ảnh Nghiệm Thu Trước / Sau
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          Minh bạch hóa tiến độ gửi trực tiếp cho chủ xe
+                        </p>
+                      </div>
+                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                        {inspectionPhotos.length} ảnh
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isPaidOrder}
+                      onClick={handleSimulateCapture}
+                      className="w-full py-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-sm shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-2 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Camera className="w-5 h-5" />
+                      {isPaidOrder ? "Đã Khóa Chụp Ảnh (Đơn Đã Thanh Toán)" : "Chụp & Tải Lên Ảnh Nghiệm Thu"}
+                    </button>
+
+                    <div className="space-y-4 pt-2">
+                      {inspectionPhotos.map((photo) => (
+                        <div key={photo.id} className="rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-xs">
+                          <div className="relative h-44 w-full bg-slate-100">
+                            <img
+                              src={photo.url}
+                              alt={photo.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src = "/inspection-sample.jpg";
+                              }}
+                            />
+                            <div className="absolute top-2 left-2 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-black/70 text-white backdrop-blur-sm">
+                              {photo.stage} • {photo.timestamp}
+                            </div>
+                          </div>
+                          <div className="p-3">
+                            <p className="text-xs font-medium text-slate-800">{photo.title}</p>
+                            <p className="text-[10px] text-emerald-600 font-semibold mt-1 flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" /> Đã đồng bộ hồ sơ số khách hàng
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            </>
+          ) : null}
+        </div>
+      )}
 
-            {/* Cột phải: Ảnh Nghiệm Thu (5 cols) */}
-            <div className="lg:col-span-5 space-y-6">
-              <div className="rounded-3xl border bg-card p-6 shadow-xs space-y-4">
+      {/* ========================================================================= */}
+      {/* TAB 2: HÀNG ĐỢI CÁC XE ĐANG CHỜ TRONG XƯỞNG (QUEUE) */}
+      {/* ========================================================================= */}
+      {mainTab === "waiting" && (
+        <div className="space-y-4">
+          <div className="p-5 rounded-3xl border border-slate-200 bg-white shadow-xs">
+            <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-blue-600" />
+              Hàng Đợi Các Xe Đang Chờ Trong Xưởng ({waitingQueue.length} xe)
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Danh sách các xe đang ở giai đoạn Tiếp nhận, Chờ duyệt báo giá, hoặc Chờ xuất kho phụ tùng. Giúp thợ chuẩn bị dụng cụ và mặt bằng khoang nâng trước.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {waitingQueue.map((wq) => (
+              <div key={wq.order_code} className="p-5 rounded-3xl border border-slate-200 bg-white shadow-xs space-y-3">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold text-base flex items-center gap-2 text-foreground">
-                      <Camera className="w-4 h-4 text-amber-500" />
-                      Ảnh Nghiệm Thu Trước / Sau
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      Minh bạch hóa tiến độ gửi trực tiếp cho chủ xe
-                    </p>
-                  </div>
-                  <span className="text-xs font-mono px-2 py-0.5 rounded bg-muted">
-                    {inspectionPhotos.length} ảnh
+                  <span className="font-mono font-black text-sm px-2.5 py-1 rounded-md bg-slate-900 text-white">
+                    {wq.license_plate}
+                  </span>
+                  <span
+                    className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-full ${
+                      wq.current_status === "INSPECTION"
+                        ? "bg-blue-100 text-blue-800"
+                        : wq.current_status === "QUOTE_SENT"
+                        ? "bg-purple-100 text-purple-800"
+                        : "bg-amber-100 text-amber-800"
+                    }`}
+                  >
+                    {wq.current_status === "INSPECTION"
+                      ? "Tiếp Nhận Khám Xe"
+                      : wq.current_status === "QUOTE_SENT"
+                      ? "Chờ Khách Duyệt"
+                      : "Chờ Xuất Kho Vật Tư"}
                   </span>
                 </div>
 
-                <button
-                  type="button"
-                  disabled={isPaidOrder}
-                  onClick={handleSimulateCapture}
-                  className="w-full py-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-black font-extrabold text-sm shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-2 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Camera className="w-5 h-5" />
-                  {isPaidOrder ? "Đã Khóa Chụp Ảnh (Đơn Đã Thanh Toán)" : "Chụp & Tải Lên Ảnh Nghiệm Thu"}
-                </button>
-
-                <div className="space-y-4 pt-2">
-                  {inspectionPhotos.map((photo) => (
-                    <div key={photo.id} className="rounded-2xl border overflow-hidden bg-background">
-                      <div className="relative h-44 w-full bg-slate-100 dark:bg-zinc-800">
-                        <img
-                          src={photo.url}
-                          alt={photo.title}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).src = "/inspection-sample.jpg";
-                          }}
-                        />
-                        <div className="absolute top-2 left-2 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-black/70 text-white backdrop-blur-sm">
-                          {photo.stage} • {photo.timestamp}
-                        </div>
-                      </div>
-                      <div className="p-3">
-                        <p className="text-xs font-medium text-foreground">{photo.title}</p>
-                        <p className="text-[10px] text-emerald-600 font-semibold mt-1 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> Đã đồng bộ hồ sơ số khách hàng
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900">{wq.vehicle_model}</h4>
+                  <p className="text-xs text-slate-500 mt-0.5">Chủ xe: {wq.customer_name} ({wq.customer_phone})</p>
                 </div>
+
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <span className="text-slate-500">Mã Lệnh:</span>
+                  <span className="font-mono font-bold text-slate-700">{wq.order_code}</span>
+                </div>
+
+                {wq.estimate?.items && wq.estimate.items.length > 0 && (
+                  <div className="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                    <p className="font-bold text-slate-700 mb-1">Dự kiến thay thế:</p>
+                    <ul className="list-disc pl-4 space-y-0.5">
+                      {wq.estimate.items.slice(0, 2).map((it: any, idx: number) => (
+                        <li key={idx} className="truncate">{it.name}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 3: LỊCH SỬ XE ĐÃ HOÀN THÀNH CỦA RIÊNG THỢ NÀY (COMPLETED HISTORY) */}
+      {/* ========================================================================= */}
+      {mainTab === "history" && (
+        <div className="space-y-4">
+          <div className="p-5 rounded-3xl border border-slate-200 bg-white shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                <History className="w-5 h-5 text-emerald-600" />
+                Sổ Tay Lịch Sử Thi Công Của [{selectedTech.name}] ({completedOrders.length} xe)
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Toàn bộ các xe do chính bạn trực tiếp thi công và ký nghiệm thu KCS đạt chuẩn 100%. Được lưu vết vĩnh viễn trong hồ sơ năng suất thợ.
+              </p>
+            </div>
+            <div className="text-right shrink-0">
+              <span className="px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 font-bold text-xs">
+                Tổng đã làm: {completedOrders.length} xe
+              </span>
             </div>
           </div>
-        </>
-      ) : null}
+
+          {completedOrders.length === 0 ? (
+            <div className="p-12 text-center rounded-3xl border border-dashed border-slate-300 bg-slate-50 space-y-2">
+              <Award className="w-10 h-10 text-slate-400 mx-auto" />
+              <p className="text-base font-bold text-slate-800">Chưa có xe nào trong lịch sử hoàn thành</p>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                Khi bạn hoàn tất 100% công đoạn trên Tab &quot;Xe Đang Nhận&quot; và bấm Nghiệm Thu KCS, xe sẽ tự động được lưu vết vào đây!
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {completedOrders.map((co) => (
+                <div key={co.order_code} className="p-5 rounded-3xl border border-slate-200 bg-white shadow-xs space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono font-black text-sm px-2.5 py-1 rounded-md bg-slate-900 text-white">
+                      {co.license_plate}
+                    </span>
+                    <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      {co.current_status === "PAID" ? "Đã Thanh Toán (PAID)" : "Đã Nghiệm Thu KCS"}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">{co.vehicle_model}</h4>
+                    <p className="text-xs text-slate-500 mt-0.5">Chủ xe: {co.customer_name}</p>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Khoang nâng:</span>
+                      <span className="font-bold text-amber-700">{co.bay || "Khoang nâng 01"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Thời gian cập nhật:</span>
+                      <span className="font-medium text-slate-700">
+                        {new Date(co.updatedAt).toLocaleDateString("vi-VN")} {new Date(co.updatedAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Ảnh nghiệm thu:</span>
+                      <span className="font-bold text-emerald-600">{co.inspection_photos?.length || 0} ảnh</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="font-mono text-slate-500">{co.order_code}</span>
+                    <span className="text-emerald-700 font-bold">100% Hoàn Tất</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

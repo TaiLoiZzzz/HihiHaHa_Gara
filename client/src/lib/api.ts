@@ -207,6 +207,25 @@ export const api = {
       roleFallback: "WORKSHOP_MANAGER",
     }),
 
+  // 5.0.1. Dashboard Kỹ thuật viên (Xe đang làm, Lịch sử đã hoàn thành, Hàng đợi xe chờ)
+  getTechnicianDashboard: (techId: string) =>
+    fetchApi<{
+      success: boolean;
+      data: {
+        active_orders: any[];
+        completed_orders: any[];
+        waiting_queue: any[];
+        stats: {
+          active_count: number;
+          max_allowed: number;
+          total_completed: number;
+          today_completed: number;
+        };
+      };
+    }>(`/work-orders/technicians/${techId}/dashboard`, {
+      roleFallback: "TECHNICIAN",
+    }),
+
   // 5.1. Khởi tạo Lệnh sửa chữa mới lên MongoDB
   createWorkOrder: (payload: {
     license_plate: string;
