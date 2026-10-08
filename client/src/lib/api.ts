@@ -47,17 +47,29 @@ export function clearSession(): void {
   localStorage.removeItem("hihihaha_user");
 }
 
-// Lấy token hợp lệ (ưu tiên token đã đăng nhập trong localStorage)
+// Lấy token hợp lệ (ưu tiên token đã đăng nhập nếu đúng nhóm vai trò)
 export async function getValidToken(roleFallback: string = "SERVICE_ADVISOR"): Promise<string> {
   if (typeof window === "undefined") return "";
 
   const saved = getSavedToken();
-  if (saved) return saved;
+  const currentUser = getCurrentUser();
 
-  // Nếu chưa đăng nhập, cấp token theo role để tránh đứt kết nối
+  // Chỉ dùng saved token nếu vai trò khớp nhau:
+  // - Nếu cần CUSTOMER: token lưu trữ phải là CUSTOMER
+  // - Nếu cần nhân viên (TECHNICIAN, WORKSHOP_MANAGER, SERVICE_ADVISOR, OWNER): token lưu trữ không được là CUSTOMER
+  if (saved && currentUser) {
+    if (roleFallback === "CUSTOMER" && currentUser.role === "CUSTOMER") {
+      return saved;
+    }
+    if (roleFallback !== "CUSTOMER" && currentUser.role !== "CUSTOMER") {
+      return saved;
+    }
+  }
+
+  // Cấp token theo role fallback để tránh đứt kết nối
   try {
     const phoneMap: Record<string, string> = {
-      CUSTOMER: "0912345678",
+      CUSTOMER: "0797526990",
       SERVICE_ADVISOR: "0988888801",
       WORKSHOP_MANAGER: "0988888802",
       TECHNICIAN: "0988888803",
@@ -69,13 +81,12 @@ export async function getValidToken(roleFallback: string = "SERVICE_ADVISOR"): P
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         role: roleFallback,
-        phone_number: phoneMap[roleFallback] || "0988888801",
+        phone_number: phoneMap[roleFallback] || "0988888803",
       }),
     });
 
     const data = await res.json();
     if (data?.data?.accessToken) {
-      saveSession(data.data.accessToken, data.data.user);
       return data.data.accessToken;
     }
   } catch (err) {
@@ -90,7 +101,7 @@ export async function fetchApi<T>(endpoint: string, options: FetchOptions = {}):
 
   let activeToken = token;
   if (!activeToken && typeof window !== "undefined") {
-    activeToken = getSavedToken() || (await getValidToken(roleFallback));
+    activeToken = await getValidToken(roleFallback);
   }
 
   const reqHeaders: Record<string, string> = {
@@ -181,10 +192,10 @@ export const api = {
     return data;
   },
 
-  // 4. Lấy thông tin Lệnh sửa chữa thật
-  getWorkOrder: (orderCode: string) =>
+  // 4. Lấy thông tin Lệnh sửa chữa thật (mặc định cho phép nhân viên xem toàn quyền)
+  getWorkOrder: (orderCode: string, roleFallback: "CUSTOMER" | "WORKSHOP_MANAGER" | "TECHNICIAN" = "WORKSHOP_MANAGER") =>
     fetchApi<{ success: boolean; data: any }>(`/work-orders/${orderCode}`, {
-      roleFallback: "CUSTOMER",
+      roleFallback,
     }),
 
   // 5. Lấy danh sách Lệnh của tôi (hỗ trợ lọc theo thợ / xe)

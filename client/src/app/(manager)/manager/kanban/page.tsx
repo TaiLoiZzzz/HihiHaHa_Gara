@@ -666,15 +666,44 @@ export default function WorkshopKanbanPage() {
                         </div>
                       </div>
 
-                      {/* Nút bấm Phân Công Thợ & Khoang Nâng trực tiếp */}
-                      <button
-                        type="button"
-                        onClick={() => openAssignModal(card)}
-                        className="w-full py-1.5 px-2.5 rounded-lg border border-dashed border-amber-300 hover:border-amber-500 bg-amber-50/70 hover:bg-amber-100/90 text-amber-900 font-bold text-[11px] transition-all flex items-center justify-center gap-1.5 active:scale-95 group shadow-xs"
-                      >
-                        <UserCheck className="w-3.5 h-3.5 text-amber-600 group-hover:scale-110 transition-transform" />
-                        <span>Phân Công Thợ & Khoang</span>
-                      </button>
+                      {/* Nút Phân Công & Nút Mở Tablet Thợ Trực Tiếp */}
+                      {(() => {
+                        const matchedTech = TECHNICIANS_LIST.find((t) =>
+                          card.technician.includes(t.name.split(" ")[0]) || card.technician.includes(t.name)
+                        );
+                        const techQuery = matchedTech ? `&tech=${matchedTech.id}` : "";
+                        const hasTech = !card.technician.includes("Chưa");
+
+                        return hasTech ? (
+                          <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                            <button
+                              type="button"
+                              onClick={() => openAssignModal(card)}
+                              className="py-1.5 px-1.5 rounded-lg border border-dashed border-amber-300 hover:border-amber-500 bg-amber-50/70 hover:bg-amber-100/90 text-amber-900 font-bold text-[10px] transition-all flex items-center justify-center gap-1 active:scale-95 group shadow-xs"
+                            >
+                              <UserCheck className="w-3 h-3 text-amber-600 group-hover:scale-110 transition-transform" />
+                              <span className="truncate">Đổi Thợ/Khoang</span>
+                            </button>
+                            <Link
+                              href={`/technician?order=${card.orderCode}${techQuery}`}
+                              className="py-1.5 px-1.5 rounded-lg border border-slate-200 hover:border-slate-800 bg-slate-900 hover:bg-slate-800 text-white font-bold text-[10px] transition-all flex items-center justify-center gap-1 active:scale-95 shadow-xs text-center"
+                              title="Mở trực tiếp trên Tablet Khoang Kỹ Thuật Viên"
+                            >
+                              <Wrench className="w-3 h-3 text-amber-400 shrink-0" />
+                              <span className="truncate">Tablet Thợ →</span>
+                            </Link>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => openAssignModal(card)}
+                            className="w-full py-1.5 px-2.5 rounded-lg border border-dashed border-amber-300 hover:border-amber-500 bg-amber-50/70 hover:bg-amber-100/90 text-amber-900 font-bold text-[11px] transition-all flex items-center justify-center gap-1.5 active:scale-95 group shadow-xs"
+                          >
+                            <UserCheck className="w-3.5 h-3.5 text-amber-600 group-hover:scale-110 transition-transform" />
+                            <span>Phân Công Thợ & Khoang</span>
+                          </button>
+                        );
+                      })()}
 
                       {/* Quick stage transition button */}
                       <div className="pt-1 flex justify-end gap-1">

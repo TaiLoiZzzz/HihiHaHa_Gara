@@ -567,23 +567,13 @@ const assignWorkOrderController = async (req, res, next) => {
         );
       }
 
-      const existingIdx = workOrder.assigned_technicians?.findIndex(
-        (t) => t.technician_id === techId || t.technician_name === technician_name
-      ) ?? -1;
-
-      if (!workOrder.assigned_technicians) {
-        workOrder.assigned_technicians = [];
-      }
-
-      if (existingIdx >= 0) {
-        workOrder.assigned_technicians[existingIdx].technician_name = technician_name;
-      } else {
-        workOrder.assigned_technicians.push({
+      workOrder.assigned_technicians = [
+        {
           technician_id: techId,
           technician_name: technician_name,
           assigned_at: new Date(),
-        });
-      }
+        },
+      ];
     }
 
     if (bay) {
@@ -678,15 +668,29 @@ const getTechnicianDashboardController = async (req, res, next) => {
     const { tech_id } = req.params;
     const techId = tech_id || req.user?.phone_number;
 
+    const techNameKeywords = {
+      '0988888803': 'Thợ',
+      '0988888804': 'Cường',
+      '0988888805': 'Long',
+      '0988888806': 'Tuấn',
+    };
+    const namePattern = techNameKeywords[techId] || techId;
+
     // 1. Xe dang phu trach thi cong (Active: 0..3 xe)
     const activeOrders = await WorkOrder.find({
-      'assigned_technicians.technician_id': techId,
+      $or: [
+        { 'assigned_technicians.technician_id': techId },
+        { 'assigned_technicians.technician_name': new RegExp(namePattern, 'i') },
+      ],
       current_status: { $in: ['QUOTE_APPROVED', 'WAITING_PARTS', 'IN_PROGRESS', 'QUALITY_CHECK'] },
     }).sort({ updatedAt: -1 }).lean();
 
     // 2. Lich su xe da hoan thanh cua rieng tho nay (Completed History)
     const completedOrders = await WorkOrder.find({
-      'assigned_technicians.technician_id': techId,
+      $or: [
+        { 'assigned_technicians.technician_id': techId },
+        { 'assigned_technicians.technician_name': new RegExp(namePattern, 'i') },
+      ],
       current_status: { $in: ['COMPLETED', 'PAYMENT_PENDING', 'PAID', 'DELIVERED'] },
     }).sort({ updatedAt: -1 }).lean();
 

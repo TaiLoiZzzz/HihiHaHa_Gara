@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import {
   Wrench,
@@ -44,9 +45,21 @@ const TECHNICIANS = [
   { id: "0988888806", name: "Phạm Minh Tuấn (THO-04)", role: "Kỹ thuật viên Cân Chỉnh Góc Đặt 3D", pin: "2222", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&auto=format&fit=crop&q=80" },
 ];
 
-export default function TechnicianTabletPage() {
+function TechnicianTabletContent() {
+  const searchParams = useSearchParams();
+  const queryOrder = searchParams.get("order") || "";
+  const queryTech = searchParams.get("tech") || "";
+
   // 1. Quản lý danh tính thợ & Màn hình khóa PIN
-  const [selectedTech, setSelectedTech] = useState(TECHNICIANS[0]);
+  const [selectedTech, setSelectedTech] = useState(() => {
+    if (queryTech) {
+      const match = TECHNICIANS.find(
+        (t) => t.id === queryTech || t.name.toLowerCase().includes(queryTech.toLowerCase())
+      );
+      if (match) return match;
+    }
+    return TECHNICIANS[0];
+  });
   const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
@@ -66,7 +79,7 @@ export default function TechnicianTabletPage() {
   });
 
   // 4. Xe cụ thể đang được chọn làm việc tại khoang
-  const [activeOrderCode, setActiveOrderCode] = useState<string>("");
+  const [activeOrderCode, setActiveOrderCode] = useState<string>(queryOrder || "");
   const [activeOrder, setActiveOrder] = useState<any>(null);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [overallProgress, setOverallProgress] = useState(0);
@@ -77,44 +90,11 @@ export default function TechnicianTabletPage() {
   const [isPaidOrder, setIsPaidOrder] = useState(false);
   const [isCompletedOrder, setIsCompletedOrder] = useState(false);
 
-  // Tải dữ liệu toàn diện của Kỹ thuật viên (Xe đang làm + Lịch sử cá nhân + Hàng đợi)
-  const loadTechnicianData = useCallback(async (techId: string, preferredOrderCode?: string) => {
+  // Tải chi tiết một Lệnh sửa chữa cụ thể (sử dụng quyền TECHNICIAN để không bao giờ bị 403)
+  const loadOrderDetails = useCallback(async (orderCode: string) => {
+    if (!orderCode) return;
     try {
-      setLoading(true);
-      const res = await api.getTechnicianDashboard(techId);
-      if (res.success && res.data) {
-        const { active_orders, completed_orders, waiting_queue, stats: techStats } = res.data;
-        setActiveOrders(active_orders || []);
-        setCompletedOrders(completed_orders || []);
-        setWaitingQueue(waiting_queue || []);
-        setStats(techStats || { active_count: 0, max_allowed: 3, total_completed: 0, today_completed: 0 });
-
-        // Tự động chọn xe đang làm nếu có
-        if (active_orders && active_orders.length > 0) {
-          const target = preferredOrderCode && active_orders.some((o: any) => o.order_code === preferredOrderCode)
-            ? preferredOrderCode
-            : active_orders[0].order_code;
-          setActiveOrderCode(target);
-          await loadOrderDetails(target);
-        } else {
-          setActiveOrderCode("");
-          setActiveOrder(null);
-          setTasks([]);
-          setOverallProgress(0);
-          setInspectionPhotos([]);
-        }
-      }
-    } catch (err: any) {
-      console.warn("Lỗi tải thông tin thợ:", err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Tải chi tiết một Lệnh sửa chữa cụ thể
-  const loadOrderDetails = async (orderCode: string) => {
-    try {
-      const res = await api.getWorkOrder(orderCode);
+      const res = await api.getWorkOrder(orderCode, "TECHNICIAN");
       if (res.success && res.data) {
         const wo = res.data;
         setActiveOrder({
@@ -174,11 +154,62 @@ export default function TechnicianTabletPage() {
     } catch (err: any) {
       console.warn("Lỗi tải chi tiết xe:", err.message);
     }
-  };
+  }, []);
 
+  // Tải dữ liệu toàn diện của Kỹ thuật viên (Xe đang làm + Lịch sử cá nhân + Hàng đợi)
+  const loadTechnicianData = useCallback(async (techId: string, preferredOrderCode?: string, silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+      const res = await api.getTechnicianDashboard(techId);
+      if (res.success && res.data) {
+        const { active_orders, completed_orders, waiting_queue, stats: techStats } = res.data;
+        setActiveOrders(active_orders || []);
+        setCompletedOrders(completed_orders || []);
+        setWaitingQueue(waiting_queue || []);
+        setStats(techStats || { active_count: 0, max_allowed: 3, total_completed: 0, today_completed: 0 });
+
+        // Tự động chọn xe đang làm nếu có
+        if (active_orders && active_orders.length > 0) {
+          let target = "";
+          if (preferredOrderCode && active_orders.some((o: any) => o.order_code === preferredOrderCode)) {
+            target = preferredOrderCode;
+          } else if (activeOrderCode && active_orders.some((o: any) => o.order_code === activeOrderCode)) {
+            target = activeOrderCode;
+          } else if (queryOrder && active_orders.some((o: any) => o.order_code === queryOrder)) {
+            target = queryOrder;
+          } else {
+            target = active_orders[0].order_code;
+          }
+
+          setActiveOrderCode(target);
+          await loadOrderDetails(target);
+        } else {
+          setActiveOrderCode("");
+          setActiveOrder(null);
+          setTasks([]);
+          setOverallProgress(0);
+          setInspectionPhotos([]);
+        }
+      }
+    } catch (err: any) {
+      console.warn("Lỗi tải thông tin thợ:", err.message);
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, [activeOrderCode, queryOrder, loadOrderDetails]);
+
+  // Load ban đầu khi chọn thợ
   useEffect(() => {
-    loadTechnicianData(selectedTech.id);
-  }, [selectedTech, loadTechnicianData]);
+    loadTechnicianData(selectedTech.id, queryOrder || undefined);
+  }, [selectedTech.id]);
+
+  // Auto-polling ngầm mỗi 4 giây để đồng bộ real-time ngay khi Quản đốc phân công trên Kanban
+  useEffect(() => {
+    const timer = setInterval(() => {
+      loadTechnicianData(selectedTech.id, activeOrderCode, true);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [selectedTech.id, activeOrderCode, loadTechnicianData]);
 
   // Đổi tài khoản Thợ
   const handleSelectTech = (tech: typeof TECHNICIANS[0]) => {
@@ -590,6 +621,21 @@ export default function TechnicianTabletPage() {
               </span>
             </div>
 
+            {/* Thông báo hướng dẫn khi thợ nhận cùng lúc nhiều xe */}
+            {activeOrders.length > 1 && (
+              <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-300/80 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-600 shrink-0 animate-bounce" />
+                  <span>
+                    <strong>{selectedTech.name}</strong> đang cùng lúc phụ trách <strong>{activeOrders.length}/3 xe</strong>. Nhấp vào thẻ bất kỳ bên dưới để chuyển đổi bàn làm việc!
+                  </span>
+                </div>
+                <span className="font-mono font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-300 self-start sm:self-auto shrink-0">
+                  Đang thao tác: {activeOrder?.plateNumber || activeOrderCode}
+                </span>
+              </div>
+            )}
+
             {activeOrders.length === 0 ? (
               <div className="p-8 text-center rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 space-y-3">
                 <AlertCircle className="w-8 h-8 text-amber-500 mx-auto" />
@@ -608,9 +654,9 @@ export default function TechnicianTabletPage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
                 {activeOrders.map((ord) => {
-                  const isActive = activeOrder?.orderCode === ord.order_code;
+                  const isActive = activeOrder?.orderCode === ord.order_code || activeOrderCode === ord.order_code;
                   return (
                     <div
                       key={ord.order_code}
@@ -618,16 +664,23 @@ export default function TechnicianTabletPage() {
                         setActiveOrderCode(ord.order_code);
                         loadOrderDetails(ord.order_code);
                       }}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-2 shadow-xs ${
+                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 shadow-xs ${
                         isActive
-                          ? "border-amber-500 bg-amber-50/90 ring-2 ring-amber-500/30"
-                          : "border-slate-200 bg-slate-50/60 hover:border-slate-300 hover:bg-slate-100"
+                          ? "border-amber-500 bg-amber-50/90 ring-2 ring-amber-500/40 shadow-md shadow-amber-500/10"
+                          : "border-slate-200 bg-white hover:border-amber-400 hover:bg-amber-50/30"
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-mono font-black text-sm px-2.5 py-0.5 rounded-md bg-slate-900 text-white">
-                          {ord.license_plate}
-                        </span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono font-black text-sm px-2.5 py-0.5 rounded-md bg-slate-900 text-white shadow-2xs">
+                            {ord.license_plate}
+                          </span>
+                          {isActive && (
+                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 flex items-center gap-1 shadow-2xs">
+                              <Sparkles className="w-3 h-3" /> Đang thao tác
+                            </span>
+                          )}
+                        </div>
                         <span
                           className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
                             (ord.progress_percent || 0) === 100
@@ -641,8 +694,8 @@ export default function TechnicianTabletPage() {
 
                       <div>
                         <p className="text-xs font-bold text-slate-900 truncate">{ord.vehicle_model}</p>
-                        <div className="flex items-center justify-between text-[11px] mt-0.5">
-                          <span className="text-slate-500 truncate">Khách: {ord.customer_name}</span>
+                        <div className="flex items-center justify-between text-[11px] mt-1">
+                          <span className="text-slate-500 truncate">Khách: <strong className="text-slate-800">{ord.customer_name}</strong></span>
                           {ord.customer_phone && (
                             <a
                               href={`tel:${ord.customer_phone}`}
@@ -657,9 +710,25 @@ export default function TechnicianTabletPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between pt-1 border-t border-slate-200 text-[11px]">
-                        <span className="text-amber-600 font-bold">{ord.bay || "Khoang nâng"}</span>
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
+                        <span className="text-amber-700 font-bold">{ord.bay || "Khoang nâng"}</span>
                         <span className="text-slate-500 font-mono font-medium">{ord.order_code}</span>
+                      </div>
+
+                      {/* Nút hành động trực quan */}
+                      <div className="pt-0.5">
+                        {isActive ? (
+                          <div className="w-full py-1.5 rounded-xl bg-amber-500/20 text-amber-900 text-center text-[11px] font-bold border border-amber-300">
+                            ✓ Đang mở trên bàn làm việc bên dưới
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className="w-full py-1.5 rounded-xl bg-slate-100 hover:bg-amber-500 hover:text-slate-950 text-slate-700 text-center text-[11px] font-bold border border-slate-200 transition-colors"
+                          >
+                            👉 Nhấp để chuyển qua thi công xe này
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -1109,5 +1178,22 @@ export default function TechnicianTabletPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function TechnicianTabletPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[60vh] flex items-center justify-center p-8 font-sans">
+          <div className="flex items-center gap-3 text-slate-500 font-bold text-sm bg-white p-6 rounded-3xl border border-slate-200 shadow-lg">
+            <RefreshCw className="w-5 h-5 animate-spin text-amber-500" />
+            <span>Đang khởi tạo Tablet Kỹ Thuật Viên Realtime...</span>
+          </div>
+        </div>
+      }
+    >
+      <TechnicianTabletContent />
+    </Suspense>
   );
 }
