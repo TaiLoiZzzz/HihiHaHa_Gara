@@ -1,11 +1,11 @@
 export function getApiBaseUrl(): string {
   if (typeof window !== "undefined") {
-    const host = window.location.hostname;
-    if (host.includes("quachtailoi.id.vn") || (host !== "localhost" && host !== "127.0.0.1")) {
-      return process.env.NEXT_PUBLIC_API_URL || "https://api.hihihahagara.quachtailoi.id.vn/api/v1";
-    }
+    // Trên client browser (cả domain thật và localhost):
+    // Dùng đường dẫn tương đối /api/v1 để Next.js proxy trực tiếp sang backend port 5000.
+    // Cách này giải quyết triệt để lỗi SSL đa cấp Cloudflare và 100% không bị CORS!
+    return "/api/v1";
   }
-  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+  return process.env.INTERNAL_API_URL || "http://localhost:5000/api/v1";
 }
 
 export interface UserSession {

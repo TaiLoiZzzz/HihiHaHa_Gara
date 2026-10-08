@@ -12,20 +12,22 @@ const routes = require('./routes');
 
 const app = express();
 
-// 1. helmet bao mat http headers (cho phap cdn script cho trang test)
+// 1. helmet bao mat http headers (cho phep cdn script va cross-origin resource)
 app.use(
   helmet({
     contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
   })
 );
 
-// 2. cors cau hinh cho truyen nhan voi frontend next.js (port 3000) & local html files
+// 2. cors cau hinh cho phep tat ca origin bao gom local va domain production
 app.use(
   cors({
-    origin: '*',
+    origin: (origin, callback) => callback(null, true),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    optionsSuccessStatus: 200,
   })
 );
 
