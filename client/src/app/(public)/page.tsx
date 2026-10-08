@@ -77,114 +77,114 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 py-4 pb-20 font-sans">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-12 sm:space-y-16 py-2 sm:py-4 pb-20 font-sans">
       
       {/* 1. HERO SECTION - SHOWROOM 4S SANG TRỌNG (TRẮNG - VÀNG - ĐEN THAN) */}
-      <section className="relative rounded-3xl border border-slate-200/90 bg-gradient-to-br from-amber-50/60 via-white to-slate-50/80 p-8 sm:p-12 lg:p-14 shadow-sm overflow-hidden">
+      <section className="relative rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-gradient-to-br from-amber-50/60 via-white to-slate-50/80 p-4 sm:p-8 md:p-10 lg:p-12 shadow-sm overflow-hidden">
         {/* Decorative accents */}
         <div className="absolute top-0 right-0 -mt-10 -mr-10 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-1/3 -mb-10 w-72 h-72 bg-amber-200/20 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
           
           {/* Cột Trái: Tiêu đề & Cam kết */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold shadow-xs">
+          <div className="lg:col-span-7 space-y-5 sm:space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[11px] sm:text-xs font-bold shadow-xs">
               <span className="w-2 h-2 rounded-full bg-amber-600 animate-pulse" />
               TRUNG TÂM DỊCH VỤ Ô TÔ CHUẨN 4S QUỐC TẾ
             </div>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-[1.15]">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-[1.2]">
               Chăm Sóc & Sửa Chữa Xe Với{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-500 underline decoration-amber-300 decoration-wavy decoration-2">
                 Sự Minh Bạch Tuyệt Đối
               </span>
             </h1>
 
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal max-w-2xl">
+            <p className="text-xs sm:text-sm md:text-base text-slate-600 leading-relaxed font-normal max-w-2xl">
               Xem chi tiết báo giá từng con ốc trước khi thợ thi công, duyệt báo giá điện tử trên điện thoại, theo dõi trực tiếp hình ảnh thợ thay linh kiện qua ảnh chụp và thanh toán mã QR bảo mật chuẩn ngân hàng.
             </p>
 
-            <div className="flex flex-wrap items-center gap-3.5 pt-1">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
               <Link
                 href="/services"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-sm font-bold shadow-md shadow-amber-500/25 transition-all transform active:scale-95"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs sm:text-sm font-bold shadow-md shadow-amber-500/25 transition-all transform active:scale-95 text-center"
               >
                 Xem Bảng Giá & Đặt Lịch
-                <ArrowRight className="w-4 h-4 text-slate-950" />
+                <ArrowRight className="w-4 h-4 text-slate-950 shrink-0" />
               </Link>
 
               <Link
                 href="/login"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-sm font-bold shadow-xs transition-all transform active:scale-95"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs sm:text-sm font-bold shadow-xs transition-all transform active:scale-95 text-center"
               >
                 Tra Cứu Hồ Sơ Xe Của Bạn
               </Link>
             </div>
 
             {/* 4 Chỉ số vàng */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-slate-200">
-              <div className="space-y-1">
-                <p className="text-2xl font-black font-mono text-amber-600">100%</p>
-                <p className="text-xs font-semibold text-slate-700">Phụ tùng chính hãng</p>
-                <p className="text-[11px] text-slate-500">Nguồn gốc OEM rõ ràng</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-5 border-t border-slate-200">
+              <div className="space-y-0.5">
+                <p className="text-xl sm:text-2xl font-black font-mono text-amber-600">100%</p>
+                <p className="text-[11px] sm:text-xs font-semibold text-slate-700">Phụ tùng chính hãng</p>
+                <p className="text-[10px] sm:text-[11px] text-slate-500">Nguồn gốc OEM rõ ràng</p>
               </div>
-              <div className="space-y-1">
-                <p className="text-2xl font-black font-mono text-amber-600">12 Tháng</p>
-                <p className="text-xs font-semibold text-slate-700">Bảo hành linh kiện</p>
-                <p className="text-[11px] text-slate-500">Toàn quốc điện tử</p>
+              <div className="space-y-0.5">
+                <p className="text-xl sm:text-2xl font-black font-mono text-amber-600">12 Tháng</p>
+                <p className="text-[11px] sm:text-xs font-semibold text-slate-700">Bảo hành linh kiện</p>
+                <p className="text-[10px] sm:text-[11px] text-slate-500">Toàn quốc điện tử</p>
               </div>
-              <div className="space-y-1">
-                <p className="text-2xl font-black font-mono text-amber-600">4 Khoang</p>
-                <p className="text-xs font-semibold text-slate-700">Cầu nâng thủy lực</p>
-                <p className="text-[11px] text-slate-500">Xưởng 4S tiêu chuẩn</p>
+              <div className="space-y-0.5">
+                <p className="text-xl sm:text-2xl font-black font-mono text-amber-600">4 Khoang</p>
+                <p className="text-[11px] sm:text-xs font-semibold text-slate-700">Cầu nâng thủy lực</p>
+                <p className="text-[10px] sm:text-[11px] text-slate-500">Xưởng 4S tiêu chuẩn</p>
               </div>
-              <div className="space-y-1">
-                <p className="text-2xl font-black font-mono text-amber-600">4.9 ★</p>
-                <p className="text-xs font-semibold text-slate-700">Hài lòng khách hàng</p>
-                <p className="text-[11px] text-slate-500">Hơn 5.000 lượt phục vụ</p>
+              <div className="space-y-0.5">
+                <p className="text-xl sm:text-2xl font-black font-mono text-amber-600">4.9 ★</p>
+                <p className="text-[11px] sm:text-xs font-semibold text-slate-700">Hài lòng khách hàng</p>
+                <p className="text-[10px] sm:text-[11px] text-slate-500">Hơn 5.000 lượt phục vụ</p>
               </div>
             </div>
           </div>
 
           {/* Cột Phải: Showcase Đội Ngũ Kỹ Thuật Viên & Trung Tâm Dịch Vụ 4S Hiện Đại */}
-          <div className="lg:col-span-5 relative">
+          <div className="lg:col-span-5 relative w-full">
             {/* Vầng sáng vàng sang trọng phía sau */}
-            <div className="absolute -inset-1.5 rounded-3xl bg-gradient-to-r from-amber-400/25 via-amber-300/35 to-amber-500/25 blur-2xl opacity-75 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute -inset-1 sm:-inset-1.5 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-amber-400/25 via-amber-300/35 to-amber-500/25 blur-2xl opacity-75 group-hover:opacity-100 transition-opacity" />
 
-            <div className="relative rounded-3xl border border-slate-200/90 bg-white/85 backdrop-blur-xl p-6 sm:p-7 shadow-2xl shadow-amber-500/10 space-y-5">
+            <div className="relative rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white/90 backdrop-blur-xl p-4 sm:p-6 lg:p-7 shadow-2xl shadow-amber-500/10 space-y-4 sm:space-y-5">
               
               {/* Header Showcase với Logo & Trạng Thái Hoạt Động Xưởng */}
-              <div className="flex items-center justify-between pb-3.5 border-b border-slate-200/70">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-white border border-amber-200 p-1.5 shadow-xs flex items-center justify-center shrink-0">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-200/70 gap-2">
+                <div className="flex items-center gap-2.5 sm:gap-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white border border-amber-200 p-1 sm:p-1.5 shadow-xs flex items-center justify-center shrink-0">
                     <Image
                       src="/logo.png"
                       alt="Logo HiHiHaHa Auto"
-                      width={44}
-                      height={44}
+                      width={40}
+                      height={40}
                       className="object-contain"
                       priority
                     />
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <h3 className="text-sm font-black text-slate-900 tracking-tight">HIHIHAHA AUTO</h3>
+                      <h3 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">HIHIHAHA AUTO</h3>
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                     </div>
-                    <p className="text-[11px] font-bold text-amber-600">TRUNG TÂM DỊCH VỤ 4S CHUYÊN SÂU</p>
+                    <p className="text-[10px] sm:text-[11px] font-bold text-amber-600">TRUNG TÂM DỊCH VỤ 4S</p>
                   </div>
                 </div>
 
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-2xs">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  4/4 Cầu Nâng Sẵn Sàng
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-2xs shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  4/4 Cầu Nâng Live
                 </span>
               </div>
 
               {/* Khung Ảnh Đội Ngũ Kỹ Thuật Viên Chuyên Nghiệp Kèm Badges Nổi */}
-              <div className="relative rounded-2xl overflow-hidden border border-slate-200/80 bg-slate-900 shadow-md group/img">
-                <div className="relative w-full aspect-[4/3] overflow-hidden">
+              <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200/80 bg-slate-900 shadow-md group/img">
+                <div className="relative w-full aspect-[16/11] sm:aspect-[4/3] overflow-hidden">
                   <Image
                     src="/gara-team.png"
                     alt="Đội ngũ kỹ thuật viên HiHiHaHa Gara"
@@ -197,30 +197,30 @@ export default function HomePage() {
                 </div>
 
                 {/* Floating Badge Trên Ảnh (Góc Trên Trái) */}
-                <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-slate-900/80 backdrop-blur-md text-[11px] font-bold text-amber-300 border border-amber-500/30 flex items-center gap-1.5 shadow-sm">
-                  <Award className="w-3.5 h-3.5 text-amber-400" />
-                  <span>100% Kỹ Thuật Viên Chứng Chỉ Hãng</span>
+                <div className="absolute top-2.5 left-2.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-slate-900/85 backdrop-blur-md text-[10px] sm:text-[11px] font-bold text-amber-300 border border-amber-500/30 flex items-center gap-1 sm:gap-1.5 shadow-sm">
+                  <Award className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400 shrink-0" />
+                  <span>Kỹ Thuật Viên Chứng Chỉ Hãng</span>
                 </div>
 
                 {/* Floating Badge Trên Ảnh (Góc Dưới) */}
-                <div className="absolute bottom-3 inset-x-3 flex items-center justify-between text-[11px] font-bold text-white">
-                  <div className="px-2.5 py-1 rounded-lg bg-slate-950/80 backdrop-blur-md border border-white/20 flex items-center gap-1">
+                <div className="absolute bottom-2.5 inset-x-2.5 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-white gap-2">
+                  <div className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-slate-950/85 backdrop-blur-md border border-white/20 flex items-center gap-1">
                     <span className="text-amber-400">★ 4.9/5</span>
                     <span className="text-slate-300">• 5.200+ Xe</span>
                   </div>
-                  <div className="px-2.5 py-1 rounded-lg bg-emerald-500/90 text-slate-950 font-black flex items-center gap-1 shadow-xs">
-                    <ShieldCheck className="w-3.5 h-3.5" />
+                  <div className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-emerald-500/95 text-slate-950 font-black flex items-center gap-1 shadow-xs">
+                    <ShieldCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
                     <span>Cam Kết Minh Bạch</span>
                   </div>
                 </div>
               </div>
 
               {/* Ô Tra Cứu Nhanh Hồ Sơ Xe Bằng Biển Số Trực Tiếp */}
-              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-50/70 to-white border border-amber-200/80 space-y-2 shadow-xs">
-                <div className="flex items-center justify-between text-xs">
+              <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-50/70 to-white border border-amber-200/80 space-y-2 shadow-xs">
+                <div className="flex items-center justify-between text-[11px] sm:text-xs">
                   <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                    <Search className="w-3.5 h-3.5 text-amber-600" />
-                    Tra cứu tiến độ xe trên cầu nâng:
+                    <Search className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    Tra cứu tiến độ trên cầu nâng:
                   </span>
                   <span className="text-[10px] font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md">
                     Live Realtime
@@ -228,17 +228,17 @@ export default function HomePage() {
                 </div>
 
                 <div className="relative flex items-center">
-                  <Car className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
+                  <Car className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
                   <input
                     type="text"
-                    placeholder="Nhập biển số xe (VD: 51K-999.99)..."
+                    placeholder="Nhập biển số (VD: 51K-999.99)..."
                     value={quickPlate}
                     onChange={(e) => setQuickPlate(e.target.value.toUpperCase())}
-                    className="w-full pl-10 pr-24 py-2.5 text-xs font-mono font-bold uppercase tracking-wider rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition shadow-inner"
+                    className="w-full pl-9 pr-22 sm:pr-24 py-2 sm:py-2.5 text-xs font-mono font-bold uppercase tracking-wider rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition shadow-inner"
                   />
                   <Link
                     href={`/login${quickPlate ? `?plate=${encodeURIComponent(quickPlate)}` : ""}`}
-                    className="absolute right-1 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition shadow-xs flex items-center gap-1 active:scale-95"
+                    className="absolute right-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition shadow-xs flex items-center gap-1 active:scale-95 shrink-0"
                   >
                     <span>Tra Cứu</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -248,26 +248,26 @@ export default function HomePage() {
 
               {/* Thông Tin Trụ Sở & Hotline Trực Tiếp */}
               <div className="p-3 rounded-xl bg-white/90 border border-slate-200/80 text-left space-y-1.5 shadow-2xs">
-                <div className="flex items-start gap-2 text-xs text-slate-700">
-                  <MapPin className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <div className="flex items-start gap-1.5 text-[11px] sm:text-xs text-slate-700">
+                  <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 shrink-0 mt-0.5" />
                   <span className="font-semibold">Số 1 Võ Văn Ngân, TP. Thủ Đức, TP. Hồ Chí Minh</span>
                 </div>
-                <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
-                  <a href="tel:0797526990" className="text-slate-600 hover:text-amber-600 transition flex items-center gap-1 font-semibold">
-                    <PhoneCall className="w-3.5 h-3.5 text-emerald-600" />
-                    Hotline: <strong className="text-slate-900 font-mono">0797 526 990</strong>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] sm:text-xs pt-1 border-t border-slate-100 gap-1">
+                  <a href="tel:0797526990" className="text-slate-700 hover:text-amber-600 transition flex items-center gap-1 font-semibold">
+                    <PhoneCall className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Hotline: <strong className="text-slate-900 font-mono">0797 526 990</strong></span>
                   </a>
-                  <span className="text-slate-500 text-[11px]">Hỗ trợ kỹ thuật 24/7</span>
+                  <span className="text-slate-500 text-[10px] sm:text-[11px]">Hỗ trợ kỹ thuật 24/7</span>
                 </div>
               </div>
 
               {/* Nút Vào Cổng Khách Hàng */}
               <Link
                 href="/login"
-                className="w-full py-3.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-900 text-amber-400 font-black text-xs uppercase tracking-wider transition shadow-lg shadow-slate-950/20 flex items-center justify-center gap-2 group/btn active:scale-98"
+                className="w-full py-3 sm:py-3.5 px-3 sm:px-4 rounded-xl bg-slate-950 hover:bg-slate-900 text-amber-400 font-black text-xs uppercase tracking-wider transition shadow-lg shadow-slate-950/20 flex items-center justify-center gap-2 group/btn active:scale-98 text-center"
               >
-                <span>Vào Cổng Chủ Xe Để Xem Lệnh & Duyệt Báo Giá</span>
-                <ArrowRight className="w-4 h-4 text-amber-400 group-hover/btn:translate-x-1 transition-transform" />
+                <span>Vào Cổng Chủ Xe Tra Cứu & Duyệt Báo Giá</span>
+                <ArrowRight className="w-4 h-4 text-amber-400 group-hover/btn:translate-x-1 transition-transform shrink-0" />
               </Link>
 
             </div>
