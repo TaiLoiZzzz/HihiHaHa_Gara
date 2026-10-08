@@ -80,7 +80,7 @@ export function StaffNavbar({ currentRoleTitle, role }: StaffNavbarProps) {
       avatarDefault: "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=160&auto=format&fit=crop&q=80",
       links: [
         { label: "Màn Hình Tablet Khoang Nâng", href: "/technician", icon: Smartphone },
-        { label: "Sổ Tay Kỹ Thuật", href: "/help/technician", icon: BookOpen },
+        { label: "Sổ Tay Kỹ Thuật", href: "/help", icon: BookOpen },
       ],
     },
     owner: {

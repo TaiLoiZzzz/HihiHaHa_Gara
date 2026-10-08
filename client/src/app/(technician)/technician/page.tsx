@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, Suspense } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import {
@@ -10,6 +11,7 @@ import {
   Car,
   Sparkles,
   Lock,
+  BookOpen,
   FileCheck,
   Sliders,
   ChevronRight,
@@ -546,6 +548,14 @@ function TechnicianTabletContent() {
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-amber-500" : ""}`} />
           </button>
+
+          <Link
+            href="/help"
+            className="px-3.5 py-2.5 rounded-2xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs text-amber-900"
+            title="Cẩm nang hướng dẫn thao tác thợ"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-amber-600" /> Sổ Tay Thao Tác
+          </Link>
 
           <button
             type="button"

@@ -44,7 +44,6 @@ export function CustomerNavbar() {
     { label: "Hồ Sơ Xe", href: "/customer", icon: Car },
     { label: "Lệnh Đang Sửa", href: `/customer/orders/${activeOrderCode}`, icon: FileText },
     { label: "Thanh Toán QR", href: `/customer/payment/${activeOrderCode}`, icon: CreditCard },
-    { label: "Hướng Dẫn", href: "/help/customer", icon: HelpCircle },
   ];
 
   return (
