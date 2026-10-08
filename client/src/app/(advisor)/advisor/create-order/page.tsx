@@ -102,57 +102,23 @@ export default function CreateOrderPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  // Form states - Mặc định dữ liệu thực tế
-  const [plateNumber, setPlateNumber] = useState("51K-888.88");
-  const [customerName, setCustomerName] = useState("Minh Thảo");
-  const [phone, setPhone] = useState("0912345678");
-  const [customerEmail, setCustomerEmail] = useState("tailoi1606@gmail.com");
-  const [carModel, setCarModel] = useState("Toyota Camry 2.5Q (2022)");
-  const [odo, setOdo] = useState("42500");
-  const [fuelLevel, setFuelLevel] = useState("65");
-  const [customerRequests, setCustomerRequests] = useState(
-    "Bảo dưỡng định kỳ 40.000km, kiểm tra phanh trước phát tiếng kêu, thay dầu nhớt và lọc nhớt chính hãng."
-  );
+  // Form states - Khởi tạo rỗng để Cố vấn nhập mới từ đầu
+  const [plateNumber, setPlateNumber] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [carModel, setCarModel] = useState("");
+  const [odo, setOdo] = useState("");
+  const [fuelLevel, setFuelLevel] = useState("50");
+  const [customerRequests, setCustomerRequests] = useState("");
 
-  // Tự động nhận diện chủ xe khi nhập biển số
+  // Nhận diện và chuẩn hóa biển số viết hoa
   const handlePlateChange = (plate: string) => {
-    const upper = plate.toUpperCase();
-    setPlateNumber(upper);
-    if (upper.includes("51K-888.88") || upper.includes("88888")) {
-      setCustomerName("Minh Thảo");
-      setPhone("0912345678");
-      setCustomerEmail("tailoi1606@gmail.com");
-      setCarModel("Toyota Camry 2.5Q (2022)");
-    }
+    setPlateNumber(plate.toUpperCase());
   };
 
-  // Initial estimate items
-  const [items, setItems] = useState<OrderItem[]>([
-    {
-      id: "1",
-      name: "Dầu động cơ tổng hợp toàn phần Castrol EDGE 0W-20 (4L)",
-      code: "OIL-0W20-CAS",
-      type: "part",
-      quantity: 1,
-      unitPrice: 1200000,
-    },
-    {
-      id: "2",
-      name: "Lọc nhớt chính hãng Toyota Camry TNGA",
-      code: "04152-YZZA6",
-      type: "part",
-      quantity: 1,
-      unitPrice: 250000,
-    },
-    {
-      id: "3",
-      name: "Công bảo dưỡng định kỳ & kiểm tra phanh 4 bánh",
-      code: "LAB-MAINT-40K",
-      type: "labor",
-      quantity: 1,
-      unitPrice: 650000,
-    },
-  ]);
+  // Initial estimate items - Bắt đầu sạch không có dữ liệu mẫu
+  const [items, setItems] = useState<OrderItem[]>([]);
 
   const [newItemName, setNewItemName] = useState("");
   const [newItemCode, setNewItemCode] = useState("");
@@ -576,63 +542,80 @@ export default function CreateOrderPage() {
 
             {/* List */}
             <div className="divide-y divide-slate-200 border border-slate-200 rounded-xl overflow-hidden bg-white">
-              {items.map((item) => (
-                <div key={item.id} className="p-4 flex items-center justify-between gap-4 bg-white hover:bg-slate-50 transition">
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase mt-0.5 ${
-                        item.type === "part"
-                          ? "bg-blue-100 text-blue-800 border border-blue-200"
-                          : "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                      }`}
-                    >
-                      {item.type === "part" ? "Phụ tùng" : "Nhân công"}
-                    </span>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900 leading-snug">{item.name}</p>
-                      <p className="text-xs text-slate-500 font-mono mt-0.5">{item.code}</p>
-                    </div>
+              {items.length === 0 ? (
+                <div className="py-10 px-4 text-center space-y-3 bg-slate-50/60">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-100/90 border border-amber-300 text-amber-700 flex items-center justify-center mx-auto shadow-2xs">
+                    <ClipboardList className="w-6 h-6" />
                   </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center border border-slate-300 rounded-lg overflow-hidden bg-white">
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateQty(item.id, -1)}
-                        className="px-2.5 py-1 text-xs hover:bg-slate-100 font-bold text-slate-700"
-                      >
-                        -
-                      </button>
-                      <span className="px-3 py-1 text-xs font-mono font-bold text-slate-900">{item.quantity}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateQty(item.id, 1)}
-                        className="px-2.5 py-1 text-xs hover:bg-slate-100 font-bold text-slate-700"
-                      >
-                        +
-                      </button>
-                    </div>
-
-                    <div className="text-right w-32">
-                      <p className="text-sm font-extrabold font-mono text-amber-600">
-                        {formatVND(item.unitPrice * item.quantity)}
-                      </p>
-                      <p className="text-[11px] text-slate-500 font-mono">
-                        {formatVND(item.unitPrice)}/đv
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveItem(item.id)}
-                      className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
-                      title="Xóa hạng mục"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-slate-800">Chưa có hạng mục báo giá nào</p>
+                    <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                      Bấm nút <strong className="text-amber-700 font-extrabold">&quot;✨ Gợi Ý Phụ Tùng Bằng AI&quot;</strong> ở trên để bốc tự động vật tư thực tế trong kho, hoặc gõ tìm kiếm phụ tùng & tiền công ở khung bên dưới.
+                    </p>
                   </div>
                 </div>
-              ))}
+              ) : (
+                items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white hover:bg-slate-50 transition"
+                  >
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase shrink-0 mt-0.5 ${
+                          item.type === "part"
+                            ? "bg-blue-100 text-blue-800 border border-blue-200"
+                            : "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                        }`}
+                      >
+                        {item.type === "part" ? "Phụ tùng" : "Nhân công"}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-900 leading-snug break-words">{item.name}</p>
+                        <p className="text-xs text-slate-500 font-mono mt-0.5">{item.code}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                      <div className="flex items-center border border-slate-300 rounded-lg overflow-hidden bg-white shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateQty(item.id, -1)}
+                          className="px-2.5 py-1 text-xs hover:bg-slate-100 font-bold text-slate-700 active:bg-slate-200"
+                        >
+                          -
+                        </button>
+                        <span className="px-3 py-1 text-xs font-mono font-bold text-slate-900">{item.quantity}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateQty(item.id, 1)}
+                          className="px-2.5 py-1 text-xs hover:bg-slate-100 font-bold text-slate-700 active:bg-slate-200"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      <div className="text-right min-w-[90px] sm:w-32">
+                        <p className="text-sm font-extrabold font-mono text-amber-600">
+                          {formatVND(item.unitPrice * item.quantity)}
+                        </p>
+                        <p className="text-[11px] text-slate-500 font-mono">
+                          {formatVND(item.unitPrice)}/đv
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(item.id)}
+                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0"
+                        title="Xóa hạng mục"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
             {/* Quick add item form với Autocomplete Thông Minh */}

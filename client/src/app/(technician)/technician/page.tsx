@@ -516,16 +516,16 @@ function TechnicianTabletContent() {
         </div>
 
         {/* Dropdown Đổi Thợ & Nút Khóa PIN */}
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-2xl border border-slate-200">
-            <span className="text-xs font-bold text-slate-600 pl-2 hidden sm:inline">Chuyển Thợ:</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-2xl border border-slate-200">
+            <span className="text-xs font-bold text-slate-600 pl-1.5 hidden sm:inline">Chuyển Thợ:</span>
             <select
               value={selectedTech.id}
               onChange={(e) => {
                 const target = TECHNICIANS.find((t) => t.id === e.target.value);
                 if (target) handleSelectTech(target);
               }}
-              className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs max-w-sm truncate"
+              className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs max-w-[200px] sm:max-w-sm truncate"
             >
               {TECHNICIANS.map((t) => {
                 const wl = workloads.find((w) => w.id === t.id);
@@ -543,7 +543,7 @@ function TechnicianTabletContent() {
           <button
             type="button"
             onClick={() => loadTechnicianData(selectedTech.id, activeOrderCode)}
-            className="p-2.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-all shadow-xs"
+            className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-all shadow-xs shrink-0"
             title="Đồng bộ lại dữ liệu"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-amber-500" : ""}`} />
@@ -551,28 +551,32 @@ function TechnicianTabletContent() {
 
           <Link
             href="/help"
-            className="px-3.5 py-2.5 rounded-2xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs text-amber-900"
+            className="px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl sm:rounded-2xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs text-amber-900 shrink-0"
             title="Cẩm nang hướng dẫn thao tác thợ"
           >
-            <BookOpen className="w-3.5 h-3.5 text-amber-600" /> Sổ Tay Thao Tác
+            <BookOpen className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+            <span className="hidden sm:inline">Sổ Tay Thao Tác</span>
+            <span className="sm:hidden">Sổ Tay</span>
           </Link>
 
           <button
             type="button"
             onClick={() => setIsAuthenticated(false)}
-            className="px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs text-slate-700"
+            className="px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl sm:rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs text-slate-700 shrink-0"
           >
-            <Lock className="w-3.5 h-3.5" /> Khóa PIN
+            <Lock className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden sm:inline">Khóa PIN</span>
+            <span className="sm:hidden">Khóa</span>
           </button>
         </div>
       </div>
 
       {/* Thanh Điều Hướng Nhanh Xe Đang Xử Lý Toàn Xưởng */}
       {workloads.some((w) => w.orders?.length > 0) && (
-        <div className="p-4 rounded-3xl border border-slate-200 bg-white shadow-xs space-y-2.5">
-          <div className="flex items-center justify-between">
+        <div className="p-3.5 sm:p-4 rounded-3xl border border-slate-200 bg-white shadow-xs space-y-2.5">
+          <div className="flex items-center justify-between flex-wrap gap-1">
             <span className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-              <Layers className="w-4 h-4 text-amber-500" />
+              <Layers className="w-4 h-4 text-amber-500 shrink-0" />
               Xe Đang Xử Lý Trong Xưởng ({workloads.reduce((acc, w) => acc + (w.orders?.length || 0), 0)} xe)
             </span>
             <span className="text-[11px] text-slate-400">
@@ -609,93 +613,93 @@ function TechnicianTabletContent() {
       )}
 
       {/* 4 Thẻ Thống Kê Năng Suất Của Riêng Thợ Này */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-white shadow-xs">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Xe Đang Phụ Trách</p>
-            <Car className="w-4 h-4 text-amber-500" />
+            <p className="text-[11px] sm:text-xs text-slate-500 uppercase font-bold tracking-wider">Xe Phụ Trách</p>
+            <Car className="w-4 h-4 text-amber-500 shrink-0" />
           </div>
-          <p className="text-2xl font-black font-mono mt-1 text-slate-900">
+          <p className="text-xl sm:text-2xl font-black font-mono mt-1 text-slate-900">
             {stats.active_count}/{stats.max_allowed} <span className="text-xs font-sans text-slate-500 font-semibold">xe</span>
           </p>
-          <p className="text-[11px] text-slate-400 mt-0.5">
+          <p className="text-[11px] text-slate-400 mt-0.5 truncate">
             {stats.active_count >= 3 ? "Đạt tải tối đa (3/3)" : `Còn nhận thêm ${3 - stats.active_count} xe`}
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs">
+        <div className="p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-white shadow-xs">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Xong Hôm Nay</p>
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            <p className="text-[11px] sm:text-xs text-slate-500 uppercase font-bold tracking-wider">Xong Hôm Nay</p>
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
           </div>
-          <p className="text-2xl font-black font-mono mt-1 text-emerald-600">
+          <p className="text-xl sm:text-2xl font-black font-mono mt-1 text-emerald-600">
             {stats.today_completed} <span className="text-xs font-sans text-slate-500 font-semibold">xe</span>
           </p>
-          <p className="text-[11px] text-slate-400 mt-0.5">Nghiệm thu đạt chuẩn 100%</p>
+          <p className="text-[11px] text-slate-400 mt-0.5 truncate">Nghiệm thu đạt chuẩn 100%</p>
         </div>
 
-        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs">
+        <div className="p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-white shadow-xs">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Tổng Xe Đã Hoàn Tất</p>
-            <Award className="w-4 h-4 text-purple-500" />
+            <p className="text-[11px] sm:text-xs text-slate-500 uppercase font-bold tracking-wider">Tổng Đã Xong</p>
+            <Award className="w-4 h-4 text-purple-500 shrink-0" />
           </div>
-          <p className="text-2xl font-black font-mono mt-1 text-purple-600">
+          <p className="text-xl sm:text-2xl font-black font-mono mt-1 text-purple-600">
             {stats.total_completed} <span className="text-xs font-sans text-slate-500 font-semibold">xe</span>
           </p>
-          <p className="text-[11px] text-slate-400 mt-0.5">Lịch sử tích lũy tay nghề</p>
+          <p className="text-[11px] text-slate-400 mt-0.5 truncate">Lịch sử tích lũy tay nghề</p>
         </div>
 
-        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs">
+        <div className="p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-white shadow-xs">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Xe Đang Chờ Xưởng</p>
-            <Clock className="w-4 h-4 text-blue-500" />
+            <p className="text-[11px] sm:text-xs text-slate-500 uppercase font-bold tracking-wider">Xe Chờ Xưởng</p>
+            <Clock className="w-4 h-4 text-blue-500 shrink-0" />
           </div>
-          <p className="text-2xl font-black font-mono mt-1 text-blue-600">
+          <p className="text-xl sm:text-2xl font-black font-mono mt-1 text-blue-600">
             {waitingQueue.length} <span className="text-xs font-sans text-slate-500 font-semibold">xe</span>
           </p>
-          <p className="text-[11px] text-slate-400 mt-0.5">Hàng đợi chờ vào cầu nâng</p>
+          <p className="text-[11px] text-slate-400 mt-0.5 truncate">Hàng đợi chờ vào khoang</p>
         </div>
       </div>
 
       {/* THANH CHUYỂN TAB CHÍNH: 1. Xe Đang Làm - 2. Hàng Đợi Xe Chờ - 3. Lịch Sử Của Thợ */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto no-scrollbar scroll-smooth">
         <button
           type="button"
           onClick={() => setMainTab("active")}
-          className={`px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 ${
+          className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 whitespace-nowrap ${
             mainTab === "active"
               ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
               : "bg-white hover:bg-slate-100 text-slate-600 border border-slate-200"
           }`}
         >
-          <Wrench className="w-4 h-4" />
-          Xe Đang Nhận Thi Công ({activeOrders.length})
+          <Wrench className="w-4 h-4 shrink-0" />
+          <span>Xe Đang Nhận Thi Công ({activeOrders.length})</span>
         </button>
 
         <button
           type="button"
           onClick={() => setMainTab("waiting")}
-          className={`px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 ${
+          className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 whitespace-nowrap ${
             mainTab === "waiting"
               ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
               : "bg-white hover:bg-slate-100 text-slate-600 border border-slate-200"
           }`}
         >
-          <Clock className="w-4 h-4" />
-          Hàng Đợi Xe Trong Xưởng ({waitingQueue.length})
+          <Clock className="w-4 h-4 shrink-0" />
+          <span>Hàng Đợi Xe ({waitingQueue.length})</span>
         </button>
 
         <button
           type="button"
           onClick={() => setMainTab("history")}
-          className={`px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 ${
+          className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 whitespace-nowrap ${
             mainTab === "history"
               ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
               : "bg-white hover:bg-slate-100 text-slate-600 border border-slate-200"
           }`}
         >
-          <History className="w-4 h-4" />
-          Lịch Sử Đã Hoàn Thành Của Riêng Tôi ({completedOrders.length})
+          <History className="w-4 h-4 shrink-0" />
+          <span>Lịch Sử Hoàn Thành ({completedOrders.length})</span>
         </button>
       </div>
 
