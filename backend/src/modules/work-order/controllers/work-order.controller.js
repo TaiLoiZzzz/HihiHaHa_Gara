@@ -264,7 +264,7 @@ const updateWorkOrderStatusController = async (req, res, next) => {
 const updateProgressController = async (req, res, next) => {
   try {
     const { order_code } = req.params;
-    const { stage_name, percent_complete, photo_urls = [], note } = req.body;
+    const { stage_name, percent_complete, photo_urls = [], note, tasks } = req.body;
 
     if (!stage_name) {
       return next(new AppError('Vui lòng cung cấp tên công đoạn thi công stage_name', 400, 'BAD_REQUEST'));
@@ -273,6 +273,11 @@ const updateProgressController = async (req, res, next) => {
     const workOrder = await WorkOrder.findOne({ order_code });
     if (!workOrder) {
       return next(new AppError(`Không tìm thấy Lệnh sửa chữa [${order_code}]`, 404, 'WORK_ORDER_NOT_FOUND'));
+    }
+
+    // Luu checklist cong viec tasks vao MongoDB
+    if (Array.isArray(tasks) && tasks.length > 0) {
+      workOrder.tasks = tasks;
     }
 
     // step 139: luu vet vao mang inspection_photos va workflow_timeline trong mongodb

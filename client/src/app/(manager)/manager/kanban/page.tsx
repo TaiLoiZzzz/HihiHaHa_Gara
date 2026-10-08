@@ -139,8 +139,18 @@ export default function WorkshopKanbanPage() {
   const [cards, setCards] = useState<KanbanCard[]>(INITIAL_CARDS);
   const [draggedCardId, setDraggedCardId] = useState<string | null>(null);
 
-  // Đồng bộ trạng thái lệnh thật từ MongoDB
+  // Đồng bộ trạng thái lệnh thật từ MongoDB & Khôi phục vị trí thẻ khi bấm F5
   React.useEffect(() => {
+    // 1. Phục hồi ngay lập tức từ localStorage để chống reset vị trí cột khi F5
+    const cachedKanban = localStorage.getItem("hihihaha_kanban_cards");
+    if (cachedKanban) {
+      try {
+        const parsed = JSON.parse(cachedKanban);
+        if (Array.isArray(parsed) && parsed.length > 0) setCards(parsed);
+      } catch (e) {}
+    }
+
+    // 2. Đồng bộ từ MongoDB
     async function syncRealOrder() {
       try {
         const resList = await api.getMyWorkOrders();
@@ -187,7 +197,9 @@ export default function WorkshopKanbanPage() {
           const extraCards = INITIAL_CARDS.filter(
             (c) => !mappedCards.some((mc: any) => mc.orderCode === c.orderCode)
           );
-          setCards([...mappedCards, ...extraCards]);
+          const finalCards = [...mappedCards, ...extraCards];
+          setCards(finalCards);
+          localStorage.setItem("hihihaha_kanban_cards", JSON.stringify(finalCards));
         } else {
           const res = await api.getWorkOrder("WO-20261001-0089");
           if (res.success && res.data) {
@@ -241,31 +253,34 @@ export default function WorkshopKanbanPage() {
     e.preventDefault();
   };
 
+  const handleMoveCard = async (cardId: string, targetStage: KanbanCard["stage"]) => {
+    const card = cards.find((c) => c.id === cardId);
+    if (!card) return;
+
+    const updatedCards = cards.map((c) => {
+      if (c.id === cardId) {
+        const updated = { ...c, stage: targetStage };
+        if (targetStage === "completed") updated.progress = 100;
+        return updated;
+      }
+      return c;
+    });
+
+    setCards(updatedCards);
+    localStorage.setItem("hihihaha_kanban_cards", JSON.stringify(updatedCards));
+
+    const nextStatus = STAGE_TO_STATUS[targetStage] || "IN_PROGRESS";
+    try {
+      await api.updateStatus(card.orderCode, nextStatus, `Quản đốc chuyển lệnh sang cột ${targetStage} trên Kanban`);
+      toast.success(`Đã chuyển lệnh #${card.orderCode} sang [${COLUMNS.find((col) => col.key === targetStage)?.label}] và lưu MongoDB!`);
+    } catch (err: any) {
+      toast.success(`Đã chuyển lệnh #${card.orderCode} sang cột: ${COLUMNS.find((col) => col.key === targetStage)?.label}`);
+    }
+  };
+
   const handleDrop = async (targetStage: KanbanCard["stage"]) => {
     if (!draggedCardId) return;
-
-    const card = cards.find((c) => c.id === draggedCardId);
-    setCards((prev) =>
-      prev.map((c) => {
-        if (c.id === draggedCardId) {
-          const updated = { ...c, stage: targetStage };
-          if (targetStage === "completed") updated.progress = 100;
-          return updated;
-        }
-        return c;
-      })
-    );
-
-    if (card) {
-      const nextStatus = STAGE_TO_STATUS[targetStage] || "IN_PROGRESS";
-      try {
-        await api.updateStatus(card.orderCode, nextStatus, `Quản đốc kéo thẻ sang cột ${targetStage} trên Kanban`);
-        toast.success(`Đã chuyển lệnh #${card.orderCode} sang [${COLUMNS.find((col) => col.key === targetStage)?.label}] và lưu MongoDB!`);
-      } catch (err: any) {
-        toast.success(`Đã chuyển lệnh #${card.orderCode} sang cột: ${COLUMNS.find((col) => col.key === targetStage)?.label}`);
-      }
-    }
-
+    await handleMoveCard(draggedCardId, targetStage);
     setDraggedCardId(null);
   };
 
@@ -436,7 +451,7 @@ export default function WorkshopKanbanPage() {
                             onClick={() => {
                               const nextIdx = COLUMNS.findIndex((c) => c.key === col.key) + 1;
                               if (nextIdx < COLUMNS.length) {
-                                handleDrop(COLUMNS[nextIdx].key);
+                                handleMoveCard(card.id, COLUMNS[nextIdx].key);
                               }
                             }}
                             className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-amber-600 transition"

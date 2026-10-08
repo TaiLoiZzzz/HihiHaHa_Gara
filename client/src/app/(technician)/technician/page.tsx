@@ -99,8 +99,23 @@ export default function TechnicianTabletPage() {
     },
   ]);
 
-  // Tải dữ liệu thật từ Backend MongoDB
+  // Tải dữ liệu thật từ Backend MongoDB & Khôi phục bộ nhớ cache F5
   React.useEffect(() => {
+    // 1. Phục hồi ngay lập tức từ localStorage để chống reset khi bấm F5
+    const cachedTasks = localStorage.getItem("tech_tasks_WO-20261001-0089");
+    const cachedProgress = localStorage.getItem("tech_progress_WO-20261001-0089");
+    if (cachedTasks) {
+      try {
+        const parsed = JSON.parse(cachedTasks);
+        if (Array.isArray(parsed) && parsed.length > 0) setTasks(parsed);
+      } catch (e) {}
+    }
+    if (cachedProgress) {
+      const p = Number(cachedProgress);
+      if (!isNaN(p)) setOverallProgress(p);
+    }
+
+    // 2. Đồng bộ dữ liệu mới nhất từ MongoDB
     async function loadOrder() {
       try {
         const res = await api.getWorkOrder("WO-20261001-0089");
@@ -114,9 +129,18 @@ export default function TechnicianTabletPage() {
             bay: "Khoang Nâng 02 (Cầu 4 trụ)",
             assignedAt: "08:30 Hôm nay",
           });
-          if (typeof wo.progress_percent === "number" && wo.progress_percent > 0) {
-            setOverallProgress(wo.progress_percent);
+
+          // Nạp checklist tasks từ MongoDB nếu đã lưu
+          if (Array.isArray(wo.tasks) && wo.tasks.length > 0) {
+            setTasks(wo.tasks);
+            localStorage.setItem("tech_tasks_WO-20261001-0089", JSON.stringify(wo.tasks));
           }
+
+          if (typeof wo.progress_percent === "number") {
+            setOverallProgress(wo.progress_percent);
+            localStorage.setItem("tech_progress_WO-20261001-0089", wo.progress_percent.toString());
+          }
+
           if (wo.inspection_photos && wo.inspection_photos.length > 0) {
             setInspectionPhotos(
               wo.inspection_photos.map((p: any, i: number) => ({
@@ -154,21 +178,30 @@ export default function TechnicianTabletPage() {
 
   const handleClearPin = () => setPin("");
 
-  // Đồng bộ tiến độ về Backend
+  // Đồng bộ tiến độ về Backend & Lưu cache vĩnh viễn
   const handleSyncProgress = async (val: number) => {
+    let updatedTasks = tasks;
+    if (val === 100) {
+      updatedTasks = tasks.map((t) => ({ ...t, status: "done" as const, progress: 100 }));
+      setTasks(updatedTasks);
+    }
+    localStorage.setItem("tech_progress_" + activeOrder.orderCode, val.toString());
+    localStorage.setItem("tech_tasks_" + activeOrder.orderCode, JSON.stringify(updatedTasks));
+
     try {
       await api.updateProgress(activeOrder.orderCode, {
         stage_name: "THI_CONG_KHOANG_NANG",
         percent_complete: val,
+        tasks: updatedTasks,
         note: `Kỹ thuật viên cập nhật tiến độ thi công lên ${val}% tại Khoang nâng 02`,
       });
-      toast.success(`Đã đồng bộ tiến độ ${val}% vào MongoDB & phát Realtime Socket!`);
+      toast.success(`Đã lưu tiến độ ${val}% vào MongoDB & phát Realtime Socket!`);
     } catch (err: any) {
       console.warn("Lỗi đồng bộ tiến độ:", err.message);
     }
   };
 
-  // Cập nhật trạng thái từng task
+  // Cập nhật trạng thái từng task & Lưu vĩnh viễn vào MongoDB + localStorage
   const handleToggleTaskStatus = async (id: string) => {
     const nextTasks = tasks.map((t) => {
       if (t.id === id) {
@@ -184,13 +217,21 @@ export default function TechnicianTabletPage() {
     if (updated) {
       const avg = Math.round(nextTasks.reduce((s, t) => s + t.progress, 0) / nextTasks.length);
       setOverallProgress(avg);
+
+      // Lưu ngay vào localStorage chống mất khi F5
+      localStorage.setItem("tech_tasks_" + activeOrder.orderCode, JSON.stringify(nextTasks));
+      localStorage.setItem("tech_progress_" + activeOrder.orderCode, avg.toString());
+
       try {
         await api.updateProgress(activeOrder.orderCode, {
           stage_name: updated.name,
           percent_complete: avg,
-          note: `Công đoạn [${updated.name}] chuyển sang [${updated.status}] (${updated.progress}%)`,
+          tasks: nextTasks,
+          note: `Công đoạn [${updated.name}] chuyển sang [${
+            updated.status === "done" ? "Đã hoàn thành" : updated.status === "in_progress" ? "Đang thi công" : "Chưa bắt đầu"
+          }] (${updated.progress}%)`,
         });
-        toast.success(`Đã cập nhật công đoạn [${updated.name}] lên MongoDB!`);
+        toast.success(`Đã lưu công đoạn [${updated.name}] vào MongoDB vĩnh viễn!`);
       } catch (err: any) {
         console.warn("Lỗi sync task:", err.message);
       }

@@ -34,6 +34,16 @@ const WorkOrderSchema = new mongoose.Schema(
     },
     progress_percent: { type: Number, default: 0 },
     paid_at: { type: Date },
+    tasks: [
+      {
+        id: { type: String },
+        name: { type: String },
+        code: { type: String },
+        spec: { type: String },
+        status: { type: String, enum: ['pending', 'in_progress', 'done'], default: 'pending' },
+        progress: { type: Number, default: 0 },
+      },
+    ],
     assigned_technicians: [
       {
         technician_id: { type: String, required: true },

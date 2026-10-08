@@ -20,10 +20,10 @@ const query = (text, params) => pool.query(text, params);
 const checkPostgresConnection = async () => {
   try {
     const res = await pool.query('SELECT NOW() AS current_time');
-    console.log(`✅ [PostgreSQL] Connected successfully to ${process.env.PG_DATABASE} at ${res.rows[0].current_time}`);
+    console.log(` [PostgreSQL] Connected successfully to ${process.env.PG_DATABASE} at ${res.rows[0].current_time}`);
     return true;
   } catch (err) {
-    console.error('❌ [PostgreSQL] Connection failed:', err.message);
+    console.error(' [PostgreSQL] Connection failed:', err.message);
     return false;
   }
 };

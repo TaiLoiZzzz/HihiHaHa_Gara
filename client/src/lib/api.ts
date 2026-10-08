@@ -236,10 +236,10 @@ export const api = {
       body: JSON.stringify({ order_code: orderCode, payment_method: paymentMethod, bank_code: bankCode }),
     }),
 
-  // 8. Cập nhật tiến độ & ảnh nghiệm thu của thợ
+  // 8. Cập nhật tiến độ, ảnh nghiệm thu & checklist của thợ
   updateProgress: (
     orderCode: string,
-    payload: { stage_name?: string; percent_complete?: number; note?: string; photo_urls?: any[] }
+    payload: { stage_name?: string; percent_complete?: number; note?: string; photo_urls?: any[]; tasks?: any[] }
   ) =>
     fetchApi<{ success: boolean; data: any }>(`/work-orders/${orderCode}/progress`, {
       method: "POST",

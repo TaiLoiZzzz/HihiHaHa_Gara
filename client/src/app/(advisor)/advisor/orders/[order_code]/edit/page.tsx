@@ -88,24 +88,34 @@ export default function EditOrderEstimatePage() {
     },
   ]);
 
-  // Nạp dữ liệu thật từ MongoDB
+  // Nạp dữ liệu thật từ MongoDB & Khôi phục cache F5
   React.useEffect(() => {
+    // 1. Phục hồi ngay từ localStorage nếu có
+    const cachedItems = localStorage.getItem("advisor_estimate_" + orderCode);
+    if (cachedItems) {
+      try {
+        const parsed = JSON.parse(cachedItems);
+        if (Array.isArray(parsed) && parsed.length > 0) setItems(parsed);
+      } catch (e) {}
+    }
+
+    // 2. Đồng bộ từ MongoDB
     async function loadData() {
       try {
         const res = await api.getWorkOrder(orderCode);
         if (res.success && res.data) {
           setOrderData(res.data);
           if (res.data.estimate?.items && res.data.estimate.items.length > 0) {
-            setItems(
-              res.data.estimate.items.map((it: any, idx: number) => ({
-                id: `item-${idx}`,
-                name: it.name,
-                code: it.part_code || `PART-${idx}`,
-                type: it.type === "LABOR" ? "labor" : "part",
-                quantity: it.quantity || 1,
-                unitPrice: it.unit_price || 0,
-              }))
-            );
+            const dbItems = res.data.estimate.items.map((it: any, idx: number) => ({
+              id: `item-${idx}`,
+              name: it.name,
+              code: it.part_code || `PART-${idx}`,
+              type: it.type === "LABOR" ? "labor" : "part",
+              quantity: it.quantity || 1,
+              unitPrice: it.unit_price || 0,
+            }));
+            setItems(dbItems);
+            localStorage.setItem("advisor_estimate_" + orderCode, JSON.stringify(dbItems));
           }
         }
       } catch (err: any) {
@@ -216,6 +226,7 @@ export default function EditOrderEstimatePage() {
 
   const handleSaveOrder = async () => {
     setSaving(true);
+    localStorage.setItem("advisor_estimate_" + orderCode, JSON.stringify(items));
     try {
       await api.updateEstimate(
         orderCode,
