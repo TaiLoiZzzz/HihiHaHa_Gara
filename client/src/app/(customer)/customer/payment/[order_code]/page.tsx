@@ -83,7 +83,7 @@ export default function CustomerPaymentPage({ params }: Props) {
       const res = await api.confirmPayment(orderCode, "VIETQR", "MB");
       if (res.success) {
         setPaid(true);
-        toast.success(`Thanh toán ${formatCurrencyVND(totalAmount)} thành công! Giao dịch đã lưu PostgreSQL và trừ kho MongoDB!`);
+        toast.success(`Thanh toán ${formatCurrencyVND(totalAmount)} thành công! Hóa đơn điện tử đã được phát hành.`);
         setTimeout(() => {
           router.push("/customer");
         }, 1500);
@@ -245,7 +245,7 @@ export default function CustomerPaymentPage({ params }: Props) {
         {paid && (
           <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-medium space-y-2 animate-in fade-in">
             <div className="font-bold flex items-center justify-center gap-1.5 text-sm">
-              <CheckCircle2 className="w-4 h-4" /> GIAO DỊCH ĐÃ GHI SỔ THÀNH CÔNG VÀO POSTGRESQL!
+              <CheckCircle2 className="w-4 h-4" /> XÁC NHẬN THANH TOÁN THÀNH CÔNG!
             </div>
             <p>Hệ thống đang tự động chuyển về Hồ Sơ Xe của Quý Khách...</p>
             <Link

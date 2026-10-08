@@ -237,7 +237,7 @@ export default function AdvisorWorkOrdersPage() {
                         <Link
                           href={`/advisor/orders/${order.order_code}/edit`}
                           className="p-2 rounded-lg bg-slate-100 hover:bg-amber-500 hover:text-slate-950 text-slate-600 transition"
-                          title="Chỉnh sửa báo giá & tra cứu Neo4j"
+                          title="Chỉnh sửa báo giá & phụ tùng"
                         >
                           <Edit3 className="w-4 h-4" />
                         </Link>

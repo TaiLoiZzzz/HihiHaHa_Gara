@@ -335,7 +335,7 @@ export default function CreateOrderPage() {
         toast.error("Không thể lưu Lệnh sửa chữa lên hệ thống.");
       }
     } catch (err: any) {
-      toast.error(err.message || "Lỗi lưu dữ liệu Lệnh sửa chữa vào MongoDB.");
+      toast.error(err.message || "Lỗi lưu dữ liệu Lệnh sửa chữa.");
     } finally {
       setLoading(false);
     }

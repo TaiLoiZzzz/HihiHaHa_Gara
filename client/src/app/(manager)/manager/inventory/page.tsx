@@ -197,7 +197,7 @@ export default function WorkshopInventoryPage() {
         <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-1">
           <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Tổng SKU Trong Kho</p>
           <p className="text-2xl font-black font-mono text-slate-900">{items.length} <span className="text-xs font-medium text-slate-500">mã</span></p>
-          <p className="text-[11px] text-slate-500 font-medium">Đồng bộ trực tiếp MongoDB</p>
+          <p className="text-[11px] text-slate-500 font-medium">Hệ thống kho tập trung</p>
         </div>
         <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-1">
           <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Tổng Giá Trị Tồn Kho</p>
@@ -214,12 +214,12 @@ export default function WorkshopInventoryPage() {
           <p className="text-[11px] text-red-600/90 font-medium">Dưới ngưỡng an toàn</p>
         </div>
         <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-1">
-          <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Trạng Thái Kết Nối DB</p>
+          <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Đồng Bộ Dữ Liệu Kho</p>
           <div className="flex items-center gap-2 mt-1">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
             <p className="text-xl font-black text-emerald-600 font-mono">Trực Tuyến</p>
           </div>
-          <p className="text-[11px] text-emerald-700 font-medium">MongoDB live query</p>
+          <p className="text-[11px] text-emerald-700 font-medium">Thời gian thực 24/7</p>
         </div>
       </div>
 
@@ -259,7 +259,7 @@ export default function WorkshopInventoryPage() {
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
-            <p className="text-xs text-slate-500 font-mono font-medium">Đang nạp danh mục phụ tùng từ máy chủ MongoDB...</p>
+            <p className="text-xs text-slate-500 font-medium">Đang tải danh mục phụ tùng từ kho vật tư...</p>
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="py-16 text-center text-slate-500 text-xs font-medium">

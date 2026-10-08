@@ -140,7 +140,7 @@ export default function WorkOrderDetailPage({ params }: Props) {
         if (res.data.workflow_timeline) {
           setTimeline(res.data.workflow_timeline);
         }
-        toast.success("🎉 Ký duyệt báo giá thành công! Dữ liệu đã lưu vào cơ sở dữ liệu MongoDB.");
+        toast.success("🎉 Ký duyệt báo giá thành công! Lệnh đã được chuyển tới xưởng để bắt đầu thi công.");
       } else {
         setApproved(true);
         toast.success("Ký duyệt báo giá thành công!");
@@ -155,7 +155,7 @@ export default function WorkOrderDetailPage({ params }: Props) {
       <div className="min-h-[50vh] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
-          <p className="text-xs text-muted-foreground font-mono">Đang truy vấn Lệnh #{orderCode} từ MongoDB...</p>
+          <p className="text-xs text-muted-foreground font-mono">Đang tải hồ sơ sửa chữa #{orderCode}...</p>
         </div>
       </div>
     );
@@ -325,7 +325,7 @@ export default function WorkOrderDetailPage({ params }: Props) {
           <div className="space-y-1 text-xs text-zinc-500">
             <p className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-500" />
-              Cam kết 100% phụ tùng chính hãng OEM tra xuất qua đồ thị Neo4j
+              Cam kết 100% phụ tùng chính hãng OEM đạt tiêu chuẩn kiểm định an toàn
             </p>
             <p className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-amber-500" />

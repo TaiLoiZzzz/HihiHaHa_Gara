@@ -121,7 +121,7 @@ const STAFF_PROFILES_DEFAULT: Record<string, {
     code: "GDO-01",
     dept: "Ban Giám Đốc & Hội Đồng Quản Trị HiHiHaHa Auto",
     yearsExp: "15 năm kinh nghiệm quản trị chuỗi ô tô 4S",
-    bio: "15 năm kinh nghiệm sáng lập, đầu tư và vận hành chuỗi trung tâm dịch vụ chăm sóc ô tô công nghệ cao chuẩn 4S tại TP.HCM. Tiên phong ứng dụng trí tuệ nhân tạo và kiến trúc dữ liệu phân tán Polyglot trong ngành dịch vụ ô tô.",
+    bio: "15 năm kinh nghiệm sáng lập, đầu tư và vận hành chuỗi trung tâm dịch vụ chăm sóc ô tô công nghệ cao chuẩn 4S tại TP.HCM. Tiên phong ứng dụng trí tuệ nhân tạo và công nghệ số hóa quản trị garage tiên tiến trong ngành dịch vụ ô tô.",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80",
     skills: [
       "Chiến lược quản trị gara 4S hiện đại",

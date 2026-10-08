@@ -91,7 +91,7 @@ export default function BlogDetailPage({ params }: Props) {
             </div>
             <div className="flex items-start gap-2 text-xs sm:text-sm">
               <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-              <span>Khóa giữ kho thời gian thực bằng thuật toán phân tán Redis Redlock ngay khi khách hàng ký duyệt trực tuyến trên điện thoại.</span>
+              <span>Tự động đặt giữ phụ tùng trong kho thời gian thực ngay khi khách hàng ký duyệt trực tuyến trên điện thoại.</span>
             </div>
             <div className="flex items-start gap-2 text-xs sm:text-sm">
               <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />

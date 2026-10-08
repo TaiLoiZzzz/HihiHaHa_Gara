@@ -105,10 +105,10 @@ export function GraphRagAiModal({
 
       if (response.success && response.data) {
         setResult(response.data);
-        toast.success("AI Graph-RAG đã đối soát thành công 100% phụ tùng từ Neo4j & Kho!");
+        toast.success("AI đã phân tích chẩn đoán và đề xuất phụ tùng phù hợp trong kho!");
       }
     } catch (error: unknown) {
-      const errMsg = error instanceof Error ? error.message : "Lỗi khi gọi chẩn đoán AI Graph-RAG";
+      const errMsg = error instanceof Error ? error.message : "Lỗi khi phân tích chẩn đoán AI";
       toast.error(errMsg);
     } finally {
       setLoading(false);
@@ -128,14 +128,14 @@ export function GraphRagAiModal({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-base sm:text-lg font-black text-slate-900">
-                  Trợ Lý AI Lập Báo Giá & Chẩn Đoán (Cố Vấn Dịch Vụ)
+                  Trợ Lý AI Chẩn Đoán & Lập Báo Giá
                 </h3>
                 <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  Grounded Kho Thật
+                  Kho phụ tùng chính hãng
                 </span>
               </div>
               <p className="text-xs text-slate-500">
-                Đối soát Đồ thị Tri thức Ô tô Neo4j & Xác thực tồn kho thực tế MongoDB
+                Tự động phân tích triệu chứng xe và bốc phụ tùng sẵn sàng trong kho
               </p>
             </div>
           </div>
@@ -196,12 +196,12 @@ export function GraphRagAiModal({
               {loading ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
-                  Đang quét Đồ thị Tri thức Neo4j & Kho...
+                  Đang phân tích kỹ thuật & kiểm tra kho...
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 text-slate-950" />
-                  Phân Tích AI Graph-RAG & Tìm Phụ Tùng
+                  Phân Tích Kỹ Thuật AI & Bốc Phụ Tùng
                 </>
               )}
             </LiquidGlassButton>
@@ -265,11 +265,11 @@ export function GraphRagAiModal({
               </div>
             )}
 
-            {/* Danh sách phụ tùng gợi ý Grounded */}
+            {/* Danh sách phụ tùng gợi ý */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                  Phụ tùng tương thích xác thực từ Kho ({result.recommended_parts.length})
+                  Phụ tùng tương thích trong kho ({result.recommended_parts.length})
                 </h4>
                 <span className="text-[11px] text-slate-500 font-medium">Bấm chọn từng món nếu chỉ muốn bổ sung lẻ</span>
               </div>
@@ -290,8 +290,7 @@ export function GraphRagAiModal({
                         </span>
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-                        <span>Cụm: <strong className="text-slate-700">{part.subsystem}</strong></span>
-                        <span>Khung gầm: <strong className="text-amber-700">{part.shared_platform}</strong></span>
+                        <span>Hệ thống: <strong className="text-slate-700">{part.subsystem}</strong></span>
                         <span>Kệ kho: <strong className="text-slate-700 font-mono">{part.location_rack}</strong></span>
                       </div>
                     </div>

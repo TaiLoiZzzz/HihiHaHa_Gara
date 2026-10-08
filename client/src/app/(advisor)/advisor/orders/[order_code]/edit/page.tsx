@@ -214,7 +214,7 @@ export default function EditOrderEstimatePage() {
     };
 
     setItems([...items, newItem]);
-    toast.success(`Đã thêm ${part.partCode} qua gợi ý Neo4j Graph!`);
+    toast.success(`Đã thêm phụ tùng [${part.partCode}] vào bảng báo giá!`);
   };
 
   // Áp dụng chẩn đoán AI vào bảng báo giá
@@ -284,8 +284,8 @@ export default function EditOrderEstimatePage() {
     setIsSearchingNeo4j(true);
     setTimeout(() => {
       setIsSearchingNeo4j(false);
-      toast.success("Neo4j Cypher Graph Engine: 4 quan hệ nền tảng TNGA-K đã được nạp thành công!");
-    }, 600);
+      toast.success("Đã đồng bộ phụ tùng tương thích theo khung gầm dòng xe!");
+    }, 400);
   };
 
   const handleSaveOrder = async () => {
@@ -407,7 +407,7 @@ export default function EditOrderEstimatePage() {
                       </span>
                       {item.isOemSubstitute && (
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1">
-                          <Network className="w-3 h-3 text-amber-600" /> Neo4j OEM
+                          <CheckCircle2 className="w-3 h-3 text-amber-600" /> Phụ tùng OEM
                         </span>
                       )}
                     </div>
@@ -499,40 +499,37 @@ export default function EditOrderEstimatePage() {
           </div>
         </div>
 
-        {/* Right Column: Neo4j Cypher Graph Engine - Tra cứu phụ tùng dùng chung (5 cols) */}
+        {/* Right Column: Tra cứu phụ tùng tương thích dòng xe (5 cols) */}
         <div className="lg:col-span-5 space-y-6">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center">
-                  <Network className="w-4 h-4" />
+                  <Car className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-sm text-slate-900">Tra Cứu Phụ Tùng Tương Thích Neo4j</h3>
-                  <p className="text-xs text-slate-500">Nền tảng khung gầm TNGA-K dùng chung</p>
+                  <h3 className="font-extrabold text-sm text-slate-900">Phụ Tùng Khuyến Nghị Cho Xe</h3>
+                  <p className="text-xs text-slate-500">Tương thích khung gầm & đời xe chính hãng</p>
                 </div>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
-                Port 17687 Bolt
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                Sẵn hàng tại kho
               </span>
             </div>
 
-            {/* Cypher Query Box */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-slate-700 block">
-                Truy vấn đồ thị Cypher (Cypher Query):
-              </label>
-              <div className="relative font-mono text-xs bg-slate-900 text-amber-400 p-3 rounded-xl border border-slate-800 leading-relaxed overflow-x-auto shadow-inner">
-                <p>{cypherQuery}</p>
+            {/* Thông tin tra cứu */}
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 text-slate-700">
+                <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>Tự động khớp phụ tùng phù hợp với thông số kỹ thuật của xe</span>
               </div>
               <button
                 type="button"
                 onClick={handleSimulateNeo4jRun}
                 disabled={isSearchingNeo4j}
-                className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center justify-center gap-2 active:scale-95 shadow-xs"
+                className="py-1.5 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition shrink-0 active:scale-95 shadow-xs"
               >
-                <Search className="w-3.5 h-3.5 text-amber-400" />
-                {isSearchingNeo4j ? "Đang truy vấn Graph Database..." : "Thực thi truy vấn Cypher"}
+                {isSearchingNeo4j ? "Đang quét..." : "Làm mới"}
               </button>
             </div>
 
