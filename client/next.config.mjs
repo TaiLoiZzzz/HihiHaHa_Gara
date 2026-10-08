@@ -20,6 +20,14 @@ const nextConfig = {
         source: '/health',
         destination: 'http://localhost:5000/health',
       },
+      {
+        source: '/email-preview',
+        destination: 'http://localhost:5000/email-preview',
+      },
+      {
+        source: '/test-api',
+        destination: 'http://localhost:5000/test-api',
+      },
     ];
   },
 };

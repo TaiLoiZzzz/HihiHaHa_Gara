@@ -50,9 +50,13 @@ app.get('/health', (req, res) => {
   );
 });
 
-// 6. phuc vu trang client HTML test truc quan
+// 6. phuc vu trang client HTML test truc quan & mau email
 app.get('/test-api', (req, res) => {
   res.sendFile(path.join(__dirname, '../../test_api.html'));
+});
+
+app.get('/email-preview', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../client/public/email-preview.html'));
 });
 
 // 7. dang ky router chinh cho RESTful API v1
