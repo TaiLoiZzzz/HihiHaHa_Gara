@@ -1,5 +1,6 @@
 const WorkOrder = require('../models/work-order.model');
 const Customer = require('../../auth/models/customer.model');
+const { sendIntakeConfirmationEmail } = require('../../auth/services/email.service');
 const { calculateEstimateService } = require('../services/estimate.service');
 const { allocatePartsService, deallocatePartsService } = require('../../inventory/services/inventory.service');
 const { broadcastProgressUpdated } = require('../../../sockets');
@@ -61,7 +62,7 @@ const createWorkOrderController = async (req, res, next) => {
       ],
     });
 
-    // Dong bo ho so khach hang & xe vao MongoDB Customer collection
+    // Dong bo ho so khach hang & xe vao MongoDB Customer collection (dong thoi tao tai khoan chu xe)
     try {
       let existingCust = await Customer.findOne({
         $or: [
@@ -69,6 +70,8 @@ const createWorkOrderController = async (req, res, next) => {
           { 'vehicles_owned.license_plate': normalizedPlate },
         ],
       });
+
+      const effectiveEmail = cleanEmail || existingCust?.email || 'tailoi1606@gmail.com';
 
       if (existingCust) {
         if (cleanEmail) existingCust.email = cleanEmail;
@@ -81,12 +84,17 @@ const createWorkOrderController = async (req, res, next) => {
             vin: 'VN' + Date.now().toString().slice(-8),
           });
         }
+        existingCust.audit_logs.push({
+          action: 'INTAKE_BY_ADVISOR',
+          timestamp: new Date(),
+          details: `Cố vấn tạo Lệnh sửa chữa #${order_code} cho xe ${normalizedPlate}. Cập nhật hồ sơ tài khoản.`,
+        });
         await existingCust.save();
       } else {
         await Customer.create({
           full_name: customer_name?.trim() || 'Khách Hàng',
           phone_number: normalizedPhone,
-          email: cleanEmail || 'tailoi1606@gmail.com',
+          email: effectiveEmail,
           vehicles_owned: [
             {
               license_plate: normalizedPlate,
@@ -94,7 +102,26 @@ const createWorkOrderController = async (req, res, next) => {
               vin: 'VN' + Date.now().toString().slice(-8),
             },
           ],
+          audit_logs: [
+            {
+              action: 'ACCOUNT_CREATED_BY_ADVISOR',
+              timestamp: new Date(),
+              details: `Tài khoản chủ xe được khởi tạo tự động bởi Cố vấn dịch vụ khi tiếp nhận xe ${normalizedPlate} (Lệnh #${order_code}).`,
+            },
+          ],
         });
+      }
+
+      // Gui email thong bao tiep nhan xe & kich hoat tai khoan qua Gmail SMTP thuc te
+      if (effectiveEmail) {
+        sendIntakeConfirmationEmail({
+          recipientEmail: effectiveEmail,
+          customerName: customer_name?.trim() || 'Quý khách',
+          licensePlate: normalizedPlate,
+          vehicleModel: vehicle_model || 'Xe dịch vụ',
+          orderCode: order_code,
+          phone: normalizedPhone,
+        }).catch((e) => console.error('Lỗi gửi email tiếp nhận:', e.message));
       }
     } catch (custErr) {
       console.warn('Lỗi đồng bộ hồ sơ khách hàng khi tạo lệnh:', custErr.message);

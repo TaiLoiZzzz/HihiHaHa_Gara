@@ -330,13 +330,14 @@ export default function CreateOrderPage() {
 
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-1.5 flex items-center justify-between">
-                  <span>Email Khách Hàng (Gmail)</span>
-                  <span className="text-[10px] text-amber-600 font-semibold lowercase">Gửi OTP & báo giá</span>
+                  <span>Email Khách Hàng (Gmail) <span className="text-red-500">*</span></span>
+                  <span className="text-[10px] text-amber-600 font-semibold lowercase">Tự động kích hoạt tài khoản</span>
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
                   <input
                     type="email"
+                    required
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
                     className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm font-semibold placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 shadow-xs transition"
@@ -390,6 +391,19 @@ export default function CreateOrderPage() {
                     placeholder="65"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Banner Thông báo tự động kích hoạt tài khoản */}
+            <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-950 flex items-start gap-2">
+              <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <p className="font-bold text-amber-900">
+                  Tự động kích hoạt tài khoản Cổng Khách Hàng
+                </p>
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  Khi Cố vấn lưu Lệnh, hệ thống sẽ tự động tạo hồ sơ khách hàng và gửi email xác nhận tiếp nhận xe qua Gmail. Khách hàng về nhà chỉ cần mở trang đăng nhập bằng <strong>Biển số xe</strong> và <strong>Số điện thoại</strong> là có thể theo dõi xe ngay.
+                </p>
               </div>
             </div>
 
