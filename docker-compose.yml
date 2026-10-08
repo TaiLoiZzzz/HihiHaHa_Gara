@@ -1,51 +1,132 @@
 version: '3.8'
 
+# ==============================================================================
+# HIHIHAHA AUTO GARAGE - PRODUCTION DOCKER ARCHITECTURE
+# 1. Next.js Multi-stage Standalone Build (~120MB)
+# 2. Zero Public DB Exposure: Cắt đứt 100% bề mặt quét cổng từ Internet
+#    (Toàn bộ CSDL chỉ dùng expose nội bộ trong bridge network, không map ra Host)
+# ==============================================================================
+
 services:
+  # ----------------------------------------------------------------------------
+  # 1. FRONTEND: Next.js 14 Standalone Container (~120MB)
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: hihihaha_frontend
+    restart: always
+    ports:
+      - "8888:3000" # Chỉ mở duy nhất cổng Web ra Host cho Cloudflare Tunnel
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      INTERNAL_BACKEND_URL: http://backend:5000
+      NEXT_PUBLIC_API_URL: /api/v1
+    depends_on:
+      - backend
+    networks:
+      - hihihaha_internal_net
+
+  # ----------------------------------------------------------------------------
+  # 2. BACKEND: Express REST API & Socket Service
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hihihaha_backend
+    restart: always
+    expose:
+      - "5000" # Kết nối nội bộ với Next.js qua network bridge
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      MONGO_URI: mongodb://mongodb:27017/hihihaha_db
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_USER: postgres
+      PG_PASSWORD: postgres
+      PG_DATABASE: hihihaha_db
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: neo4j123456
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: hihihaha_super_secret_jwt_key_2026_secured
+    depends_on:
+      - mongodb
+      - postgres
+      - neo4j
+      - redis
+    networks:
+      - hihihaha_internal_net
+
+  # ----------------------------------------------------------------------------
+  # 3. POLYGLOT DATABASES (ZERO PUBLIC EXPOSURE - KHÔNG MAP RA HOST)
+  # ----------------------------------------------------------------------------
   mongodb:
     image: mongo:7.0
     container_name: hihihaha_mongo
     restart: always
-    ports:
-      - "27017:27017"
+    expose:
+      - "27017" # Bỏ ports, chỉ cho phép giao tiếp nội bộ trong mạng Docker
     volumes:
       - mongo_data:/data/db
     environment:
       MONGO_INITDB_DATABASE: hihihaha_db
+    networks:
+      - hihihaha_internal_net
 
   postgres:
     image: postgres:16-alpine
     container_name: hihihaha_postgres
     restart: always
-    ports:
-      - "5433:5432" # map port 5433 (tranh trùng port 5432 cua local postgres)
+    expose:
+      - "5432" # Bỏ ports, chỉ cho phép giao tiếp nội bộ trong mạng Docker
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: hihihaha_db
     volumes:
       - pg_data:/var/lib/postgresql/data
+    networks:
+      - hihihaha_internal_net
 
   neo4j:
     image: neo4j:5-community
     container_name: hihihaha_neo4j
     restart: always
-    ports:
-      - "17474:7474" # map port 17474 tranh hyper-v windows
-      - "17687:7687" # map port 17687 tranh hyper-v windows
+    expose:
+      - "7474" # Bỏ ports, chỉ cho phép giao tiếp nội bộ trong mạng Docker
+      - "7687"
     environment:
       NEO4J_AUTH: neo4j/neo4j123456
     volumes:
       - neo4j_data:/data
+    networks:
+      - hihihaha_internal_net
 
   redis:
     image: redis:7.2-alpine
     container_name: hihihaha_redis
     restart: always
-    ports:
-      - "16379:6379" # map port 16379 tranh hyper-v windows cong 6379
+    expose:
+      - "6379" # Bỏ ports, chỉ cho phép giao tiếp nội bộ trong mạng Docker
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
+    networks:
+      - hihihaha_internal_net
+
+# ------------------------------------------------------------------------------
+# ISOLATED INTERNAL NETWORK & PERSISTENT VOLUMES
+# ------------------------------------------------------------------------------
+networks:
+  hihihaha_internal_net:
+    driver: bridge
+    name: hihihaha_internal_net
 
 volumes:
   mongo_data:

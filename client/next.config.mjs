@@ -1,5 +1,8 @@
+const backendUrl = process.env.INTERNAL_BACKEND_URL || 'http://localhost:5000';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -14,19 +17,19 @@ const nextConfig = {
     return [
       {
         source: '/api/v1/:path*',
-        destination: 'http://localhost:5000/api/v1/:path*',
+        destination: `${backendUrl}/api/v1/:path*`,
       },
       {
         source: '/health',
-        destination: 'http://localhost:5000/health',
+        destination: `${backendUrl}/health`,
       },
       {
         source: '/email-preview',
-        destination: 'http://localhost:5000/email-preview',
+        destination: `${backendUrl}/email-preview`,
       },
       {
         source: '/test-api',
-        destination: 'http://localhost:5000/test-api',
+        destination: `${backendUrl}/test-api`,
       },
     ];
   },
