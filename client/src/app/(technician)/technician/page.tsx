@@ -29,6 +29,9 @@ import {
   ArrowRight,
   Calendar,
   Phone,
+  Droplets,
+  ClipboardCheck,
+  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -38,6 +41,9 @@ interface TaskItem {
   name: string;
   code: string;
   spec: string;
+  category?: "TORQUE" | "FLUID" | "LABOR" | "INSPECTION";
+  categoryLabel?: string;
+  detailNote?: string;
   status: "pending" | "in_progress" | "done";
   progress: number;
 }
@@ -48,6 +54,141 @@ const TECHNICIANS = [
   { id: "0988888805", name: "Lê Hoàng Long (THO-03)", role: "Kỹ thuật viên Bảo Dưỡng Nhanh", pin: "1111", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80" },
   { id: "0988888806", name: "Phạm Minh Tuấn (THO-04)", role: "Kỹ thuật viên Cân Chỉnh Góc Đặt 3D", pin: "2222", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&auto=format&fit=crop&q=80" },
 ];
+
+/**
+ * Phân loại chính xác bản chất từng hạng mục theo chuẩn kỹ thuật gara:
+ * 1. FLUID: Dầu nhớt, chất lỏng -> Định mức dung tích (Lít), phẩm cấp độ nhớt SAE, kiểm tra que thăm (KHÔNG GHI LỰC SIẾT!)
+ * 2. TORQUE: Cốc lọc nhớt, ốc rốn xả, má phanh, cùm Caliper, bánh xe -> Lực siết N.m theo tiêu chuẩn hãng
+ * 3. LABOR / INSPECTION: Công đoạn dịch vụ, vệ sinh, kiểm tra an toàn KCS 4S
+ */
+function classifyTaskSpec(item: any, idx: number): TaskItem {
+  const rawName = String(item.name || "").trim();
+  const lower = rawName.toLowerCase();
+  const code = item.part_code || item.code || `TASK-${idx + 1}`;
+  const isPart = item.type === "PART";
+
+  let displayName = rawName;
+  let detailNote = "";
+
+  // 1. Rút gọn tiêu đề nếu là đoạn mô tả chẩn đoán dài dòng
+  if (rawName.length > 60) {
+    detailNote = rawName;
+    if (lower.includes("phanh") || lower.includes("cùm") || lower.includes("caliper") || lower.includes("đĩa")) {
+      displayName = "Kiểm tra độ dày đĩa phanh & Thay cặp má phanh trước";
+    } else if (lower.includes("dầu") || lower.includes("nhớt")) {
+      displayName = "Kiểm tra hệ thống bôi trơn & Thay dầu động cơ";
+    } else {
+      displayName = `Công đoạn thi công: ${rawName.slice(0, 48)}...`;
+    }
+  }
+
+  // 2. CHẤT LỎNG / DẦU NHỚT / NƯỚC LÀM MÁT (FLUID) - Tuyệt đối không ghi lực siết N.m
+  if (
+    (lower.includes("dầu") || lower.includes("nhớt") || lower.includes("castrol") || lower.includes("nước làm mát") || lower.includes("coolant")) &&
+    !lower.includes("lọc") &&
+    !lower.includes("cốc")
+  ) {
+    return {
+      id: item.id || `task-${idx + 1}`,
+      name: displayName,
+      code,
+      category: "FLUID",
+      categoryLabel: "ĐỊNH MỨC & TIÊU CHUẨN PHẨM CẤP DẦU NHỚT",
+      spec: "Định mức châm: 4.2 Lít (vạch MAX que thăm) • Tiêu chuẩn SAE 0W-20 API SP • Lau sạch miệng nắp & que thăm",
+      detailNote,
+      status: (item.status as any) || "pending",
+      progress: item.progress || 0,
+    };
+  }
+
+  // 3. LỌC NHỚT & CỐC LỌC & ỐC RỐN XẢ (FILTER / DRAIN PLUG)
+  if (lower.includes("lọc nhớt") || lower.includes("cốc lọc") || lower.includes("04152")) {
+    return {
+      id: item.id || `task-${idx + 1}`,
+      name: displayName,
+      code,
+      category: "TORQUE",
+      categoryLabel: "LỰC SIẾT CỐC LỌC & ỐC RỐN XẢ (N.m)",
+      spec: "Lực siết cốc lọc nhớt: 25 N.m • Lực siết ốc rốn xả đáy: 40 N.m (thay long-đền nhôm mới chống rò rỉ)",
+      detailNote,
+      status: (item.status as any) || "pending",
+      progress: item.progress || 0,
+    };
+  }
+
+  // 4. MÁ PHANH / ĐĨA PHANH / CÙM CALIPER / BÁNH XE (BRAKE & WHEEL - TORQUE)
+  if (
+    lower.includes("má phanh") ||
+    lower.includes("đĩa phanh") ||
+    lower.includes("caliper") ||
+    lower.includes("akebono") ||
+    lower.includes("tắc-kê") ||
+    lower.includes("lốp")
+  ) {
+    if (isPart || lower.includes("má") || lower.includes("thay") || lower.includes("lắp")) {
+      return {
+        id: item.id || `task-${idx + 1}`,
+        name: displayName,
+        code,
+        category: "TORQUE",
+        categoryLabel: "LỰC SIẾT CÙM PHANH & TẮC-KÊ LỐP (N.m)",
+        spec: "Lực siết ốc cùm Caliper: 34 N.m • Lực siết tắc-kê lốp: 103 N.m (cân lực chéo cánh sao) • Bôi mỡ đồng lưng má",
+        detailNote,
+        status: (item.status as any) || "pending",
+        progress: item.progress || 0,
+      };
+    }
+  }
+
+  // 5. GẦM / TREO / CÀNG A / ROTUYN (SUSPENSION - TORQUE)
+  if (lower.includes("gầm") || lower.includes("treo") || lower.includes("càng") || lower.includes("rotuyn")) {
+    return {
+      id: item.id || `task-${idx + 1}`,
+      name: displayName,
+      code,
+      category: "TORQUE",
+      categoryLabel: "LỰC SIẾT ĐAI ỐC GẦM & HỆ THỐNG TREO (N.m)",
+      spec: "Lực siết đai ốc càng A & gầm: 85 N.m (±5%) • Cân chỉnh độ chụm Toe: 0°00'",
+      detailNote,
+      status: (item.status as any) || "pending",
+      progress: item.progress || 0,
+    };
+  }
+
+  // 6. CÔNG LAO ĐỘNG / QUY TRÌNH THI CÔNG (LABOR)
+  if (!isPart || lower.includes("công") || lower.includes("dịch vụ") || lower.includes("dưỡng")) {
+    let spec = "Quy chuẩn 4S: Thao tác đúng quy trình hãng • Kiểm tra an toàn trước khi hạ cầu nâng";
+    if (lower.includes("dầu") && lower.includes("phanh")) {
+      spec = "Quy chuẩn 4S: Xả sạch dầu cũ đáy các-te, vệ sinh ắc trượt cùm Caliper • Nổ máy test rò rỉ 3 phút";
+    } else if (lower.includes("dầu")) {
+      spec = "Quy chuẩn 4S: Xả kiệt cặn dầu cũ, lau sạch bề mặt tiếp xúc • Châm nhớt mới và test áp suất bơm";
+    }
+    return {
+      id: item.id || `task-${idx + 1}`,
+      name: displayName,
+      code,
+      category: "LABOR",
+      categoryLabel: "QUY TRÌNH THAO TÁC THI CÔNG 4S",
+      spec,
+      detailNote,
+      status: (item.status as any) || "pending",
+      progress: item.progress || 0,
+    };
+  }
+
+  // 7. MẶC ĐỊNH CHO LINH KIỆN KHÁC
+  return {
+    id: item.id || `task-${idx + 1}`,
+    name: displayName,
+    code,
+    category: "TORQUE",
+    categoryLabel: "TIÊU CHUẨN LỰC SIẾT KỸ THUẬT (N.m)",
+    spec: "Lực siết bu-lông gá chuẩn: 45 N.m • Linh kiện OEM chính hãng",
+    detailNote,
+    status: (item.status as any) || "pending",
+    progress: item.progress || 0,
+  };
+}
 
 function TechnicianTabletContent() {
   const searchParams = useSearchParams();
@@ -121,38 +262,19 @@ function TechnicianTabletContent() {
         setIsCompletedOrder(wo.current_status === "COMPLETED" || wo.current_status === "PAYMENT_PENDING");
         setOverallProgress(wo.progress_percent || 0);
 
-        // Nạp checklist tasks từ MongoDB nếu có, hoặc tạo động từ Báo giá
+        // Nạp checklist tasks từ MongoDB nếu có, hoặc phân loại chuẩn xác từ Báo giá
         if (Array.isArray(wo.tasks) && wo.tasks.length > 0) {
-          setTasks(wo.tasks);
+          setTasks(wo.tasks.map((t: any, idx: number) => classifyTaskSpec(t, idx)));
         } else if (wo.estimate?.items && wo.estimate.items.length > 0) {
-          const generatedTasks = wo.estimate.items.map((it: any, idx: number) => {
-            let spec = "Lực siết bu-lông chuẩn hãng: 45 N.m • Tiêu chuẩn 4S";
-            const lower = (it.name || "").toLowerCase();
-            if (lower.includes("nhớt") || lower.includes("lọc")) {
-              spec = "Lực siết cốc lọc: 25 N.m • Ốc rốn xả: 40 N.m • Dầu 0W-20 Castrol";
-            } else if (lower.includes("phanh") || lower.includes("thắng") || lower.includes("lốp") || lower.includes("bánh")) {
-              spec = "Lực siết cùm Caliper: 34 N.m • Lực siết tắc-kê lốp: 103 N.m";
-            } else if (lower.includes("gầm") || lower.includes("treo") || lower.includes("càng")) {
-              spec = "Lực siết đai ốc càng A & gầm: 85 N.m (±5%) • Cân chỉnh Toe: 0°00'";
-            } else if (it.type === "PART") {
-              spec = "Linh kiện OEM chính hãng • Kiểm tra cân lực N.m theo tài liệu kỹ thuật";
-            }
-            return {
-              id: `task-${idx + 1}`,
-              name: it.name,
-              code: it.part_code || `TASK-${idx + 1}`,
-              spec,
-              status: "pending" as const,
-              progress: 0,
-            };
-          });
+          const generatedTasks = wo.estimate.items.map((it: any, idx: number) => classifyTaskSpec(it, idx));
           setTasks(generatedTasks);
         } else {
           setTasks([
-            { id: "t1", name: "Xả nhớt động cơ & Thay cốc lọc TNGA", code: "OIL-TNGA-01", spec: "Lực siết cốc lọc: 25 N.m • Ốc rốn xả: 40 N.m • Dầu 0W-20", status: "pending", progress: 0 },
-            { id: "t2", name: "Bảo dưỡng cùm phanh & Thay má Akebono", code: "BRK-AKE-02", spec: "Lực siết cùm Caliper: 34 N.m • Lực siết tắc-kê lốp: 103 N.m", status: "pending", progress: 0 },
-            { id: "t3", name: "Kiểm tra siết lực đai ốc gầm & Hệ thống treo", code: "SUSP-TORQ-03", spec: "Lực siết đai ốc gầm: 85 N.m (±5%) • Cân chỉnh độ chụm Toe", status: "pending", progress: 0 },
-            { id: "t4", name: "Kiểm tra áp suất lốp & Nghiệm thu an toàn KCS", code: "KCS-FINAL-04", spec: "Áp suất 4 lốp: 2.3 bar • Độ đảo đĩa phanh < 0.03mm (Chuẩn KCS)", status: "pending", progress: 0 },
+            classifyTaskSpec({ id: "t1", name: "Dầu động cơ Castrol EDGE 0W-20 (4L)", code: "OIL-0W20", type: "PART" }, 0),
+            classifyTaskSpec({ id: "t2", name: "Lọc nhớt chính hãng Toyota Camry TNGA", code: "04152-YZZA6", type: "PART" }, 1),
+            classifyTaskSpec({ id: "t3", name: "Má phanh trước Ceramic Akebono", code: "ACT-1222-AKE", type: "PART" }, 2),
+            classifyTaskSpec({ id: "t4", name: "Công thay dầu động cơ, lọc nhớt & dưỡng má phanh", code: "LAB-SVC-OIL-BRK", type: "LABOR" }, 3),
+            classifyTaskSpec({ id: "t5", name: "Kiểm tra áp suất lốp & Nghiệm thu an toàn KCS", code: "KCS-FINAL-04", type: "LABOR" }, 4),
           ]);
         }
 
@@ -1167,15 +1289,62 @@ function TechnicianTabletContent() {
                                 <span className="text-[10px] font-mono text-slate-500">{task.code}</span>
                               </div>
                               <p className="font-bold text-sm text-slate-900 leading-snug">{task.name}</p>
-                              <div className="mt-2 p-2 rounded-xl bg-amber-500/10 border border-amber-400/40 text-amber-950 flex items-start gap-2">
-                                <div className="p-1 rounded-md bg-amber-500 text-slate-950 font-black shrink-0 mt-0.5">
-                                  <Wrench className="w-3.5 h-3.5" />
+
+                              {/* Ghi chú chi tiết nếu là hạng mục chẩn đoán dài dòng */}
+                              {task.detailNote && (
+                                <p className="text-[11px] text-slate-600 italic mt-1.5 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                                  📌 Ghi chú điều phối: {task.detailNote}
+                                </p>
+                              )}
+
+                              {/* Hộp Thông Số Kỹ Thuật Độc Lập Theo Từng Loại Hạng Mục */}
+                              <div
+                                className={`mt-2.5 p-2.5 rounded-2xl border flex items-start gap-2.5 ${
+                                  task.category === "FLUID"
+                                    ? "bg-sky-50/90 border-sky-300 text-sky-950"
+                                    : task.category === "LABOR"
+                                    ? "bg-purple-50/90 border-purple-300 text-purple-950"
+                                    : task.category === "INSPECTION"
+                                    ? "bg-emerald-50/90 border-emerald-300 text-emerald-950"
+                                    : "bg-amber-50/90 border-amber-300 text-amber-950"
+                                }`}
+                              >
+                                <div
+                                  className={`p-1.5 rounded-xl text-white font-black shrink-0 mt-0.5 shadow-2xs ${
+                                    task.category === "FLUID"
+                                      ? "bg-sky-600"
+                                      : task.category === "LABOR"
+                                      ? "bg-purple-600"
+                                      : task.category === "INSPECTION"
+                                      ? "bg-emerald-600"
+                                      : "bg-amber-500 text-slate-950"
+                                  }`}
+                                >
+                                  {task.category === "FLUID" ? (
+                                    <Droplets className="w-3.5 h-3.5" />
+                                  ) : task.category === "LABOR" ? (
+                                    <ClipboardCheck className="w-3.5 h-3.5" />
+                                  ) : task.category === "INSPECTION" ? (
+                                    <ShieldCheck className="w-3.5 h-3.5" />
+                                  ) : (
+                                    <Wrench className="w-3.5 h-3.5" />
+                                  )}
                                 </div>
-                                <div className="text-xs font-mono leading-relaxed">
-                                  <div className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
-                                    Tiêu Chuẩn Lực Siết Kỹ Thuật (N.m):
+                                <div className="text-xs font-mono leading-relaxed flex-1">
+                                  <div
+                                    className={`text-[10px] font-bold uppercase tracking-wider ${
+                                      task.category === "FLUID"
+                                        ? "text-sky-800"
+                                        : task.category === "LABOR"
+                                        ? "text-purple-800"
+                                        : task.category === "INSPECTION"
+                                        ? "text-emerald-800"
+                                        : "text-amber-800"
+                                    }`}
+                                  >
+                                    {task.categoryLabel || (task.category === "FLUID" ? "ĐỊNH MỨC & PHẨM CẤP DẦU NHỚT:" : "TIÊU CHUẨN LỰC SIẾT KỸ THUẬT (N.m):")}
                                   </div>
-                                  <div className="font-bold text-slate-900">{task.spec}</div>
+                                  <div className="font-bold text-slate-900 mt-0.5">{task.spec}</div>
                                 </div>
                               </div>
                             </div>
@@ -1188,24 +1357,38 @@ function TechnicianTabletContent() {
                                 task.status === "done"
                                   ? "bg-emerald-600 text-white shadow-emerald-600/20 hover:bg-emerald-700"
                                   : task.status === "in_progress"
-                                  ? "bg-amber-500 text-slate-950 hover:bg-amber-400 ring-2 ring-amber-500/30"
+                                  ? task.category === "FLUID"
+                                    ? "bg-sky-500 text-white hover:bg-sky-600 ring-2 ring-sky-500/30"
+                                    : task.category === "LABOR"
+                                    ? "bg-purple-600 text-white hover:bg-purple-700 ring-2 ring-purple-600/30"
+                                    : "bg-amber-500 text-slate-950 hover:bg-amber-400 ring-2 ring-amber-500/30"
                                   : "bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200"
                               }`}
                             >
                               {task.status === "done" ? (
                                 <>
                                   <CheckCircle2 className="w-3.5 h-3.5" />
-                                  <span>✓ Xong (Đạt KCS)</span>
+                                  <span>{task.category === "FLUID" ? "✓ Đạt Mức Max" : task.category === "TORQUE" ? "✓ Đã Cân Lực Xong" : "✓ Đạt Chuẩn KCS"}</span>
                                 </>
                               ) : task.status === "in_progress" ? (
                                 <>
-                                  <Wrench className="w-3.5 h-3.5 animate-spin" />
-                                  <span>Đang Siết N.m...</span>
+                                  {task.category === "FLUID" ? (
+                                    <Droplets className="w-3.5 h-3.5 animate-bounce" />
+                                  ) : (
+                                    <Wrench className="w-3.5 h-3.5 animate-spin" />
+                                  )}
+                                  <span>{task.category === "FLUID" ? "Đang Châm & Đo..." : task.category === "TORQUE" ? "Đang Siết N.m..." : "Đang Thi Công..."}</span>
                                 </>
                               ) : (
                                 <>
-                                  <Wrench className="w-3.5 h-3.5" />
-                                  <span>Bắt Đầu</span>
+                                  {task.category === "FLUID" ? (
+                                    <Droplets className="w-3.5 h-3.5" />
+                                  ) : task.category === "LABOR" ? (
+                                    <ClipboardCheck className="w-3.5 h-3.5" />
+                                  ) : (
+                                    <Wrench className="w-3.5 h-3.5" />
+                                  )}
+                                  <span>{task.category === "FLUID" ? "Châm Dầu Nhớt" : task.category === "TORQUE" ? "Bắt Đầu Siết" : "Bắt Đầu Làm"}</span>
                                 </>
                               )}
                             </button>

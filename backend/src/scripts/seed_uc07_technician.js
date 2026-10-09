@@ -7,36 +7,55 @@ async function seedUC07() {
   const db = mongoose.connection.db;
   const WorkOrder = db.collection('workorders');
 
-  const tasks = [
+  const tasksCamry = [
     {
       id: 't1',
-      name: 'Xả nhớt động cơ & Thay thế cốc lọc nhớt TNGA',
-      code: 'OIL-FLTR-TNGA',
-      spec: 'Lực siết cốc lọc: 25 N.m • Ốc rốn xả: 40 N.m • Dầu nhớt Castrol EDGE 0W-20',
+      name: 'Dầu động cơ tổng hợp toàn phần Castrol EDGE 0W-20 (4L)',
+      code: 'OIL-0W20-CAS',
+      category: 'FLUID',
+      categoryLabel: 'ĐỊNH MỨC & TIÊU CHUẨN PHẨM CẤP DẦU NHỚT',
+      spec: 'Định mức châm: 4.2 Lít (vạch MAX que thăm) • Tiêu chuẩn SAE 0W-20 API SP • Lau sạch miệng nắp & que thăm',
       status: 'done',
       progress: 100,
     },
     {
       id: 't2',
-      name: 'Bảo dưỡng cùm phanh Caliper & Thay má phanh Akebono Ceramic',
-      code: 'BRK-AKE-CERAMIC',
-      spec: 'Lực siết cùm phanh Caliper: 34 N.m • Lực siết ốc tắc-kê lốp: 103 N.m',
+      name: 'Lọc nhớt chính hãng Toyota Camry TNGA',
+      code: '04152-YZZA6',
+      category: 'TORQUE',
+      categoryLabel: 'LỰC SIẾT CỐC LỌC & ỐC RỐN XẢ (N.m)',
+      spec: 'Lực siết cốc lọc nhớt: 25 N.m • Lực siết ốc rốn xả đáy: 40 N.m (thay long-đền nhôm mới chống rò rỉ)',
+      status: 'done',
+      progress: 100,
+    },
+    {
+      id: 't3',
+      name: 'Má phanh trước Ceramic Akebono Ultra-Premium',
+      code: 'ACT-1222-AKE',
+      category: 'TORQUE',
+      categoryLabel: 'LỰC SIẾT CÙM PHANH & TẮC-KÊ LỐP (N.m)',
+      spec: 'Lực siết ốc cùm Caliper: 34 N.m • Lực siết tắc-kê lốp: 103 N.m (cân lực chéo cánh sao) • Bôi mỡ đồng lưng má',
       status: 'in_progress',
       progress: 60,
     },
     {
-      id: 't3',
-      name: 'Kiểm tra hệ thống treo & Siết lực đai ốc gầm theo chuẩn hãng',
-      code: 'SUSP-TORQ-85NM',
-      spec: 'Lực siết đai ốc càng A & gầm: 85 N.m (±5%) • Cân chỉnh Toe: 0°00\'',
+      id: 't4',
+      name: 'Công thay dầu động cơ, lọc nhớt & dưỡng má phanh',
+      code: 'LAB-SVC-OIL-BRK',
+      category: 'LABOR',
+      categoryLabel: 'QUY TRÌNH THAO TÁC THI CÔNG 4S',
+      spec: 'Quy chuẩn 4S: Xả sạch dầu cũ đáy các-te, vệ sinh ắc trượt cùm Caliper • Nổ máy test rò rỉ 3 phút',
       status: 'pending',
       progress: 0,
     },
     {
-      id: 't4',
-      name: 'Kiểm tra áp suất 4 lốp & Nghiệm thu an toàn KCS xuất xưởng',
-      code: 'KCS-FINAL-INSP',
-      spec: 'Áp suất lốp: 2.3 bar • Độ đảo đĩa phanh < 0.03mm (Chuẩn kiểm định KCS xuất xưởng)',
+      id: 't5',
+      name: 'Kiểm tra độ dày đĩa phanh & Nghiệm thu KCS má phanh trước',
+      code: 'LAB-AI-3797',
+      category: 'INSPECTION',
+      categoryLabel: 'TIÊU CHUẨN KIỂM ĐỊNH AN TOÀN KCS',
+      spec: 'Độ dày đĩa phanh > 24mm • Độ đảo đĩa < 0.03mm (đồng hồ so) • Cân áp suất 4 lốp đạt chuẩn 2.3 bar',
+      detailNote: 'Yêu cầu đưa xe lên cầu nâng tháo bánh kiểm tra chi tiết độ dày má phanh và bề mặt đĩa phanh; lắp đặt cặp má phanh mới đúng tiêu chuẩn xuất xưởng.',
       status: 'pending',
       progress: 0,
     },
@@ -76,7 +95,7 @@ async function seedUC07() {
             technician_name: 'Nguyễn Văn Thợ (THO-01)',
           }
         ],
-        tasks: tasks,
+        tasks: tasksCamry,
         inspection_photos: photos,
         updatedAt: new Date(),
       }
@@ -84,7 +103,7 @@ async function seedUC07() {
     { upsert: true }
   );
 
-  // Add 1 more active car for THO-01 to demonstrate multi-car workflow
+  // Update Porsche Macan GTS
   await WorkOrder.updateOne(
     { order_code: 'WO-20261008-1001' },
     {
@@ -108,6 +127,8 @@ async function seedUC07() {
             id: 'p1',
             name: 'Tháo kiểm tra má phanh gốm Carbon Ceramic',
             code: 'PCCB-BRK-CHK',
+            category: 'TORQUE',
+            categoryLabel: 'LỰC SIẾT CÙM PHANH 6-PISTON & CENTER-LOCK',
             spec: 'Lực siết bu-lông cùm Caliper 6-piston: 85 N.m • Ốc lốp Center-lock: 600 N.m',
             status: 'in_progress',
             progress: 25,
@@ -116,7 +137,9 @@ async function seedUC07() {
             id: 'p2',
             name: 'Bảo dưỡng định kỳ cấp lớn & Thay lọc gió đôi BMC',
             code: 'BMC-AIR-FLTR',
-            spec: 'Lực siết nắp cổ hút: 9.5 N.m • Kiểm tra rò rỉ khí nạp qua máy khói',
+            category: 'LABOR',
+            categoryLabel: 'QUY TRÌNH THI CÔNG & KIỂM TRA ĐỘ KÍN',
+            spec: 'Lực siết nắp cổ hút: 9.5 N.m • Kiểm tra rò rỉ khí nạp qua máy tạo khói',
             status: 'pending',
             progress: 0,
           },
@@ -124,6 +147,8 @@ async function seedUC07() {
             id: 'p3',
             name: 'Nghiệm thu thử tải hệ thống treo khí nén PASM',
             code: 'PASM-CALIB',
+            category: 'INSPECTION',
+            categoryLabel: 'TIÊU CHUẨN KIỂM ĐỊNH AN TOÀN KCS',
             spec: 'Áp suất bầu khí: 11.5 bar • Test hành trình nâng hạ 3 nấc KCS',
             status: 'pending',
             progress: 0,
@@ -143,7 +168,7 @@ async function seedUC07() {
     { upsert: true }
   );
 
-  console.log('Successfully seeded UC07 workorders for THO-01 (0988888803)!');
+  console.log('Successfully re-seeded UC07 with logically classified tasks!');
   process.exit(0);
 }
 
