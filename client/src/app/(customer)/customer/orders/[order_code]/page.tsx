@@ -14,7 +14,10 @@ import {
   AlertCircle, 
   Sparkles,
   ArrowRight,
-  Loader2
+  Loader2,
+  XCircle,
+  X,
+  PhoneCall
 } from "lucide-react";
 import { formatCurrencyVND } from "@/lib/utils";
 import { LiquidGlassButton } from "@/components/ui/liquid-glass-button";
@@ -57,6 +60,11 @@ export default function WorkOrderDetailPage({ params }: Props) {
   const [orderData, setOrderData] = useState<any>(null);
   const [items, setItems] = useState<EstimateItem[]>([]);
   const [approved, setApproved] = useState(false);
+  const [rejected, setRejected] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectAction, setRejectAction] = useState<"REVISE" | "CANCEL">("REVISE");
+  const [isRejecting, setIsRejecting] = useState(false);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
 
@@ -91,9 +99,12 @@ export default function WorkOrderDetailPage({ params }: Props) {
           }
           if (
             wo.estimate?.approval_status === "APPROVED" || 
-            (wo.current_status !== "QUOTE_SENT" && wo.current_status !== "DRAFT" && wo.current_status !== "INSPECTION")
+            (wo.current_status !== "QUOTE_SENT" && wo.current_status !== "DRAFT" && wo.current_status !== "INSPECTION" && wo.current_status !== "CANCELLED")
           ) {
             setApproved(true);
+          }
+          if (wo.estimate?.approval_status === "REJECTED" || wo.current_status === "CANCELLED") {
+            setRejected(true);
           }
           if (wo.workflow_timeline) {
             setTimeline(wo.workflow_timeline);
@@ -137,16 +148,56 @@ export default function WorkOrderDetailPage({ params }: Props) {
       if (res.success && res.data) {
         setOrderData(res.data);
         setApproved(true);
+        setRejected(false);
         if (res.data.workflow_timeline) {
           setTimeline(res.data.workflow_timeline);
         }
         toast.success("🎉 Ký duyệt báo giá thành công! Lệnh đã được chuyển tới xưởng để bắt đầu thi công.");
       } else {
         setApproved(true);
+        setRejected(false);
         toast.success("Ký duyệt báo giá thành công!");
       }
     } catch (err: any) {
       toast.error(err.message || "Không thể ký duyệt báo giá. Vui lòng thử lại!");
+    }
+  };
+
+  // Xử lý từ chối báo giá và gửi API thật
+  const handleReject = async (action: "REVISE" | "CANCEL", reasonText: string) => {
+    try {
+      setIsRejecting(true);
+      const res = await fetchApi<{ success: boolean; data: any }>(`/work-orders/${orderCode}/reject-estimate`, {
+        method: "POST",
+        body: JSON.stringify({ 
+          reason: reasonText,
+          action 
+        }),
+        roleFallback: "CUSTOMER",
+      });
+      if (res.success && res.data) {
+        setOrderData(res.data);
+        setRejected(true);
+        setApproved(false);
+        setShowRejectModal(false);
+        if (res.data.workflow_timeline) {
+          setTimeline(res.data.workflow_timeline);
+        }
+        if (action === "CANCEL") {
+          toast.success("Đã ghi nhận yêu cầu hủy lệnh sửa chữa của quý khách.");
+        } else {
+          toast.success("Đã gửi phản hồi từ chối báo giá! Cố vấn dịch vụ sẽ liên hệ lại với quý khách.");
+        }
+      } else {
+        setRejected(true);
+        setApproved(false);
+        setShowRejectModal(false);
+        toast.success("Đã gửi phản hồi từ chối báo giá!");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Không thể gửi phản hồi. Vui lòng thử lại!");
+    } finally {
+      setIsRejecting(false);
     }
   };
 
@@ -181,7 +232,11 @@ export default function WorkOrderDetailPage({ params }: Props) {
               {orderCode}
             </h1>
             <span className={`px-3 py-1 text-xs font-bold rounded-full ${
-              isPaid
+              orderData?.current_status === "CANCELLED"
+                ? "bg-rose-100 text-rose-800 border border-rose-300 font-extrabold"
+                : rejected && !approved
+                ? "bg-rose-100 text-rose-800 border border-rose-300 font-extrabold"
+                : isPaid
                 ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
                 : isCompleted
                 ? "bg-emerald-50 text-emerald-700 border border-emerald-300 font-extrabold"
@@ -191,7 +246,11 @@ export default function WorkOrderDetailPage({ params }: Props) {
                 ? "bg-blue-100 text-blue-800 border border-blue-300"
                 : "bg-amber-100 text-amber-800 border border-amber-300"
             }`}>
-              {isPaid
+              {orderData?.current_status === "CANCELLED"
+                ? "ĐÃ HỦY LỆNH SỬA CHỮA (CANCELLED)"
+                : rejected && !approved
+                ? "TỪ CHỐI BÁO GIÁ • CHỜ TƯ VẤN LẠI"
+                : isPaid
                 ? "ĐÃ THANH TOÁN (PAID)"
                 : isCompleted
                 ? "HOÀN TẤT THI CÔNG • CHỜ THANH TOÁN (COMPLETED)"
@@ -349,14 +408,46 @@ export default function WorkOrderDetailPage({ params }: Props) {
               </span>
             </div>
 
-            {!approved && (
-              <button 
-                onClick={handleApprove}
-                className="w-full mt-3 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-xs uppercase tracking-wider transition shadow-amber-glow"
-              >
-                Ký Duyệt Báo Giá Điện Tử (1-Click)
-              </button>
-            )}
+            {!approved && !rejected ? (
+              <div className="space-y-2 mt-3">
+                <button 
+                  onClick={handleApprove}
+                  className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-xs uppercase tracking-wider transition shadow-amber-glow active:scale-95 flex items-center justify-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  Ký Duyệt Báo Giá Điện Tử (1-Click)
+                </button>
+
+                <button 
+                  type="button"
+                  onClick={() => setShowRejectModal(true)}
+                  className="w-full py-2.5 rounded-xl border border-rose-200 hover:border-rose-400 hover:bg-rose-50 text-rose-600 font-bold text-xs uppercase tracking-wider transition active:scale-95 flex items-center justify-center gap-1.5"
+                >
+                  <XCircle className="w-4 h-4 text-rose-500" />
+                  Từ Chối / Yêu Cầu Báo Giá Lại
+                </button>
+              </div>
+            ) : rejected && !approved ? (
+              <div className="mt-3 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-900 space-y-2">
+                <div className="flex items-center gap-1.5 font-bold text-rose-700">
+                  <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>Quý khách đã từ chối báo giá</span>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  Cố vấn dịch vụ đang tiếp nhận và sẽ liên hệ lại với quý khách để điều chỉnh phương án chi phí.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRejected(false);
+                    setShowRejectModal(false);
+                  }}
+                  className="w-full py-1.5 rounded-lg bg-white border border-rose-300 hover:bg-rose-100/50 text-rose-700 font-bold text-[11px] transition shadow-2xs"
+                >
+                  Xem lại & Ký duyệt nếu đổi ý
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
@@ -440,6 +531,126 @@ export default function WorkOrderDetailPage({ params }: Props) {
         </div>
 
       </div>
+
+      {/* Modal Từ Chối Báo Giá / Yêu Cầu Tư Vấn Lại */}
+      {showRejectModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2 text-rose-600">
+                <AlertCircle className="w-5 h-5" />
+                <h3 className="font-extrabold text-base text-slate-900">Từ Chối / Phản Hồi Báo Giá</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowRejectModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Quý khách chưa hài lòng với báo giá hiện tại? Vui lòng chọn lý do để Cố vấn dịch vụ hỗ trợ giải pháp tiết kiệm và phù hợp nhất cho quý khách:
+            </p>
+
+            {/* Quick chips lý do */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Lý do chính:</label>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  "Chi phí vượt quá ngân sách dự kiến",
+                  "Chưa cần thiết làm một số hạng mục lúc này",
+                  "Muốn đổi loại phụ tùng / thương hiệu khác",
+                  "Cần Cố vấn gọi điện giải thích thêm",
+                  "Muốn giảm bớt các khoản tiền công",
+                ].map((reason) => (
+                  <button
+                    key={reason}
+                    type="button"
+                    onClick={() => setRejectReason(reason)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition text-left border ${
+                      rejectReason === reason
+                        ? "bg-rose-50 border-rose-400 text-rose-700 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    {reason}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Input ghi chú thêm */}
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Chi tiết yêu cầu của quý khách:</label>
+              <textarea
+                rows={3}
+                placeholder="Nhập ghi chú hoặc mong muốn của quý khách (VD: Chỉ thay dầu và lọc nhớt trước, các món khác để kỳ sau...)"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                className="w-full p-3 rounded-xl border border-slate-300 bg-white text-xs text-slate-900 focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
+              />
+            </div>
+
+            {/* Lựa chọn hành động */}
+            <div className="space-y-2 pt-1">
+              <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Hành động mong muốn:</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRejectAction("REVISE")}
+                  className={`p-3 rounded-xl border text-left transition ${
+                    rejectAction === "REVISE"
+                      ? "border-amber-500 bg-amber-50/70 text-amber-950 font-bold"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  <p className="text-xs font-bold text-slate-900 flex items-center gap-1">
+                    <PhoneCall className="w-3.5 h-3.5 text-amber-600" /> Tư vấn & Báo giá lại
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Giữ lệnh, Cố vấn sẽ gọi lại và sửa đổi báo giá</p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setRejectAction("CANCEL")}
+                  className={`p-3 rounded-xl border text-left transition ${
+                    rejectAction === "CANCEL"
+                      ? "border-rose-500 bg-rose-50/70 text-rose-950 font-bold"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  <p className="text-xs font-bold text-slate-900 flex items-center gap-1">
+                    <XCircle className="w-3.5 h-3.5 text-rose-600" /> Hủy lệnh sửa chữa
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Hủy toàn bộ đơn và lấy lại xe về</p>
+                </button>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowRejectModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                disabled={isRejecting}
+                onClick={() => handleReject(rejectAction, rejectReason)}
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs uppercase tracking-wider transition shadow-sm active:scale-95 flex items-center gap-1.5"
+              >
+                {isRejecting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                Xác Nhận Gửi Phản Hồi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -334,6 +334,76 @@ const customerApproveEstimateController = async (req, res, next) => {
   }
 };
 
+// step 103: khach hang tu choi bao gia / yeu cau bao gia lai
+const customerRejectEstimateController = async (req, res, next) => {
+  try {
+    const { order_code } = req.params;
+    const { reason, action } = req.body;
+
+    const workOrder = await WorkOrder.findOne({ order_code });
+    if (!workOrder) {
+      return next(new AppError(`Không tìm thấy Lệnh sửa chữa [${order_code}]`, 404, 'WORK_ORDER_NOT_FOUND'));
+    }
+
+    const currentStatus = workOrder.current_status;
+    if (['COMPLETED', 'PAYMENT_PENDING', 'PAID', 'DELIVERED'].includes(currentStatus)) {
+      return next(
+        new AppError(
+          `Không thể từ chối báo giá khi đơn hàng đã ở trạng thái [${currentStatus}]`,
+          400,
+          'INVALID_STATUS_TRANSITION'
+        )
+      );
+    }
+
+    const rejectReason = reason?.trim() || 'Khách hàng chưa đồng ý với chi phí hoặc hạng mục trong báo giá';
+    workOrder.estimate.approval_status = 'REJECTED';
+
+    if (action === 'CANCEL') {
+      workOrder.current_status = 'CANCELLED';
+      workOrder.workflow_timeline.push({
+        status: 'CANCELLED',
+        updated_by: req.user?.full_name || req.user?.phone_number || 'Khách hàng',
+        updated_at: new Date(),
+        note: `Khách hàng từ chối báo giá và yêu cầu hủy lệnh sửa chữa. Lý do: "${rejectReason}".`,
+      });
+    } else {
+      workOrder.workflow_timeline.push({
+        status: currentStatus,
+        updated_by: req.user?.full_name || req.user?.phone_number || 'Khách hàng',
+        updated_at: new Date(),
+        note: `Khách hàng đã từ chối báo giá. Lý do: "${rejectReason}". Đang chờ Cố vấn dịch vụ liên hệ tư vấn điều chỉnh lại.`,
+      });
+    }
+
+    await workOrder.save();
+
+    broadcastProgressUpdated(order_code, {
+      stage_name: 'KHÁCH HÀNG TỪ CHỐI BÁO GIÁ',
+      percent_complete: workOrder.progress_percent || 15,
+      updated_by: req.user?.full_name || 'Khách hàng',
+      note: `Khách hàng từ chối báo giá: ${rejectReason}`,
+    });
+
+    const io = req.app.get('socketio');
+    if (io) {
+      io.to('room:advisors').emit('QUOTE_REJECTED_EVENT', {
+        order_code,
+        license_plate: workOrder.license_plate,
+        customer_name: workOrder.customer_name,
+        customer_phone: workOrder.customer_phone,
+        reason: rejectReason,
+        rejected_at: new Date(),
+        action: action || 'REVISE',
+      });
+    }
+
+    return sendSuccess(res, workOrder, 'Đã ghi nhận phản hồi từ chối báo giá của quý khách. Cố vấn dịch vụ sẽ sớm liên hệ lại!');
+  } catch (err) {
+    next(err);
+  }
+};
+
 // cap nhat trang thai lenh theo state machine guard (cho quan doc / ky thuat vien)
 const updateWorkOrderStatusController = async (req, res, next) => {
   try {
@@ -795,6 +865,7 @@ module.exports = {
   updateEstimateItemsController,
   getCustomerWorkOrdersController,
   customerApproveEstimateController,
+  customerRejectEstimateController,
   updateWorkOrderStatusController,
   updateProgressController,
   assignWorkOrderController,

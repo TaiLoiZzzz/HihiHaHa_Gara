@@ -9,6 +9,7 @@ const {
   updateEstimateItemsController,
   getCustomerWorkOrdersController,
   customerApproveEstimateController,
+  customerRejectEstimateController,
   updateWorkOrderStatusController,
   updateProgressController,
   assignWorkOrderController,
@@ -63,6 +64,14 @@ router.post(
   verifyToken,
   authorizeRoles(ROLES.CUSTOMER, ROLES.SERVICE_ADVISOR, ROLES.WORKSHOP_MANAGER, ROLES.OWNER),
   customerApproveEstimateController
+);
+
+// khach hang tu choi bao gia / yeu cau bao gia lai
+router.post(
+  '/:order_code/reject-estimate',
+  verifyToken,
+  authorizeRoles(ROLES.CUSTOMER, ROLES.SERVICE_ADVISOR, ROLES.WORKSHOP_MANAGER, ROLES.OWNER),
+  customerRejectEstimateController
 );
 
 // chuyen trang thai lenh theo state machine guard
