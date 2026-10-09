@@ -21,30 +21,15 @@ export function PublicNavbar() {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group shrink-0">
-          <div className="relative flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-amber-50 border border-amber-200/60 p-1 group-hover:scale-105 transition-transform shadow-xs">
-            <Image
-              src="/logo.png"
-              alt="HiHiHaHa Auto Logo"
-              width={40}
-              height={40}
-              className="object-contain"
-              priority
-            />
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="font-extrabold tracking-tight text-base sm:text-lg text-slate-900">
-                HIHIHAHA<span className="text-amber-500"> AUTO</span>
-              </span>
-              <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded-md bg-amber-100 text-amber-800 border border-amber-300">
-                GARA 4S
-              </span>
-            </div>
-            <p className="text-[10px] sm:text-[11px] text-slate-500 tracking-tight hidden sm:block font-medium">
-              Trung Tâm Chăm Sóc & Sửa Chữa Ô Tô Chuyên Nghiệp
-            </p>
-          </div>
+        <Link href="/" className="flex items-center group shrink-0 py-0.5">
+          <Image
+            src="/logo-ngan.png"
+            alt="HiHiHaHa Gara"
+            width={160}
+            height={50}
+            className="h-10 sm:h-12 w-auto object-contain group-hover:scale-105 transition-transform"
+            priority
+          />
         </Link>
 
         {/* Desktop Navigation Links */}
