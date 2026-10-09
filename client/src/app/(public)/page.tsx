@@ -87,62 +87,47 @@ export default function HomePage() {
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
           
-          {/* Cột Trái: Tiêu đề & Cam kết */}
-          <div className="lg:col-span-7 space-y-5 sm:space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[11px] sm:text-xs font-bold shadow-xs">
-              <span className="w-2 h-2 rounded-full bg-amber-600 animate-pulse" />
-              TRUNG TÂM DỊCH VỤ Ô TÔ CHUẨN 4S QUỐC TẾ
+          {/* Cột Trái: Tiêu đề & Cam kết Tinh Giản, Thoáng Mắt */}
+          <div className="lg:col-span-7 space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100/80 text-amber-900 border border-amber-300 text-xs font-bold shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              Trung Tâm Dịch Vụ Ô Tô Chuẩn 4S
             </div>
 
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-[1.2]">
-              Chăm Sóc & Sửa Chữa Xe Với{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-500 underline decoration-amber-300 decoration-wavy decoration-2">
-                Sự Minh Bạch Tuyệt Đối
-              </span>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-[1.2]">
+              Chăm Sóc & Sửa Chữa Xe <br className="hidden sm:inline" />
+              <span className="text-amber-600">Với Sự Minh Bạch Tuyệt Đối</span>
             </h1>
 
-            <p className="text-xs sm:text-sm md:text-base text-slate-600 leading-relaxed font-normal max-w-2xl">
-              Xem chi tiết báo giá từng con ốc trước khi thợ thi công, duyệt báo giá điện tử trên điện thoại, theo dõi trực tiếp hình ảnh thợ thay linh kiện qua ảnh chụp và thanh toán mã QR bảo mật chuẩn ngân hàng.
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal max-w-xl">
+              Báo giá chi tiết từng phụ tùng trước khi thi công, ký duyệt trực tuyến trên điện thoại và theo dõi tiến độ sửa chữa thời gian thực.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
+            <div className="pt-1">
               <Link
                 href="/services"
-                className="inline-flex items-center justify-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs sm:text-sm font-bold shadow-md shadow-amber-500/25 transition-all transform active:scale-95 text-center"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-sm font-bold shadow-md shadow-amber-500/25 transition-all transform active:scale-95 text-center"
               >
-                Xem Bảng Giá & Đặt Lịch
+                Xem Bảng Giá & Đặt Lịch Hẹn
                 <ArrowRight className="w-4 h-4 text-slate-950 shrink-0" />
-              </Link>
-
-              <Link
-                href="/login"
-                className="inline-flex items-center justify-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs sm:text-sm font-bold shadow-xs transition-all transform active:scale-95 text-center"
-              >
-                Tra Cứu Hồ Sơ Xe Của Bạn
               </Link>
             </div>
 
-            {/* 4 Chỉ số vàng */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-5 border-t border-slate-200">
+            {/* 3 Cam kết tinh giản, thoáng đãng */}
+            <div className="flex items-center gap-6 sm:gap-8 pt-5 border-t border-slate-200/80 flex-wrap">
               <div className="space-y-0.5">
-                <p className="text-xl sm:text-2xl font-black font-mono text-amber-600">100%</p>
-                <p className="text-[11px] sm:text-xs font-semibold text-slate-700">Phụ tùng chính hãng</p>
-                <p className="text-[10px] sm:text-[11px] text-slate-500">Nguồn gốc OEM rõ ràng</p>
+                <p className="text-xl sm:text-2xl font-black font-mono text-slate-900">100%</p>
+                <p className="text-xs text-slate-600 font-medium">Phụ tùng OEM chính hãng</p>
               </div>
+              <div className="h-8 w-px bg-slate-200 hidden sm:block" />
               <div className="space-y-0.5">
-                <p className="text-xl sm:text-2xl font-black font-mono text-amber-600">12 Tháng</p>
-                <p className="text-[11px] sm:text-xs font-semibold text-slate-700">Bảo hành linh kiện</p>
-                <p className="text-[10px] sm:text-[11px] text-slate-500">Toàn quốc điện tử</p>
+                <p className="text-xl sm:text-2xl font-black font-mono text-slate-900">12 Tháng</p>
+                <p className="text-xs text-slate-600 font-medium">Bảo hành điện tử toàn quốc</p>
               </div>
+              <div className="h-8 w-px bg-slate-200 hidden sm:block" />
               <div className="space-y-0.5">
-                <p className="text-xl sm:text-2xl font-black font-mono text-amber-600">4 Khoang</p>
-                <p className="text-[11px] sm:text-xs font-semibold text-slate-700">Cầu nâng thủy lực</p>
-                <p className="text-[10px] sm:text-[11px] text-slate-500">Xưởng 4S tiêu chuẩn</p>
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-xl sm:text-2xl font-black font-mono text-amber-600">4.9 ★</p>
-                <p className="text-[11px] sm:text-xs font-semibold text-slate-700">Hài lòng khách hàng</p>
-                <p className="text-[10px] sm:text-[11px] text-slate-500">Hơn 5.000 lượt phục vụ</p>
+                <p className="text-xl sm:text-2xl font-black font-mono text-slate-900">4.9 ★</p>
+                <p className="text-xs text-slate-600 font-medium">Hài lòng từ 5.000+ chủ xe</p>
               </div>
             </div>
           </div>
