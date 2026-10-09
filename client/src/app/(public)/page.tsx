@@ -15,7 +15,6 @@ import {
   Car,
   Calendar,
   Award,
-  MapPin,
   Check,
   Search,
   ExternalLink
@@ -132,130 +131,80 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Cột Phải: Showcase Đội Ngũ Kỹ Thuật Viên & Trung Tâm Dịch Vụ 4S Hiện Đại */}
-          <div className="lg:col-span-5 relative w-full">
-            {/* Vầng sáng vàng sang trọng phía sau */}
-            <div className="absolute -inset-1 sm:-inset-1.5 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-amber-400/25 via-amber-300/35 to-amber-500/25 blur-2xl opacity-75 group-hover:opacity-100 transition-opacity" />
+          {/* Cột Phải: Showcase Đội Ngũ Kỹ Thuật Viên & Tra Cứu Tiến Độ */}
+          <div className="lg:col-span-5 relative w-full space-y-3.5">
+            {/* Khung Ảnh Đội Ngũ Kỹ Thuật Viên Chuyên Nghiệp Kèm Badges Nổi */}
+            <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200/90 bg-slate-900 shadow-xl group/img">
+              <div className="relative w-full aspect-[16/10] sm:aspect-[4/3] overflow-hidden">
+                <Image
+                  src="/gara-team.png"
+                  alt="Đội ngũ kỹ thuật viên HiHiHaHa Gara"
+                  fill
+                  className="object-cover object-center group-hover/img:scale-105 transition-transform duration-500"
+                  priority
+                />
+                {/* Subtle dark gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/20 pointer-events-none" />
+              </div>
 
-            <div className="relative rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white/90 backdrop-blur-xl p-4 sm:p-6 lg:p-7 shadow-2xl shadow-amber-500/10 space-y-4 sm:space-y-5">
-              
-              {/* Header Showcase với Logo & Trạng Thái Hoạt Động Xưởng */}
-              <div className="flex items-center justify-between pb-3 border-b border-slate-200/70 gap-2">
-                <div className="flex items-center gap-2.5 sm:gap-3">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white border border-amber-200 p-1 sm:p-1.5 shadow-xs flex items-center justify-center shrink-0">
-                    <Image
-                      src="/logo.png"
-                      alt="Logo HiHiHaHa Auto"
-                      width={40}
-                      height={40}
-                      className="object-contain"
-                      priority
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <h3 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">HIHIHAHA AUTO</h3>
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    </div>
-                    <p className="text-[10px] sm:text-[11px] font-bold text-amber-600">TRUNG TÂM DỊCH VỤ 4S</p>
-                  </div>
+              {/* Floating Badge Trên Ảnh (Góc Trên Trái) */}
+              <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-slate-900/85 backdrop-blur-md text-[10px] sm:text-xs font-bold text-amber-300 border border-amber-500/30 flex items-center gap-1.5 shadow-sm">
+                <Award className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Kỹ Thuật Viên Chứng Chỉ Hãng</span>
+              </div>
+
+              {/* Floating Badge Trên Ảnh (Góc Dưới) */}
+              <div className="absolute bottom-3 inset-x-3 flex items-center justify-between text-[10px] sm:text-xs font-bold text-white gap-2">
+                <div className="px-2.5 py-1 rounded-lg bg-slate-950/85 backdrop-blur-md border border-white/20 flex items-center gap-1">
+                  <span className="text-amber-400">★ 4.9/5</span>
+                  <span className="text-slate-300">• 5.200+ Xe</span>
                 </div>
+                <div className="px-2.5 py-1 rounded-lg bg-emerald-500/95 text-slate-950 font-black flex items-center gap-1 shadow-xs">
+                  <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                  <span>Cam Kết Minh Bạch</span>
+                </div>
+              </div>
+            </div>
 
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-2xs shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  4/4 Cầu Nâng Live
+            {/* Ô Tra Cứu Nhanh Hồ Sơ Xe Bằng Biển Số Trực Tiếp */}
+            <div className="p-3 sm:p-3.5 rounded-2xl bg-white border border-slate-200/90 space-y-2 shadow-sm">
+              <div className="flex items-center justify-between text-[11px] sm:text-xs">
+                <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                  <Search className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  Tra cứu tiến độ trên cầu nâng:
+                </span>
+                <span className="text-[10px] font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md">
+                  Live Realtime
                 </span>
               </div>
 
-              {/* Khung Ảnh Đội Ngũ Kỹ Thuật Viên Chuyên Nghiệp Kèm Badges Nổi */}
-              <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200/80 bg-slate-900 shadow-md group/img">
-                <div className="relative w-full aspect-[16/11] sm:aspect-[4/3] overflow-hidden">
-                  <Image
-                    src="/gara-team.png"
-                    alt="Đội ngũ kỹ thuật viên HiHiHaHa Gara"
-                    fill
-                    className="object-cover object-center group-hover/img:scale-105 transition-transform duration-500"
-                    priority
-                  />
-                  {/* Subtle dark gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/20 pointer-events-none" />
-                </div>
-
-                {/* Floating Badge Trên Ảnh (Góc Trên Trái) */}
-                <div className="absolute top-2.5 left-2.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-slate-900/85 backdrop-blur-md text-[10px] sm:text-[11px] font-bold text-amber-300 border border-amber-500/30 flex items-center gap-1 sm:gap-1.5 shadow-sm">
-                  <Award className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400 shrink-0" />
-                  <span>Kỹ Thuật Viên Chứng Chỉ Hãng</span>
-                </div>
-
-                {/* Floating Badge Trên Ảnh (Góc Dưới) */}
-                <div className="absolute bottom-2.5 inset-x-2.5 flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-white gap-2">
-                  <div className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-slate-950/85 backdrop-blur-md border border-white/20 flex items-center gap-1">
-                    <span className="text-amber-400">★ 4.9/5</span>
-                    <span className="text-slate-300">• 5.200+ Xe</span>
-                  </div>
-                  <div className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-emerald-500/95 text-slate-950 font-black flex items-center gap-1 shadow-xs">
-                    <ShieldCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                    <span>Cam Kết Minh Bạch</span>
-                  </div>
-                </div>
+              <div className="relative flex items-center">
+                <Car className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Nhập biển số (VD: 51K-999.99)..."
+                  value={quickPlate}
+                  onChange={(e) => setQuickPlate(e.target.value.toUpperCase())}
+                  className="w-full pl-9 pr-22 sm:pr-24 py-2 sm:py-2.5 text-xs font-mono font-bold uppercase tracking-wider rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/20 transition shadow-xs"
+                />
+                <Link
+                  href={`/login${quickPlate ? `?plate=${encodeURIComponent(quickPlate)}` : ""}`}
+                  className="absolute right-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition shadow-xs flex items-center gap-1 active:scale-95 shrink-0"
+                >
+                  <span>Tra Cứu</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
-
-              {/* Ô Tra Cứu Nhanh Hồ Sơ Xe Bằng Biển Số Trực Tiếp */}
-              <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-50/70 to-white border border-amber-200/80 space-y-2 shadow-xs">
-                <div className="flex items-center justify-between text-[11px] sm:text-xs">
-                  <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                    <Search className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                    Tra cứu tiến độ trên cầu nâng:
-                  </span>
-                  <span className="text-[10px] font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md">
-                    Live Realtime
-                  </span>
-                </div>
-
-                <div className="relative flex items-center">
-                  <Car className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
-                  <input
-                    type="text"
-                    placeholder="Nhập biển số (VD: 51K-999.99)..."
-                    value={quickPlate}
-                    onChange={(e) => setQuickPlate(e.target.value.toUpperCase())}
-                    className="w-full pl-9 pr-22 sm:pr-24 py-2 sm:py-2.5 text-xs font-mono font-bold uppercase tracking-wider rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition shadow-inner"
-                  />
-                  <Link
-                    href={`/login${quickPlate ? `?plate=${encodeURIComponent(quickPlate)}` : ""}`}
-                    className="absolute right-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition shadow-xs flex items-center gap-1 active:scale-95 shrink-0"
-                  >
-                    <span>Tra Cứu</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-
-              {/* Thông Tin Trụ Sở & Hotline Trực Tiếp */}
-              <div className="p-3 rounded-xl bg-white/90 border border-slate-200/80 text-left space-y-1.5 shadow-2xs">
-                <div className="flex items-start gap-1.5 text-[11px] sm:text-xs text-slate-700">
-                  <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 shrink-0 mt-0.5" />
-                  <span className="font-semibold">Số 1 Võ Văn Ngân, TP. Thủ Đức, TP. Hồ Chí Minh</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] sm:text-xs pt-1 border-t border-slate-100 gap-1">
-                  <a href="tel:0797526990" className="text-slate-700 hover:text-amber-600 transition flex items-center gap-1 font-semibold">
-                    <PhoneCall className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Hotline: <strong className="text-slate-900 font-mono">0797 526 990</strong></span>
-                  </a>
-                  <span className="text-slate-500 text-[10px] sm:text-[11px]">Hỗ trợ kỹ thuật 24/7</span>
-                </div>
-              </div>
-
-              {/* Nút Vào Cổng Khách Hàng */}
-              <Link
-                href="/login"
-                className="w-full py-3 sm:py-3.5 px-3 sm:px-4 rounded-xl bg-slate-950 hover:bg-slate-900 text-amber-400 font-black text-xs uppercase tracking-wider transition shadow-lg shadow-slate-950/20 flex items-center justify-center gap-2 group/btn active:scale-98 text-center"
-              >
-                <span>Vào Cổng Chủ Xe Tra Cứu & Duyệt Báo Giá</span>
-                <ArrowRight className="w-4 h-4 text-amber-400 group-hover/btn:translate-x-1 transition-transform shrink-0" />
-              </Link>
-
             </div>
+
+            {/* Nút Vào Cổng Khách Hàng */}
+            <Link
+              href="/login"
+              className="w-full py-3 sm:py-3.5 px-3 sm:px-4 rounded-xl bg-slate-950 hover:bg-slate-900 text-amber-400 font-black text-xs uppercase tracking-wider transition shadow-md shadow-slate-950/15 flex items-center justify-center gap-2 group/btn active:scale-98 text-center"
+            >
+              <span>Vào Cổng Chủ Xe Tra Cứu & Duyệt Báo Giá</span>
+              <ArrowRight className="w-4 h-4 text-amber-400 group-hover/btn:translate-x-1 transition-transform shrink-0" />
+            </Link>
           </div>
 
         </div>
