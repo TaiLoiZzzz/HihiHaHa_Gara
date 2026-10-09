@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, Suspense } from "react";
+import React, { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import {
   Wrench,
   Camera,
+  Upload,
+  Loader2,
   CheckCircle2,
   Car,
   Sparkles,
@@ -92,6 +94,9 @@ function TechnicianTabletContent() {
 
   const [isPaidOrder, setIsPaidOrder] = useState(false);
   const [isCompletedOrder, setIsCompletedOrder] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Tải chi tiết một Lệnh sửa chữa cụ thể (sử dụng quyền TECHNICIAN để không bao giờ bị 403)
   const loadOrderDetails = useCallback(async (orderCode: string) => {
@@ -376,33 +381,93 @@ function TechnicianTabletContent() {
     }
   };
 
-  // Chụp ảnh nghiệm thu
-  const handleSimulateCapture = async () => {
-    if (!activeOrder?.orderCode) return;
+  // Nén ảnh bằng Canvas để tải nhanh, nét và tiết kiệm băng thông (tối ưu cho di động/4G)
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (e) => {
+        const img = document.createElement("img");
+        img.src = e.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_DIM = 1600;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_DIM) {
+              height = Math.round((height * MAX_DIM) / width);
+              width = MAX_DIM;
+            }
+          } else {
+            if (height > MAX_DIM) {
+              width = Math.round((width * MAX_DIM) / height);
+              height = MAX_DIM;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            resolve(e.target?.result as string);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+          resolve(dataUrl);
+        };
+        img.onerror = () => resolve(e.target?.result as string);
+      };
+      reader.onerror = () => resolve("/inspection-sample.jpg");
+    });
+  };
+
+  // Xử lý khi thợ chụp ảnh từ Camera hoặc tải file ảnh từ thiết bị
+  const handlePhotoCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!activeOrder?.orderCode) {
+      toast.error("Vui lòng chọn xe đang làm việc trước khi chụp ảnh!");
+      return;
+    }
     if (isPaidOrder) {
       toast.error("Lệnh sửa chữa đã quyết toán thanh toán (PAID). Không thể tải thêm ảnh!");
       return;
     }
 
-    const newPhoto = {
-      id: `img-${Date.now()}`,
-      stage: "Nghiệm thu tại khoang",
-      timestamp: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
-      title: "Chụp cận cảnh linh kiện mới đã lắp ráp hoàn chỉnh trên xe",
-      url: "/inspection-sample.jpg",
-    };
-    setInspectionPhotos((prev) => [...prev, newPhoto]);
-
     try {
+      setUploadingPhoto(true);
+      const toastId = toast.loading("Đang xử lý và tải ảnh nghiệm thu lên máy chủ...");
+
+      const base64Url = await compressImage(file);
+
+      const newPhoto = {
+        id: `img-${Date.now()}`,
+        stage: `Nghiệm thu khoang (${selectedTech.name})`,
+        timestamp: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
+        title: `Ảnh nghiệm thu thực tế - Thợ [${selectedTech.name}] chụp tại ${activeOrder.bay || "khoang nâng"}`,
+        url: base64Url,
+      };
+
+      setInspectionPhotos((prev) => [newPhoto, ...prev]);
+
       await api.updateProgress(activeOrder.orderCode, {
         stage_name: "NGHIEM_THU_KHOANG",
         percent_complete: overallProgress,
-        photo_urls: [{ url: newPhoto.url, caption: newPhoto.title }],
-        note: `Thợ [${selectedTech.name}] chụp ảnh nghiệm thu hoàn tất tại ${activeOrder.bay}`,
+        photo_urls: [{ url: base64Url, caption: newPhoto.title }],
+        note: `Thợ [${selectedTech.name}] chụp & đồng bộ ảnh nghiệm thu thực tế tại ${activeOrder.bay}`,
       });
-      toast.success("Đã chụp & đồng bộ ảnh nghiệm thu vào hồ sơ khách hàng!");
+
+      toast.dismiss(toastId);
+      toast.success("🎉 Đã chụp & đồng bộ ảnh nghiệm thu thực tế vào hồ sơ số của khách hàng!");
     } catch (err: any) {
-      toast.success("Đã ghi nhận ảnh nghiệm thu vào hồ sơ!");
+      toast.error(err.message || "Lỗi tải ảnh lên hồ sơ");
+    } finally {
+      setUploadingPhoto(false);
+      if (e.target) e.target.value = "";
     }
   };
 
@@ -1074,15 +1139,61 @@ function TechnicianTabletContent() {
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      disabled={isPaidOrder}
-                      onClick={handleSimulateCapture}
-                      className="w-full py-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-sm shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-2 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Camera className="w-5 h-5" />
-                      {isPaidOrder ? "Đã Khóa Chụp Ảnh (Đơn Đã Thanh Toán)" : "Chụp & Tải Lên Ảnh Nghiệm Thu"}
-                    </button>
+                    {/* Input ẩn cho Camera trực tiếp trên điện thoại / tablet */}
+                    <input
+                      ref={cameraInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={handlePhotoCapture}
+                    />
+                    {/* Input ẩn để chọn file ảnh từ máy hoặc album */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handlePhotoCapture}
+                    />
+
+                    {isPaidOrder ? (
+                      <div className="w-full py-3.5 px-4 rounded-2xl bg-slate-100 text-slate-500 font-bold text-xs text-center border border-slate-200">
+                        Đã Khóa Chụp Ảnh (Đơn Đã Thanh Toán Hoàn Tất)
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <button
+                          type="button"
+                          disabled={uploadingPhoto}
+                          onClick={() => cameraInputRef.current?.click()}
+                          className="w-full py-3.5 px-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition-all flex items-center justify-center gap-2 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Bật máy ảnh trên điện thoại / tablet để chụp trực tiếp"
+                        >
+                          {uploadingPhoto ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Camera className="w-4 h-4 shrink-0" />
+                          )}
+                          <span>Chụp Ảnh Từ Camera</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={uploadingPhoto}
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full py-3.5 px-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-amber-400 font-black text-xs shadow-md transition-all flex items-center justify-center gap-2 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed border border-slate-700"
+                          title="Chọn ảnh có sẵn từ máy tính, thư viện ảnh"
+                        >
+                          {uploadingPhoto ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Upload className="w-4 h-4 shrink-0" />
+                          )}
+                          <span>Tải Ảnh Từ Thiết Bị</span>
+                        </button>
+                      </div>
+                    )}
 
                     <div className="space-y-4 pt-2">
                       {inspectionPhotos.map((photo) => (
