@@ -109,14 +109,14 @@ export default function CustomerPaymentPage({ params }: Props) {
       </Link>
 
       {/* Main Payment Card */}
-      <div className="p-8 sm:p-10 rounded-3xl bg-white dark:bg-brand-cardDark border border-zinc-200 dark:border-zinc-800 shadow-xl space-y-8 text-center">
+      <div className="p-4 sm:p-8 md:p-10 rounded-3xl bg-white dark:bg-brand-cardDark border border-zinc-200 dark:border-zinc-800 shadow-xl space-y-6 sm:space-y-8 text-center">
         
         {/* Header Thanh Toán */}
         <div className="space-y-2">
           <span className="px-3 py-1 text-xs font-mono font-bold rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
             CỔNG THANH TOÁN AN TOÀN VIETQR & VNPAY
           </span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-100">
             Thanh Toán Lệnh Sửa Chữa
           </h1>
           <p className="text-xs text-zinc-500 font-mono">
@@ -125,9 +125,9 @@ export default function CustomerPaymentPage({ params }: Props) {
         </div>
 
         {/* Số Tiền Cần Thanh Toán */}
-        <div className="p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800 space-y-1">
+        <div className="p-4 sm:p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800 space-y-1">
           <div className="text-xs text-zinc-500">Số tiền quyết toán cuối cùng (Đã bao gồm 8% VAT):</div>
-          <div className="text-3xl sm:text-4xl font-extrabold text-amber-500 font-mono">
+          <div className="text-2xl sm:text-4xl font-extrabold text-amber-500 font-mono">
             {formatCurrencyVND(totalAmount)}
           </div>
           <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
@@ -137,31 +137,31 @@ export default function CustomerPaymentPage({ params }: Props) {
 
         {/* Khối Mã VietQR hoặc Cảnh Báo Quy Trình */}
         {!(orderStatus === "COMPLETED" || orderStatus === "PAYMENT_PENDING" || orderStatus === "PAID" || paid) ? (
-          <div className="p-8 rounded-3xl bg-amber-50 border-2 border-amber-300 text-center space-y-5">
-            <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-700 mx-auto flex items-center justify-center font-bold">
-              <Clock className="w-8 h-8 animate-spin" />
+          <div className="p-4 sm:p-8 rounded-3xl bg-amber-50 border-2 border-amber-300 text-center space-y-5">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-amber-500/20 text-amber-700 mx-auto flex items-center justify-center font-bold">
+              <Clock className="w-7 h-7 sm:w-8 sm:h-8 animate-spin" />
             </div>
             <div className="space-y-2 max-w-md mx-auto">
-              <h3 className="text-xl font-black text-amber-950">Chưa Đạt Điều Kiện Thanh Toán</h3>
+              <h3 className="text-lg sm:text-xl font-black text-amber-950">Chưa Đạt Điều Kiện Thanh Toán</h3>
               <p className="text-xs text-amber-900 leading-relaxed font-medium">
                 Theo quy chuẩn gara 4S, quý khách chỉ thanh toán sau khi đội ngũ kỹ thuật viên hoàn tất 100% công đoạn sửa chữa và xe đạt nghiệm thu an toàn KCS.
               </p>
             </div>
-            <div className="p-4 rounded-2xl bg-white border border-amber-200 text-xs text-slate-700 max-w-md mx-auto flex items-center justify-between">
-              <span>Trạng thái xe hiện tại:</span>
-              <span className="font-mono font-bold px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300">
+            <div className="p-3 sm:p-4 rounded-2xl bg-white border border-amber-200 text-xs text-slate-700 max-w-md mx-auto flex items-center justify-between gap-2">
+              <span className="truncate">Trạng thái xe hiện tại:</span>
+              <span className="font-mono font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300 text-[10px] sm:text-xs shrink-0">
                 {orderStatus === "IN_PROGRESS"
-                  ? "ĐANG THI CÔNG SỬA CHỮA"
+                  ? "ĐANG THI CÔNG"
                   : orderStatus === "WAITING_PARTS"
-                  ? "CHỜ PHỤ TÙNG & XẾP KHOANG"
+                  ? "CHỜ PHỤ TÙNG"
                   : orderStatus === "QUOTE_SENT"
-                  ? "CHỜ PHÊ DUYỆT BÁO GIÁ"
+                  ? "CHỜ DUYỆT BÁO GIÁ"
                   : orderStatus}
               </span>
             </div>
             <div className="pt-2">
               <Link href={`/customer/orders/${orderCode}`}>
-                <button className="px-6 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-amber-400 font-black text-xs uppercase tracking-wider transition shadow-md inline-flex items-center gap-2">
+                <button className="px-5 sm:px-6 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-amber-400 font-black text-xs uppercase tracking-wider transition shadow-md inline-flex items-center gap-2">
                   <ArrowLeft className="w-4 h-4 text-amber-400" />
                   Quay Lại Theo Dõi Tiến Độ Khoang Nâng
                 </button>
@@ -172,13 +172,13 @@ export default function CustomerPaymentPage({ params }: Props) {
           <>
             {/* Khối Mã VietQR Thật Chuẩn Ngân Hàng */}
             <div className="flex flex-col items-center justify-center space-y-4">
-              <div className="p-6 rounded-3xl bg-white border-2 border-amber-500/40 shadow-xl flex flex-col items-center max-w-sm w-full">
+              <div className="p-4 sm:p-6 rounded-3xl bg-white border-2 border-amber-500/40 shadow-xl flex flex-col items-center max-w-sm w-full">
                 {/* Ảnh VietQR chuẩn từ Napas 247 */}
-                <div className="relative bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+                <div className="relative bg-white p-2 rounded-2xl border border-slate-200 shadow-inner w-full flex justify-center">
                   <img
                     src={`https://img.vietqr.io/image/MB-0797526990-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(orderCode)}&accountName=GARA%20HIHIHAHA%20AUTO`}
                     alt="Mã QR Chuyển Khoản VietQR"
-                    className="w-64 h-auto object-contain rounded-xl mx-auto"
+                    className="w-full max-w-[220px] sm:max-w-[260px] h-auto object-contain rounded-xl mx-auto"
                     onError={(e) => {
                       // Fallback nếu offline hoặc lỗi mạng
                       e.currentTarget.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`2|99|0797526990|MB|${totalAmount}|${orderCode}`)}`;

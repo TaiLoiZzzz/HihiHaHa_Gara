@@ -178,6 +178,7 @@ export default function WorkshopKanbanPage() {
   const [cards, setCards] = useState<KanbanCard[]>([]);
   const [workloads, setWorkloads] = useState<TechWorkload[]>([]);
   const [filterTechId, setFilterTechId] = useState<string | null>(null);
+  const [selectedStageTab, setSelectedStageTab] = useState<string>("all");
   const [draggedCardId, setDraggedCardId] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
 
@@ -434,6 +435,14 @@ export default function WorkshopKanbanPage() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <Link
+            href="/technician"
+            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-md shadow-amber-500/20 active:scale-95"
+            title="Mở giao diện Tablet Kỹ thuật viên tại cầu nâng (UC-07: Siết Lực N.m & Nghiệm Thu KCS)"
+          >
+            <Wrench className="w-4 h-4 text-slate-950" />
+            <span>Tablet Thợ Máy (UC-07)</span>
+          </Link>
           <button
             type="button"
             onClick={() => syncRealOrder(true)}
@@ -448,7 +457,7 @@ export default function WorkshopKanbanPage() {
             href="/manager/work-orders"
             className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs transition-all flex items-center gap-1.5 shadow-md active:scale-95"
           >
-            <ClipboardList className="w-4 h-4 text-amber-400" /> Danh Sách Lệnh Sửa Chữa
+            <ClipboardList className="w-4 h-4 text-amber-400" /> Danh Sách Lệnh
           </Link>
           <Link
             href="/manager/inventory"
@@ -460,33 +469,33 @@ export default function WorkshopKanbanPage() {
       </div>
 
       {/* Workshop Stats bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs">
-          <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Tổng xe trong xưởng</p>
-          <p className="text-2xl font-black font-mono mt-1 text-slate-900">{cards.length} xe</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="p-3.5 sm:p-5 rounded-2xl border border-slate-200 bg-white shadow-xs">
+          <p className="text-[11px] sm:text-xs text-slate-500 uppercase font-bold tracking-wider">Tổng xe trong xưởng</p>
+          <p className="text-xl sm:text-2xl font-black font-mono mt-1 text-slate-900">{cards.length} xe</p>
         </div>
-        <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs">
-          <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Đang nâng trên cầu</p>
-          <p className="text-2xl font-black font-mono mt-1 text-amber-600">
+        <div className="p-3.5 sm:p-5 rounded-2xl border border-slate-200 bg-white shadow-xs">
+          <p className="text-[11px] sm:text-xs text-slate-500 uppercase font-bold tracking-wider">Đang nâng trên cầu</p>
+          <p className="text-xl sm:text-2xl font-black font-mono mt-1 text-amber-600">
             {cards.filter((c) => c.stage === "in_progress").length} xe
           </p>
         </div>
-        <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs">
-          <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Chờ nghiệm thu QC</p>
-          <p className="text-2xl font-black font-mono mt-1 text-orange-600">
+        <div className="p-3.5 sm:p-5 rounded-2xl border border-slate-200 bg-white shadow-xs">
+          <p className="text-[11px] sm:text-xs text-slate-500 uppercase font-bold tracking-wider">Chờ nghiệm thu QC</p>
+          <p className="text-xl sm:text-2xl font-black font-mono mt-1 text-orange-600">
             {cards.filter((c) => c.stage === "qc").length} xe
           </p>
         </div>
-        <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs">
-          <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Đã hoàn thành hôm nay</p>
-          <p className="text-2xl font-black font-mono mt-1 text-emerald-600">
+        <div className="p-3.5 sm:p-5 rounded-2xl border border-slate-200 bg-white shadow-xs">
+          <p className="text-[11px] sm:text-xs text-slate-500 uppercase font-bold tracking-wider">Đã hoàn thành hôm nay</p>
+          <p className="text-xl sm:text-2xl font-black font-mono mt-1 text-emerald-600">
             {cards.filter((c) => c.stage === "completed").length} xe
           </p>
         </div>
       </div>
 
       {/* Theo Dõi Tải Công Việc Đội Ngũ Kỹ Thuật Viên (Workload Monitor) */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
@@ -519,7 +528,7 @@ export default function WorkshopKanbanPage() {
               <div
                 key={tech.id}
                 onClick={() => setFilterTechId(isSelected ? null : tech.id)}
-                className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                className={`p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
                   isSelected
                     ? "border-amber-500 bg-amber-50/80 ring-2 ring-amber-500/20"
                     : isFull
@@ -557,9 +566,51 @@ export default function WorkshopKanbanPage() {
         </div>
       </div>
 
-      {/* 6 Columns Kanban Board */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 items-start min-h-[620px] overflow-x-auto pb-4">
+      {/* Bộ Chọn Cột Quy Trình Trên Màn Hình Di Động & Tablet (< xl) */}
+      <div className="xl:hidden flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none">
+        <button
+          type="button"
+          onClick={() => setSelectedStageTab("all")}
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
+            selectedStageTab === "all"
+              ? "bg-slate-900 text-white shadow-xs"
+              : "bg-white hover:bg-slate-100 text-slate-700 border border-slate-200"
+          }`}
+        >
+          Tất Cả 6 Cột ({cards.length})
+        </button>
         {COLUMNS.map((col) => {
+          const count = cards.filter((c) => c.stage === col.key).length;
+          const isTabActive = selectedStageTab === col.key;
+          return (
+            <button
+              key={col.key}
+              type="button"
+              onClick={() => setSelectedStageTab(col.key)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 flex items-center gap-1.5 ${
+                isTabActive
+                  ? "bg-amber-500 text-slate-950 font-black shadow-xs ring-1 ring-amber-600/30"
+                  : "bg-white hover:bg-slate-100 text-slate-700 border border-slate-200"
+              }`}
+            >
+              <span>{col.label}</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                isTabActive ? "bg-black/20 text-slate-950 font-black" : "bg-slate-100 text-slate-600"
+              }`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 6 Columns Kanban Board */}
+      <div className={`grid ${
+        selectedStageTab === "all"
+          ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
+          : "grid-cols-1 max-w-xl mx-auto xl:max-w-none xl:grid-cols-6"
+      } gap-4 items-start min-h-[580px] overflow-x-auto pb-4`}>
+        {COLUMNS.filter((col) => selectedStageTab === "all" || col.key === selectedStageTab).map((col) => {
           const displayedCards = filterTechId
             ? cards.filter((c) => {
                 const selectedTechName = TECHNICIANS_LIST.find((t) => t.id === filterTechId)?.name.split(" ")[0] || "";

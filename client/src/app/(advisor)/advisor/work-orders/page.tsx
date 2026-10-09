@@ -185,58 +185,58 @@ export default function AdvisorWorkOrdersPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-extrabold text-slate-600 uppercase tracking-wider">
-                  <th className="py-4 px-6">Mã Lệnh</th>
-                  <th className="py-4 px-6">Biển Số & Xe</th>
-                  <th className="py-4 px-6">Khách Hàng</th>
-                  <th className="py-4 px-6">Trạng Thái Quy Trình</th>
-                  <th className="py-4 px-6 text-right">Tổng Tiền (8% VAT)</th>
-                  <th className="py-4 px-6 text-center">Thao Tác</th>
+                  <th className="py-3 sm:py-4 px-3 sm:px-5">Mã Lệnh</th>
+                  <th className="py-3 sm:py-4 px-3 sm:px-5">Biển Số & Xe</th>
+                  <th className="py-3 sm:py-4 px-3 sm:px-5">Khách Hàng</th>
+                  <th className="py-3 sm:py-4 px-3 sm:px-5">Trạng Thái Quy Trình</th>
+                  <th className="py-3 sm:py-4 px-3 sm:px-5 text-right">Tổng Tiền (8% VAT)</th>
+                  <th className="py-3 sm:py-4 px-3 sm:px-5 text-center">Thao Tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs font-sans">
                 {filteredOrders.map((order) => (
                   <tr key={order.order_code} className="hover:bg-amber-50/40 transition">
-                    <td className="py-4 px-6 font-mono font-bold text-amber-600">
+                    <td className="py-3.5 sm:py-4 px-3 sm:px-5 font-mono font-bold text-amber-600 whitespace-nowrap">
                       {order.order_code}
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="font-mono font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 w-fit">
+                    <td className="py-3.5 sm:py-4 px-3 sm:px-5">
+                      <div className="font-mono font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 w-fit whitespace-nowrap">
                         {order.plate}
                       </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">{order.car}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5 whitespace-nowrap">{order.car}</div>
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="font-semibold text-slate-900">{order.customer}</div>
+                    <td className="py-3.5 sm:py-4 px-3 sm:px-5">
+                      <div className="font-semibold text-slate-900 whitespace-nowrap">{order.customer}</div>
                       {order.phone && (
                         <a
                           href={`tel:${order.phone}`}
-                          className="text-[11px] text-amber-600 hover:text-amber-700 font-bold flex items-center gap-1 mt-0.5 hover:underline"
+                          className="text-[11px] text-amber-600 hover:text-amber-700 font-bold flex items-center gap-1 mt-0.5 hover:underline whitespace-nowrap"
                         >
                           <Phone className="w-3 h-3 text-amber-500" />
                           {order.phone}
                         </a>
                       )}
                     </td>
-                    <td className="py-4 px-6">
-                      <span className="inline-flex px-3 py-1 text-[11px] font-bold rounded-full border bg-amber-50 text-amber-800 border-amber-300">
+                    <td className="py-3.5 sm:py-4 px-3 sm:px-5">
+                      <span className="inline-flex px-2.5 sm:px-3 py-1 text-[11px] font-bold rounded-full border bg-amber-50 text-amber-800 border-amber-300 whitespace-nowrap">
                         {order.statusText}
                       </span>
                     </td>
-                    <td className="py-4 px-6 text-right font-mono font-black text-slate-900">
+                    <td className="py-3.5 sm:py-4 px-3 sm:px-5 text-right font-mono font-black text-slate-900 whitespace-nowrap">
                       {formatCurrencyVND(order.totalAmount)}
                     </td>
-                    <td className="py-4 px-6 text-center">
-                      <div className="flex items-center justify-center gap-2">
+                    <td className="py-3.5 sm:py-4 px-3 sm:px-5 text-center">
+                      <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                         <Link
                           href={`/customer/orders/${order.order_code}`}
-                          className="p-2 rounded-lg bg-slate-100 hover:bg-amber-500 hover:text-slate-950 text-slate-600 transition"
+                          className="p-1.5 sm:p-2 rounded-lg bg-slate-100 hover:bg-amber-500 hover:text-slate-950 text-slate-600 transition"
                           title="Xem trang khách hàng"
                         >
                           <Eye className="w-4 h-4" />
                         </Link>
                         <Link
                           href={`/advisor/orders/${order.order_code}/edit`}
-                          className="p-2 rounded-lg bg-slate-100 hover:bg-amber-500 hover:text-slate-950 text-slate-600 transition"
+                          className="p-1.5 sm:p-2 rounded-lg bg-slate-100 hover:bg-amber-500 hover:text-slate-950 text-slate-600 transition"
                           title="Chỉnh sửa báo giá & phụ tùng"
                         >
                           <Edit3 className="w-4 h-4" />

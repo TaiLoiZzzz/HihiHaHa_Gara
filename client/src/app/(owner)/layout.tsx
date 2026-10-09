@@ -8,7 +8,7 @@ export default function OwnerLayout({
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans">
       <StaffNavbar role="owner" />
-      <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
+      <main className="flex-1 p-3 sm:p-6 md:p-8 max-w-7xl mx-auto w-full">
         {children}
       </main>
     </div>

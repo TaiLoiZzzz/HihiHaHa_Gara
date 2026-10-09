@@ -388,7 +388,7 @@ export default function CreateOrderPage() {
         {/* Left 2 Cols: Thông tin xe & Khách hàng */}
         <div className="lg:col-span-2 space-y-6">
           {/* Card 1: Thông tin xe & khách */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm space-y-4 sm:space-y-6">
             <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
               <Car className="w-4 h-4 text-amber-500" />
               Thông Tin Chủ Xe & Phương Tiện
@@ -540,7 +540,7 @@ export default function CreateOrderPage() {
           </div>
 
           {/* Card 2: Hạng mục báo giá sơ bộ */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm space-y-4 sm:space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
               <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                 <ClipboardList className="w-4 h-4 text-amber-500" />
@@ -893,7 +893,7 @@ export default function CreateOrderPage() {
 
         {/* Right 1 Col: Tóm tắt chi phí & Nút xác nhận */}
         <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-6 sticky top-24">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm space-y-4 sm:space-y-6 sticky top-24">
             <h2 className="text-base font-extrabold text-slate-900 border-b border-slate-100 pb-3">Tóm Tắt Báo Giá Sơ Bộ</h2>
 
             <div className="space-y-3.5 text-sm">

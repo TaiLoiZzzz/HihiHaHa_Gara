@@ -42,21 +42,21 @@ export default function CustomerDashboardPage() {
     <div className="space-y-8 font-sans pb-16">
       
       {/* Header Profile Xe & Hạng VIP */}
-      <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="flex items-center gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center font-bold">
-            <Car className="w-8 h-8" />
+      <div className="p-4 sm:p-6 md:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6">
+        <div className="flex items-start sm:items-center gap-3.5 sm:gap-5">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center font-bold shrink-0">
+            <Car className="w-6 h-6 sm:w-8 sm:h-8" />
           </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-black text-slate-900">
+          <div className="space-y-1 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 truncate">
                 {vehicleModel}
               </h1>
-              <span className="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-slate-100 text-slate-800 border border-slate-300">
+              <span className="px-2.5 py-0.5 sm:py-1 text-xs font-mono font-bold rounded-lg bg-slate-100 text-slate-800 border border-slate-300 shrink-0">
                 {plateNumber}
               </span>
             </div>
-            <div className="flex items-center gap-4 text-xs text-slate-500">
+            <div className="flex flex-wrap items-center gap-x-2.5 sm:gap-x-4 gap-y-1 text-xs text-slate-500">
               <span>Chủ sở hữu: <strong className="text-slate-800">{customerName}</strong></span>
               <span>•</span>
               <span>SĐT: <strong className="font-mono text-slate-800">{order?.customer_phone || "0912 345 678"}</strong></span>
@@ -68,18 +68,18 @@ export default function CustomerDashboardPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-amber-50 border border-amber-200">
-          <Award className="w-8 h-8 text-amber-600" />
+        <div className="flex items-center gap-3 p-3 sm:p-3.5 rounded-2xl bg-amber-50 border border-amber-200 self-start md:self-auto shrink-0">
+          <Award className="w-7 h-7 sm:w-8 sm:h-8 text-amber-600 shrink-0" />
           <div>
             <div className="text-[10px] uppercase font-bold text-amber-700">Hạng Thành Viên</div>
-            <div className="text-sm font-extrabold text-slate-900">VIP GOLD (Ưu đãi 5% Công)</div>
+            <div className="text-xs sm:text-sm font-extrabold text-slate-900">VIP GOLD (Ưu đãi 5% Công)</div>
           </div>
         </div>
       </div>
 
       {/* Banner Trạng Thái Lệnh Sửa Chữa Hiện Tại */}
       {isPaid ? (
-        <div className="p-8 rounded-3xl bg-emerald-50/80 border-2 border-emerald-300 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div className="p-4 sm:p-6 md:p-8 rounded-3xl bg-emerald-50/80 border-2 border-emerald-300 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="px-3 py-1 text-xs font-mono font-bold rounded-full bg-emerald-600 text-white flex items-center gap-1.5">
@@ -105,7 +105,7 @@ export default function CustomerDashboardPage() {
           </Link>
         </div>
       ) : order?.current_status === "COMPLETED" || order?.current_status === "PAYMENT_PENDING" ? (
-        <div className="p-8 rounded-3xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border-2 border-emerald-500/40 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div className="p-4 sm:p-6 md:p-8 rounded-3xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border-2 border-emerald-500/40 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 text-xs font-mono font-bold rounded-full bg-emerald-600 text-white flex items-center gap-1">
@@ -132,7 +132,7 @@ export default function CustomerDashboardPage() {
           </Link>
         </div>
       ) : order?.current_status === "IN_PROGRESS" || order?.current_status === "QUALITY_CHECK" ? (
-        <div className="p-8 rounded-3xl bg-gradient-to-r from-cyan-500/10 via-cyan-500/5 to-transparent border-2 border-cyan-500/40 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div className="p-4 sm:p-6 md:p-8 rounded-3xl bg-gradient-to-r from-cyan-500/10 via-cyan-500/5 to-transparent border-2 border-cyan-500/40 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 text-xs font-mono font-bold rounded-full bg-cyan-600 text-white flex items-center gap-1.5">
@@ -159,7 +159,7 @@ export default function CustomerDashboardPage() {
           </Link>
         </div>
       ) : (
-        <div className="p-8 rounded-3xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-2 border-amber-500/40 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div className="p-4 sm:p-6 md:p-8 rounded-3xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-2 border-amber-500/40 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 text-xs font-mono font-bold rounded-full bg-amber-500 text-slate-950">
@@ -190,7 +190,7 @@ export default function CustomerDashboardPage() {
       )}
 
       {/* Sổ Bảo Dưỡng Điện Tử (Electronic Maintenance Ledger) */}
-      <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">
+      <div className="p-4 sm:p-6 md:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-black text-slate-900">

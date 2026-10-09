@@ -139,6 +139,74 @@ export default function StaffLoginPage() {
             Hệ thống tự động phân quyền và điều hướng đến màn hình làm việc tương ứng với chức danh đã được phê duyệt trong hệ thống.
           </p>
         </div>
+
+        {/* Nút Đăng Nhập Nhanh Kiểm Thử Demo */}
+        <div className="space-y-2 pt-2 border-t border-slate-100">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 text-center">
+            Tài Khoản Mẫu Kiểm Thử & Thuyết Trình
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setPhone("0988888803");
+                setPassword("123456");
+              }}
+              className="p-2.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-left transition group"
+            >
+              <div className="text-[11px] font-bold text-amber-900 group-hover:text-amber-950 flex items-center justify-between">
+                <span>🔧 Thợ Máy (UC-07)</span>
+                <span className="text-[10px] font-mono text-amber-700">0988888803</span>
+              </div>
+              <div className="text-[10px] text-amber-700 mt-0.5 truncate">Tablet Lực Siết & KCS</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPhone("0988888802");
+                setPassword("123456");
+              }}
+              className="p-2.5 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-left transition group"
+            >
+              <div className="text-[11px] font-bold text-blue-900 group-hover:text-blue-950 flex items-center justify-between">
+                <span>📋 Quản Đốc</span>
+                <span className="text-[10px] font-mono text-blue-700">0988888802</span>
+              </div>
+              <div className="text-[10px] text-blue-700 mt-0.5 truncate">Điều phối Kanban</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPhone("0988888801");
+                setPassword("123456");
+              }}
+              className="p-2.5 rounded-xl border border-purple-200 bg-purple-50 hover:bg-purple-100 text-left transition group"
+            >
+              <div className="text-[11px] font-bold text-purple-900 group-hover:text-purple-950 flex items-center justify-between">
+                <span>👔 Cố Vấn DV</span>
+                <span className="text-[10px] font-mono text-purple-700">0988888801</span>
+              </div>
+              <div className="text-[10px] text-purple-700 mt-0.5 truncate">Tiếp nhận & Báo giá</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPhone("0797526990");
+                setPassword("123456");
+              }}
+              className="p-2.5 rounded-xl border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-left transition group"
+            >
+              <div className="text-[11px] font-bold text-emerald-900 group-hover:text-emerald-950 flex items-center justify-between">
+                <span>👑 Chủ Gara (Owner)</span>
+                <span className="text-[10px] font-mono text-emerald-700">0797526990</span>
+              </div>
+              <div className="text-[10px] text-emerald-700 mt-0.5 truncate">Dashboard Doanh Thu</div>
+            </button>
+          </div>
+        </div>
       </div>
 
     </div>

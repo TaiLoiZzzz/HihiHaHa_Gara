@@ -10,7 +10,7 @@ export default function AdvisorLayout({
   return (
     <div className="flex flex-col min-h-screen bg-brand-light dark:bg-brand-dark transition-colors">
       <StaffNavbar role="advisor" />
-      <main className="flex-1 py-10 px-6 max-w-7xl mx-auto w-full">
+      <main className="flex-1 py-4 sm:py-8 px-3 sm:px-6 max-w-7xl mx-auto w-full">
         {children}
       </main>
       <PublicFooter />

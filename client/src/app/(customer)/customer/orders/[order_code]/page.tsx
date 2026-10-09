@@ -317,17 +317,17 @@ export default function WorkOrderDetailPage({ params }: Props) {
       )}
 
       {/* Bảng Báo Giá Động Từng Phần (Granular Approval) */}
-      <div className="p-8 rounded-3xl bg-white dark:bg-brand-cardDark border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="p-4 sm:p-6 md:p-8 rounded-3xl bg-white dark:bg-brand-cardDark border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+            <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100">
               Chi Tiết Báo Giá Động (Thuế VAT 8% Nghị định 44/2023)
             </h3>
             <p className="text-xs text-zinc-500 mt-1">
               Khách hàng có toàn quyền bấm chọn hoặc bỏ chọn từng phụ tùng/dịch vụ trước khi ký duyệt
             </p>
           </div>
-          <span className="text-xs font-mono font-bold px-3 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 rounded-xl">
+          <span className="text-xs font-mono font-bold px-3 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 rounded-xl self-start sm:self-auto shrink-0">
             {selectedItems.length}/{items.length} Hạng Mục Chọn
           </span>
         </div>
@@ -338,26 +338,26 @@ export default function WorkOrderDetailPage({ params }: Props) {
             <div 
               key={idx}
               onClick={() => toggleItem(idx)}
-              className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+              className={`p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 ${
                 item.selected 
                   ? "bg-amber-50/50 dark:bg-amber-500/5 border-amber-500/30 dark:border-amber-500/30" 
                   : "bg-zinc-50 dark:bg-zinc-900/40 border-zinc-200 dark:border-zinc-800 opacity-60"
               }`}
             >
-              <div className="flex items-center gap-4">
-                <div className="text-amber-500">
+              <div className="flex items-start sm:items-center gap-3 sm:gap-4">
+                <div className="text-amber-500 shrink-0 mt-0.5 sm:mt-0">
                   {item.selected ? (
                     <CheckCircle2 className="w-5 h-5 fill-amber-500 text-white dark:text-zinc-950" />
                   ) : (
                     <Circle className="w-5 h-5 text-zinc-400" />
                   )}
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                    <span className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">
                       {item.name}
                     </span>
-                    <span className="px-2 py-0.5 text-[10px] font-mono rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+                    <span className="px-2 py-0.5 text-[10px] font-mono rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 shrink-0">
                       {item.type === "PART" ? "Phụ Tùng" : "Tiền Công"}
                     </span>
                   </div>
@@ -367,7 +367,7 @@ export default function WorkOrderDetailPage({ params }: Props) {
                 </div>
               </div>
 
-              <div className="text-right">
+              <div className="text-left sm:text-right pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800/80 flex sm:flex-col justify-between items-baseline sm:items-end">
                 <p className="font-bold text-sm font-mono text-zinc-900 dark:text-zinc-100">
                   {formatCurrencyVND(item.unit_price * item.quantity)}
                 </p>
@@ -453,10 +453,10 @@ export default function WorkOrderDetailPage({ params }: Props) {
       </div>
 
       {/* Tiến Độ Thi Công & Ảnh Nghiệm Thu Thực Tế */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
         
         {/* Timeline Trạng Thái Thi Công */}
-        <div className="p-8 rounded-3xl bg-white dark:bg-brand-cardDark border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6">
+        <div className="p-4 sm:p-6 md:p-8 rounded-3xl bg-white dark:bg-brand-cardDark border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4 sm:space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <Clock className="w-4 h-4 text-amber-500" />
@@ -494,7 +494,7 @@ export default function WorkOrderDetailPage({ params }: Props) {
         </div>
 
         {/* Ảnh Nghiệm Thu Từ Khoang Nâng (Evidence Photos) */}
-        <div className="p-8 rounded-3xl bg-white dark:bg-brand-cardDark border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6">
+        <div className="p-4 sm:p-6 md:p-8 rounded-3xl bg-white dark:bg-brand-cardDark border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4 sm:space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <Camera className="w-4 h-4 text-amber-500" />

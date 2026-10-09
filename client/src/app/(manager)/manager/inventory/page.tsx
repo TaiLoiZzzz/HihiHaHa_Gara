@@ -193,33 +193,33 @@ export default function WorkshopInventoryPage() {
       </div>
 
       {/* Summary KPI Cards - Light Theme */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-1">
-          <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Tổng SKU Trong Kho</p>
-          <p className="text-2xl font-black font-mono text-slate-900">{items.length} <span className="text-xs font-medium text-slate-500">mã</span></p>
-          <p className="text-[11px] text-slate-500 font-medium">Hệ thống kho tập trung</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-1">
+          <p className="text-[11px] sm:text-xs text-slate-500 uppercase font-bold tracking-wider">Tổng SKU Trong Kho</p>
+          <p className="text-xl sm:text-2xl font-black font-mono text-slate-900">{items.length} <span className="text-xs font-medium text-slate-500">mã</span></p>
+          <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium">Hệ thống kho tập trung</p>
         </div>
-        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-1">
-          <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Tổng Giá Trị Tồn Kho</p>
-          <p className="text-2xl font-black font-mono text-amber-600">
+        <div className="p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-1">
+          <p className="text-[11px] sm:text-xs text-slate-500 uppercase font-bold tracking-wider">Tổng Giá Trị Tồn Kho</p>
+          <p className="text-lg sm:text-2xl font-black font-mono text-amber-600 truncate">
             {formatVND(totalStockValue || 1482000000)}
           </p>
-          <p className="text-[11px] text-slate-500 font-medium">Giá vốn tài sản vật tư</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium">Giá vốn tài sản vật tư</p>
         </div>
-        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-1">
-          <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Cảnh Báo Chạm Ngưỡng Đỏ</p>
-          <p className="text-2xl font-black font-mono text-red-600">
+        <div className="p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-1">
+          <p className="text-[11px] sm:text-xs text-slate-500 uppercase font-bold tracking-wider">Cảnh Báo Chạm Ngưỡng Đỏ</p>
+          <p className="text-xl sm:text-2xl font-black font-mono text-red-600">
             {lowStockCount} <span className="text-xs font-medium text-slate-500">mã</span>
           </p>
-          <p className="text-[11px] text-red-600/90 font-medium">Dưới ngưỡng an toàn</p>
+          <p className="text-[10px] sm:text-[11px] text-red-600/90 font-medium">Dưới ngưỡng an toàn</p>
         </div>
-        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-1">
-          <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Đồng Bộ Dữ Liệu Kho</p>
+        <div className="p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-1">
+          <p className="text-[11px] sm:text-xs text-slate-500 uppercase font-bold tracking-wider">Đồng Bộ Dữ Liệu Kho</p>
           <div className="flex items-center gap-2 mt-1">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <p className="text-xl font-black text-emerald-600 font-mono">Trực Tuyến</p>
+            <p className="text-lg sm:text-xl font-black text-emerald-600 font-mono">Trực Tuyến</p>
           </div>
-          <p className="text-[11px] text-emerald-700 font-medium">Thời gian thực 24/7</p>
+          <p className="text-[10px] sm:text-[11px] text-emerald-700 font-medium">Thời gian thực 24/7</p>
         </div>
       </div>
 

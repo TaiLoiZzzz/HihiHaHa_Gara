@@ -125,19 +125,34 @@ function TechnicianTabletContent() {
         if (Array.isArray(wo.tasks) && wo.tasks.length > 0) {
           setTasks(wo.tasks);
         } else if (wo.estimate?.items && wo.estimate.items.length > 0) {
-          const generatedTasks = wo.estimate.items.map((it: any, idx: number) => ({
-            id: `task-${idx + 1}`,
-            name: it.name,
-            code: it.part_code || `TASK-${idx + 1}`,
-            spec: it.type === "PART" ? "Linh kiện OEM chính hãng" : "Quy trình gara 4S tiêu chuẩn",
-            status: "pending" as const,
-            progress: 0,
-          }));
+          const generatedTasks = wo.estimate.items.map((it: any, idx: number) => {
+            let spec = "Lực siết bu-lông chuẩn hãng: 45 N.m • Tiêu chuẩn 4S";
+            const lower = (it.name || "").toLowerCase();
+            if (lower.includes("nhớt") || lower.includes("lọc")) {
+              spec = "Lực siết cốc lọc: 25 N.m • Ốc rốn xả: 40 N.m • Dầu 0W-20 Castrol";
+            } else if (lower.includes("phanh") || lower.includes("thắng") || lower.includes("lốp") || lower.includes("bánh")) {
+              spec = "Lực siết cùm Caliper: 34 N.m • Lực siết tắc-kê lốp: 103 N.m";
+            } else if (lower.includes("gầm") || lower.includes("treo") || lower.includes("càng")) {
+              spec = "Lực siết đai ốc càng A & gầm: 85 N.m (±5%) • Cân chỉnh Toe: 0°00'";
+            } else if (it.type === "PART") {
+              spec = "Linh kiện OEM chính hãng • Kiểm tra cân lực N.m theo tài liệu kỹ thuật";
+            }
+            return {
+              id: `task-${idx + 1}`,
+              name: it.name,
+              code: it.part_code || `TASK-${idx + 1}`,
+              spec,
+              status: "pending" as const,
+              progress: 0,
+            };
+          });
           setTasks(generatedTasks);
         } else {
           setTasks([
-            { id: "t1", name: "Khám xe & Kiểm tra hệ thống gầm máy", code: "INSPECT-01", spec: "Theo dõi rò rỉ", status: "pending", progress: 0 },
-            { id: "t2", name: "Thi công lắp đặt linh kiện thay thế", code: "REPAIR-01", spec: "Siết ốc đúng lực quy định", status: "pending", progress: 0 },
+            { id: "t1", name: "Xả nhớt động cơ & Thay cốc lọc TNGA", code: "OIL-TNGA-01", spec: "Lực siết cốc lọc: 25 N.m • Ốc rốn xả: 40 N.m • Dầu 0W-20", status: "pending", progress: 0 },
+            { id: "t2", name: "Bảo dưỡng cùm phanh & Thay má Akebono", code: "BRK-AKE-02", spec: "Lực siết cùm Caliper: 34 N.m • Lực siết tắc-kê lốp: 103 N.m", status: "pending", progress: 0 },
+            { id: "t3", name: "Kiểm tra siết lực đai ốc gầm & Hệ thống treo", code: "SUSP-TORQ-03", spec: "Lực siết đai ốc gầm: 85 N.m (±5%) • Cân chỉnh độ chụm Toe", status: "pending", progress: 0 },
+            { id: "t4", name: "Kiểm tra áp suất lốp & Nghiệm thu an toàn KCS", code: "KCS-FINAL-04", spec: "Áp suất 4 lốp: 2.3 bar • Độ đảo đĩa phanh < 0.03mm (Chuẩn KCS)", status: "pending", progress: 0 },
           ]);
         }
 
@@ -496,6 +511,10 @@ function TechnicianTabletContent() {
           </div>
 
           <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 font-mono text-[11px] font-bold mb-2">
+              <Wrench className="w-3.5 h-3.5 text-amber-600" />
+              <span>UC-07: Cân Lực N.m & KCS Tablet</span>
+            </div>
             <h2 className="text-xl font-bold">Màn Hình Khoang Nâng (Tablet)</h2>
             <p className="text-xs text-muted-foreground mt-1">
               Nhập mã PIN để mở khóa ca máy của <strong>{selectedTech.name}</strong>
@@ -558,9 +577,42 @@ function TechnicianTabletContent() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pb-16 font-sans">
+    <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 space-y-4 sm:space-y-6 pb-16 font-sans">
+      {/* Banner Nghiệp Vụ UC-07: Chuẩn Lực Siết N.m & Nghiệm Thu KCS FSM */}
+      <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-slate-50 border-2 border-amber-400/70 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500 text-slate-950 flex flex-col items-center justify-center font-black shrink-0 shadow-sm">
+            <span className="text-[10px] leading-none uppercase font-mono">USE CASE</span>
+            <span className="text-base leading-none font-mono">07</span>
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-sm sm:text-base font-black text-slate-950 uppercase tracking-tight">
+                Nghiệp Vụ Kỹ Thuật Viên Tại Cầu Nâng (Giao Diện Tablet)
+              </h2>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-400 text-slate-950 border border-amber-500 shadow-2xs">
+                ⚡ Chuẩn Lực Siết N.m & Nghiệm Thu KCS
+              </span>
+            </div>
+            <p className="text-xs text-slate-700 mt-1 leading-relaxed">
+              Thợ máy nhận xe theo lệnh điều phối &bull; Tick checklist thi công có <strong>thông số lực siết N.m</strong> chuẩn kỹ thuật của hãng &bull; Chụp ảnh cận cảnh nghiệm thu KCS &bull; Xác nhận hoàn tất 100% để <strong>máy trạng thái FSM tự động chuyển sang COMPLETED</strong> mở cổng thanh toán cho khách hàng.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0 self-stretch md:self-auto justify-end">
+          <Link
+            href="/manager/kanban"
+            className="px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+          >
+            <span>Bảng Kanban Quản Đốc</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      </div>
+
       {/* Header Điều Khiển Tablet & Đổi Thợ */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-3xl border border-slate-200 bg-white shadow-xs">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-3.5 sm:p-5 rounded-3xl border border-slate-200 bg-white shadow-xs">
         <div className="flex items-center gap-3.5">
           <img
             src={selectedTech.avatar}
@@ -752,7 +804,7 @@ function TechnicianTabletContent() {
       {mainTab === "active" && (
         <div className="space-y-6">
           {/* Thanh chuyển đổi các xe đang nhận */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
+          <div className="rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Car className="w-4 h-4 text-amber-500" />
@@ -913,27 +965,73 @@ function TechnicianTabletContent() {
                   </div>
                   <span className="px-3 py-1 rounded-lg bg-blue-600 text-white font-mono font-bold text-xs">CHỜ THANH TOÁN</span>
                 </div>
-              ) : overallProgress === 100 || tasks.every((t) => t.status === "done") ? (
-                <div className="p-6 rounded-2xl bg-amber-50 border-2 border-amber-400 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
-                  <div className="flex items-center gap-3">
-                    <Sparkles className="w-8 h-8 text-amber-500 shrink-0" />
+              ) : overallProgress === 100 || (tasks.length > 0 && tasks.every((t) => t.status === "done")) ? (
+                <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-500/15 via-emerald-400/10 to-emerald-50 border-2 border-emerald-500 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm animate-bounce">
+                      <CheckCircle2 className="w-7 h-7" />
+                    </div>
                     <div>
-                      <h3 className="text-base font-bold text-slate-900">Đã Hoàn Tất 100% Công Đoạn Kỹ Thuật!</h3>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-200 text-emerald-900 border border-emerald-400">
+                          KCS 100% ĐẠT CHUẨN
+                        </span>
+                        <span className="text-xs font-mono text-emerald-800 font-bold">FSM Transition Sẵn Sàng</span>
+                      </div>
+                      <h3 className="text-base font-black text-slate-950 mt-0.5">
+                        Đã Hoàn Tất 100% Checklist Thi Công & Siết Lực N.m!
+                      </h3>
                       <p className="text-xs text-slate-600">
-                        Bấm nút xác nhận để ký nghiệm thu an toàn KCS: Xe sẽ được lưu vào Lịch Sử của bạn và tự động mở thanh toán cho khách.
+                        Nhấp nút bên dưới để ký nghiệm thu an toàn KCS: Máy trạng thái FSM tự động chuyển xe sang <strong>COMPLETED</strong> và mở cổng thanh toán VietQR/VNPay cho khách.
                       </p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={handleCompleteOrder}
-                    className="px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-600/30 active:scale-95 flex items-center gap-2 shrink-0 animate-pulse"
+                    className="px-6 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-600/30 active:scale-95 flex items-center gap-2 shrink-0 animate-pulse border-2 border-emerald-400"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-white" />
-                    Nghiệm Thu KCS & Lưu Lịch Sử
+                    <CheckCircle2 className="w-5 h-5 text-white" />
+                    <span>✓ KÝ NGHIỆM THU KCS ➔ FSM: COMPLETED</span>
                   </button>
                 </div>
-              ) : null}
+              ) : (
+                <div className="p-4 sm:p-5 rounded-3xl bg-slate-900 text-white border-2 border-amber-400/80 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase font-mono bg-amber-400 text-slate-950">
+                        UC-07 FSM WORKFLOW
+                      </span>
+                      <span className="text-xs font-mono text-amber-300 font-bold">
+                        Trạng thái hiện tại: {activeOrder.current_status || "IN_PROGRESS"} ➔ Đích đến: COMPLETED
+                      </span>
+                    </div>
+                    <h3 className="text-sm sm:text-base font-bold text-white">
+                      Đang thi công tại cầu nâng • Tiến độ hiện tại: {overallProgress}%
+                    </h3>
+                    <p className="text-xs text-slate-300 leading-relaxed max-w-2xl">
+                      Thợ máy hoàn tất tick checklist thông số lực siết N.m & chụp ảnh KCS. Khi tiến độ đạt <strong>100%</strong>, hệ thống tự động mở nút nghiệm thu an toàn để máy trạng thái FSM chuyển sang <strong>COMPLETED</strong> (mở thanh toán khách hàng).
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 self-stretch sm:self-auto">
+                    <button
+                      type="button"
+                      disabled={isPaidOrder}
+                      onClick={() => {
+                        setOverallProgress(100);
+                        handleSyncProgress(100);
+                        setTasks((prev) => prev.map((t) => ({ ...t, status: "done", progress: 100 })));
+                        toast.success("⚡ Đã kích hoạt 100% Checklist & Siết Lực N.m để sẵn sàng KCS!");
+                      }}
+                      className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs uppercase tracking-wider transition shadow-sm active:scale-95 flex items-center justify-center gap-2"
+                      title="Kích hoạt nhanh tiến độ 100% để trình diễn nút nghiệm thu KCS cho Hội Đồng"
+                    >
+                      <Sparkles className="w-4 h-4 text-slate-950" />
+                      <span>⚡ KCS Nhanh 100% (Thuyết Trình)</span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Thanh Thông Tin Phương Tiện & Chủ Xe */}
               <div className="p-4 rounded-3xl border border-slate-200 bg-white shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
@@ -971,7 +1069,7 @@ function TechnicianTabletContent() {
                 {/* Cột trái: Tiến độ & Checklist (7 cols) */}
                 <div className="lg:col-span-7 space-y-6">
                   {/* Slider Tiến Độ Thực Tế */}
-                  <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+                  <div className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <h2 className="font-bold text-base flex items-center gap-2 text-slate-900">
@@ -1030,7 +1128,7 @@ function TechnicianTabletContent() {
                   </div>
 
                   {/* Checklist Hạng Mục Của Xe */}
-                  <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+                  <div className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs space-y-4">
                     <h2 className="font-bold text-base flex items-center gap-2 text-slate-900">
                       <FileCheck className="w-4 h-4 text-amber-500" />
                       Checklist Công Việc Cần Thi Công ({tasks.length} hạng mục)
@@ -1068,29 +1166,48 @@ function TechnicianTabletContent() {
                                 </span>
                                 <span className="text-[10px] font-mono text-slate-500">{task.code}</span>
                               </div>
-                              <p className="font-semibold text-sm text-slate-900">{task.name}</p>
-                              <p className="text-xs text-slate-600 font-mono mt-1 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
-                                ⚙️ {task.spec}
-                              </p>
+                              <p className="font-bold text-sm text-slate-900 leading-snug">{task.name}</p>
+                              <div className="mt-2 p-2 rounded-xl bg-amber-500/10 border border-amber-400/40 text-amber-950 flex items-start gap-2">
+                                <div className="p-1 rounded-md bg-amber-500 text-slate-950 font-black shrink-0 mt-0.5">
+                                  <Wrench className="w-3.5 h-3.5" />
+                                </div>
+                                <div className="text-xs font-mono leading-relaxed">
+                                  <div className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
+                                    Tiêu Chuẩn Lực Siết Kỹ Thuật (N.m):
+                                  </div>
+                                  <div className="font-bold text-slate-900">{task.spec}</div>
+                                </div>
+                              </div>
                             </div>
 
                             <button
                               type="button"
                               disabled={isPaidOrder}
                               onClick={() => handleToggleTaskStatus(task.id)}
-                              className={`px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                              className={`px-3.5 py-2.5 rounded-xl text-xs font-black shrink-0 transition-all shadow-xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 ${
                                 task.status === "done"
-                                  ? "bg-emerald-600 text-white"
+                                  ? "bg-emerald-600 text-white shadow-emerald-600/20 hover:bg-emerald-700"
                                   : task.status === "in_progress"
-                                  ? "bg-amber-500 text-slate-950 hover:bg-amber-600"
-                                  : "bg-slate-100 hover:bg-slate-200 text-slate-800"
+                                  ? "bg-amber-500 text-slate-950 hover:bg-amber-400 ring-2 ring-amber-500/30"
+                                  : "bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200"
                               }`}
                             >
-                              {task.status === "done"
-                                ? "✓ Xong"
-                                : task.status === "in_progress"
-                                ? "Đang làm..."
-                                : "Bắt đầu"}
+                              {task.status === "done" ? (
+                                <>
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  <span>✓ Xong (Đạt KCS)</span>
+                                </>
+                              ) : task.status === "in_progress" ? (
+                                <>
+                                  <Wrench className="w-3.5 h-3.5 animate-spin" />
+                                  <span>Đang Siết N.m...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Wrench className="w-3.5 h-3.5" />
+                                  <span>Bắt Đầu</span>
+                                </>
+                              )}
                             </button>
                           </div>
                         </div>
@@ -1101,7 +1218,7 @@ function TechnicianTabletContent() {
 
                 {/* Cột phải: Ảnh Nghiệm Thu (5 cols) */}
                 <div className="lg:col-span-5 space-y-6">
-                  <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+                  <div className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-bold text-base flex items-center gap-2 text-slate-900">
@@ -1202,7 +1319,42 @@ function TechnicianTabletContent() {
                 </div>
               </div>
             </>
-          ) : null}
+          ) : (
+            <div className="p-8 sm:p-12 rounded-3xl border-2 border-dashed border-amber-300 bg-amber-50/40 text-center space-y-4">
+              <div className="w-16 h-16 rounded-3xl bg-amber-500/10 text-amber-600 mx-auto flex items-center justify-center">
+                <Wrench className="w-8 h-8" />
+              </div>
+              <div className="max-w-md mx-auto space-y-1">
+                <h3 className="text-base sm:text-lg font-black text-slate-900">
+                  Chưa Chọn Xe Nào Để Thi Công Tại Cầu Nâng
+                </h3>
+                <p className="text-xs text-slate-600">
+                  Chọn một xe từ thanh điều hướng ở trên, nhận xe từ Hàng Đợi, hoặc bấm nút bên dưới để nạp xe mẫu kiểm thử nghiệp vụ UC-07 (Lực siết N.m & Nghiệm thu KCS).
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await loadOrderDetails("WO-20261001-0089");
+                    setActiveOrderCode("WO-20261001-0089");
+                  }}
+                  className="px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider transition shadow-md shadow-amber-500/20 active:scale-95 flex items-center gap-2"
+                >
+                  <Car className="w-4 h-4" />
+                  <span>👉 Nạp Xe Mẫu [51K-888.88] (Toyota Camry 2.5Q)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMainTab("waiting")}
+                  className="px-5 py-3 rounded-2xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs transition flex items-center gap-2 shadow-xs"
+                >
+                  <Clock className="w-4 h-4 text-blue-600" />
+                  <span>Xem Hàng Đợi Xe Chờ ({waitingQueue.length})</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1211,7 +1363,7 @@ function TechnicianTabletContent() {
       {/* ========================================================================= */}
       {mainTab === "waiting" && (
         <div className="space-y-4">
-          <div className="p-5 rounded-3xl border border-slate-200 bg-white shadow-xs">
+          <div className="p-3.5 sm:p-5 rounded-3xl border border-slate-200 bg-white shadow-xs">
             <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
               <Clock className="w-5 h-5 text-blue-600" />
               Hàng Đợi Các Xe Đang Chờ Trong Xưởng ({waitingQueue.length} xe)
@@ -1223,7 +1375,7 @@ function TechnicianTabletContent() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {waitingQueue.map((wq) => (
-              <div key={wq.order_code} className="p-5 rounded-3xl border border-slate-200 bg-white shadow-xs space-y-3">
+              <div key={wq.order_code} className="p-4 sm:p-5 rounded-3xl border border-slate-200 bg-white shadow-xs space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="font-mono font-black text-sm px-2.5 py-1 rounded-md bg-slate-900 text-white">
                     {wq.license_plate}
@@ -1310,7 +1462,7 @@ function TechnicianTabletContent() {
       {/* ========================================================================= */}
       {mainTab === "history" && (
         <div className="space-y-4">
-          <div className="p-5 rounded-3xl border border-slate-200 bg-white shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="p-3.5 sm:p-5 rounded-3xl border border-slate-200 bg-white shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
                 <History className="w-5 h-5 text-emerald-600" />
@@ -1328,7 +1480,7 @@ function TechnicianTabletContent() {
           </div>
 
           {completedOrders.length === 0 ? (
-            <div className="p-12 text-center rounded-3xl border border-dashed border-slate-300 bg-slate-50 space-y-2">
+            <div className="p-8 sm:p-12 text-center rounded-3xl border border-dashed border-slate-300 bg-slate-50 space-y-2">
               <Award className="w-10 h-10 text-slate-400 mx-auto" />
               <p className="text-base font-bold text-slate-800">Chưa có xe nào trong lịch sử hoàn thành</p>
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
@@ -1338,7 +1490,7 @@ function TechnicianTabletContent() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {completedOrders.map((co) => (
-                <div key={co.order_code} className="p-5 rounded-3xl border border-slate-200 bg-white shadow-xs space-y-3.5">
+                <div key={co.order_code} className="p-4 sm:p-5 rounded-3xl border border-slate-200 bg-white shadow-xs space-y-3.5">
                   <div className="flex items-center justify-between">
                     <span className="font-mono font-black text-sm px-2.5 py-1 rounded-md bg-slate-900 text-white">
                       {co.license_plate}

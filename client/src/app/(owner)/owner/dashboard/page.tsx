@@ -246,13 +246,13 @@ export default function OwnerDashboardPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center bg-muted/60 p-1 rounded-xl border text-xs">
+        <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-1 sm:pb-0 scrollbar-none">
+          <div className="flex items-center bg-muted/60 p-1 rounded-xl border text-xs shrink-0">
             {(["day", "week", "month", "quarter"] as const).map((r) => (
               <button
                 key={r}
                 onClick={() => setTimeRange(r)}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition-colors ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold transition-colors whitespace-nowrap ${
                   timeRange === r
                     ? "bg-amber-500 text-black shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
@@ -266,69 +266,69 @@ export default function OwnerDashboardPage() {
       </div>
 
       {/* KPI 4 Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Doanh thu */}
-        <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-2">
+        <div className="rounded-2xl border bg-card p-3.5 sm:p-5 shadow-sm space-y-1 sm:space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase text-muted-foreground">Tổng Doanh Thu</span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-              <DollarSign className="w-4 h-4" />
+            <span className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground">Tổng Doanh Thu</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+              <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <p className="text-2xl font-extrabold font-mono text-foreground">
+          <p className="text-lg sm:text-2xl font-extrabold font-mono text-foreground truncate">
             {formatVND(stats.monthlyRevenue)}
           </p>
-          <div className="flex items-center gap-1 text-xs text-emerald-500 font-semibold">
-            <ArrowUpRight className="w-3.5 h-3.5" />
-            <span>+{stats.revenueGrowth}% so với tháng trước</span>
+          <div className="flex items-center gap-1 text-[11px] sm:text-xs text-emerald-500 font-semibold truncate">
+            <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
+            <span>+{stats.revenueGrowth}%</span>
           </div>
         </div>
 
         {/* Card 2: Lượt xe */}
-        <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-2">
+        <div className="rounded-2xl border bg-card p-3.5 sm:p-5 shadow-sm space-y-1 sm:space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase text-muted-foreground">Lượt Xe Tiếp Nhận</span>
-            <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
-              <Car className="w-4 h-4" />
+            <span className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground">Lượt Xe</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+              <Car className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <p className="text-2xl font-extrabold font-mono text-foreground">
+          <p className="text-lg sm:text-2xl font-extrabold font-mono text-foreground">
             {stats.totalWorkOrders} lượt
           </p>
-          <p className="text-xs text-muted-foreground">
-            Doanh thu TB: <strong className="text-foreground font-mono">{formatVND(stats.avgOrderValue)}</strong>/xe
+          <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+            TB: <strong className="text-foreground font-mono">{formatVND(stats.avgOrderValue)}</strong>/xe
           </p>
         </div>
 
         {/* Card 3: Biên lợi nhuận phụ tùng */}
-        <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-2">
+        <div className="rounded-2xl border bg-card p-3.5 sm:p-5 shadow-sm space-y-1 sm:space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase text-muted-foreground">Biên LN Phụ Tùng OEM</span>
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
-              <Package className="w-4 h-4" />
+            <span className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground">Biên LN Phụ Tùng</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+              <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <p className="text-2xl font-extrabold font-mono text-amber-500">
+          <p className="text-lg sm:text-2xl font-extrabold font-mono text-amber-500">
             {stats.partsMargin}%
           </p>
-          <p className="text-xs text-muted-foreground">
-            Tồn kho an toàn: 500 mã SKU chuẩn hóa
+          <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+            500 mã SKU chuẩn
           </p>
         </div>
 
         {/* Card 4: Điểm CSAT */}
-        <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-2">
+        <div className="rounded-2xl border bg-card p-3.5 sm:p-5 shadow-sm space-y-1 sm:space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase text-muted-foreground">Độ Hài Lòng Khách (CSAT)</span>
-            <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center">
-              <Award className="w-4 h-4" />
+            <span className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground">CSAT Khách Hàng</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center shrink-0">
+              <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <p className="text-2xl font-extrabold font-mono text-foreground">
+          <p className="text-lg sm:text-2xl font-extrabold font-mono text-foreground">
             {stats.csatScore} / 5.0 ★
           </p>
-          <p className="text-xs text-emerald-500 font-semibold">
-            Tỷ lệ quay lại bảo dưỡng: 78.4%
+          <p className="text-[10px] sm:text-xs text-emerald-500 font-semibold truncate">
+            Quay lại: 78.4%
           </p>
         </div>
       </div>

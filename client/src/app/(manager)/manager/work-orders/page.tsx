@@ -192,26 +192,26 @@ export default function ManagerWorkOrdersPage() {
       </div>
 
       {/* Thống Kê Tổng Quan Xưởng */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
-          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tổng Xe Tiếp Nhận</div>
-          <div className="text-2xl font-black font-mono text-slate-900 mt-1">{orders.length} Lệnh</div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div className="p-3 sm:p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
+          <div className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tổng Xe Tiếp Nhận</div>
+          <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 mt-1">{orders.length} Lệnh</div>
         </div>
-        <div className="p-4 rounded-2xl bg-cyan-50/60 border border-cyan-200 shadow-xs">
-          <div className="text-[11px] font-bold text-cyan-800 uppercase tracking-wider">Đang Nâng Cầu Thi Công</div>
-          <div className="text-2xl font-black font-mono text-cyan-900 mt-1">
+        <div className="p-3 sm:p-4 rounded-2xl bg-cyan-50/60 border border-cyan-200 shadow-xs">
+          <div className="text-[10px] sm:text-[11px] font-bold text-cyan-800 uppercase tracking-wider">Đang Nâng Cầu</div>
+          <div className="text-xl sm:text-2xl font-black font-mono text-cyan-900 mt-1">
             {orders.filter((o) => o.status === "IN_PROGRESS").length} Xe
           </div>
         </div>
-        <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-200 shadow-xs">
-          <div className="text-[11px] font-bold text-blue-800 uppercase tracking-wider">Hoàn Tất Chờ Thanh Toán</div>
-          <div className="text-2xl font-black font-mono text-blue-900 mt-1">
+        <div className="p-3 sm:p-4 rounded-2xl bg-blue-50/60 border border-blue-200 shadow-xs">
+          <div className="text-[10px] sm:text-[11px] font-bold text-blue-800 uppercase tracking-wider">Chờ Thanh Toán</div>
+          <div className="text-xl sm:text-2xl font-black font-mono text-blue-900 mt-1">
             {orders.filter((o) => o.status === "COMPLETED").length} Xe
           </div>
         </div>
-        <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200 shadow-xs">
-          <div className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Đã Quyết Toán (PAID)</div>
-          <div className="text-2xl font-black font-mono text-emerald-900 mt-1">
+        <div className="p-3 sm:p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200 shadow-xs">
+          <div className="text-[10px] sm:text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Đã Quyết Toán</div>
+          <div className="text-xl sm:text-2xl font-black font-mono text-emerald-900 mt-1">
             {orders.filter((o) => o.status === "PAID").length} Xe
           </div>
         </div>
