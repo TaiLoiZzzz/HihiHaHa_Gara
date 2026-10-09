@@ -11,7 +11,7 @@ export const BLOG_POSTS = [
   {
     slug: "phanh-ceramic",
     title: "Phanh Ceramic vs Phanh Kim Loại: Sự Khác Biệt Sống Còn Về Hiệu Năng & Độ Bền",
-    excerpt: "Tại sao các dòng xe sang Lexus, BMW và xe thể thao lại chuyển hoàn toàn sang má phanh gốm Ceramic? Phân tích hệ số ma sát $\\mu$, nhiệt độ chịu tải và triệt tiêu tiếng rít khó chịu.",
+    excerpt: "Tại sao các dòng xe sang Lexus, BMW và xe thể thao lại chuyển hoàn toàn sang má phanh gốm Ceramic? Phân tích hệ số ma sát µ (mu), nhiệt độ chịu tải và triệt tiêu tiếng rít khó chịu.",
     category: "Hệ Thống Phanh",
     readTime: "6 phút đọc",
     date: "05/10/2026",
