@@ -645,21 +645,28 @@ const assignWorkOrderController = async (req, res, next) => {
       workOrder.estimated_finish_time = estimated_time;
     }
 
+    const actorName = req.user?.full_name || req.user?.phone_number || (req.user?.role === 'TECHNICIAN' ? 'Kỹ thuật viên' : 'Quản đốc');
+    const isSelfClaim = req.user?.role === 'TECHNICIAN';
+
     // Tu dong chuyen sang IN_PROGRESS (Dang thi cong) neu lenh da duoc duyet va da co tho + khoang
     if (['QUOTE_APPROVED', 'WAITING_PARTS', 'APPROVED'].includes(workOrder.current_status) && workOrder.bay && workOrder.bay !== 'Chưa xếp khoang') {
       workOrder.current_status = 'IN_PROGRESS';
       workOrder.workflow_timeline.push({
         status: 'IN_PROGRESS',
-        updated_by: req.user?.full_name || 'QUẢN ĐỐC',
+        updated_by: actorName,
         updated_at: new Date(),
-        note: `Đã phân công [${technician_name}] tại [${bay || workOrder.bay}]. Lệnh tự động chuyển sang Đang thi công (IN_PROGRESS)`,
+        note: isSelfClaim
+          ? `Kỹ thuật viên [${technician_name}] đã tự nhận xe vào [${bay || workOrder.bay}]. Bắt đầu thi công (IN_PROGRESS).`
+          : `Đã phân công [${technician_name}] tại [${bay || workOrder.bay}]. Lệnh tự động chuyển sang Đang thi công (IN_PROGRESS)`,
       });
     } else {
       workOrder.workflow_timeline.push({
         status: workOrder.current_status,
-        updated_by: req.user?.full_name || req.user?.phone_number || 'QUẢN ĐỐC',
+        updated_by: actorName,
         updated_at: new Date(),
-        note: `Quản đốc phân công [${technician_name || 'Kỹ thuật viên'}] phụ trách tại [${bay || 'Khoang nâng'}]`,
+        note: isSelfClaim
+          ? `Kỹ thuật viên [${technician_name}] đã nhận phụ trách xe tại [${bay || 'Khoang nâng'}]`
+          : `Quản đốc phân công [${technician_name || 'Kỹ thuật viên'}] phụ trách tại [${bay || 'Khoang nâng'}]`,
       });
     }
 

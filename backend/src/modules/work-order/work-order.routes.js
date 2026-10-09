@@ -81,11 +81,11 @@ router.post(
   updateProgressController
 );
 
-// quan doc phan cong ky thuat vien va khoang nang (Kanban)
+// quan doc phan cong ky thuat vien hoac ky thuat vien tu nhan xe vao khoang (Kanban / Tablet)
 router.patch(
   '/:order_code/assign',
   verifyToken,
-  authorizeRoles(ROLES.WORKSHOP_MANAGER, ROLES.SERVICE_ADVISOR, ROLES.OWNER),
+  authorizeRoles(ROLES.WORKSHOP_MANAGER, ROLES.SERVICE_ADVISOR, ROLES.OWNER, ROLES.TECHNICIAN),
   assignWorkOrderController
 );
 
