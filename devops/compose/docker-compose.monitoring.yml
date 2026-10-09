@@ -1,0 +1,89 @@
+version: '3.8'
+
+# ==============================================================================
+# HIHIHAHA AUTO GARAGE - OBSERVABILITY & MONITORING STACK
+# Services:
+#   - Prometheus (Port 9090)
+#   - Grafana (Port 3001)
+#   - Node Exporter (Host System Metrics - Port 9100)
+#   - cAdvisor (Docker Container Metrics - Port 8080)
+# ==============================================================================
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: hihihaha_prometheus
+    restart: always
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ../monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../monitoring/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - hihihaha_monitor_net
+      - hihihaha_internal_net
+
+  grafana:
+    image: grafana/grafana:10.4.1
+    container_name: hihihaha_grafana
+    restart: always
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-HiHiHaHa@2026!}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ../monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - hihihaha_monitor_net
+
+  node_exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: hihihaha_node_exporter
+    restart: always
+    command:
+      - '--path.rootfs=/host'
+    pid: host
+    volumes:
+      - '/:/host:ro,rslave'
+    ports:
+      - "9100:9100"
+    networks:
+      - hihihaha_monitor_net
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: hihihaha_cadvisor
+    restart: always
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - hihihaha_monitor_net
+
+networks:
+  hihihaha_monitor_net:
+    driver: bridge
+    name: hihihaha_monitor_net
+  hihihaha_internal_net:
+    external: true
+
+volumes:
+  prometheus_data:
+  grafana_data:

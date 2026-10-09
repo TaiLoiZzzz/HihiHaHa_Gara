@@ -1,0 +1,29 @@
+groups:
+  - name: hihihaha_infra_alerts
+    rules:
+      - alert: BackendServiceDown
+        expr: up{job="hihihaha-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HiHiHaHa Express Backend is DOWN"
+          description: "Backend service on port 5000 has been unreachable for more than 1 minute."
+
+      - alert: ContainerHighMemoryUsage
+        expr: (container_memory_usage_bytes{name=~"hihihaha.*"} / container_spec_memory_limit_bytes{name=~"hihihaha.*"}) * 100 > 85
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Memory usage detected on container {{ $labels.name }}"
+          description: "Container {{ $labels.name }} memory usage is above 85%."
+
+      - alert: HostDiskFillingUp
+        expr: (node_filesystem_free_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Host root disk is filling up (< 15% free)"
+          description: "Free disk space on host is below 15%. Clean up logs or docker volume cache immediately."

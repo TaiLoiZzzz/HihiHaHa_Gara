@@ -1,0 +1,32 @@
+# ==============================================================================
+# CLOUDFLARE TUNNEL CONFIGURATION (ZERO TRUST ARCHITECTURE)
+# Domain: hihihahagara.quachtailoi.id.vn
+# Eliminates open inbound ports, DDoS risks, and complex NAT port forwardings
+# ==============================================================================
+
+tunnel: hihihaha-garage-production
+credentials-file: /etc/cloudflared/hihihaha-tunnel.json
+
+# Performance & Connection Tuning
+warp-routing:
+  enabled: false
+
+originRequest:
+  connectTimeout: 30s
+  tlsTimeout: 10s
+  tcpKeepAlive: 30s
+  noHappyEyeballs: false
+  keepAliveConnections: 100
+  keepAliveTimeout: 90s
+  httpHostHeader: hihihahagara.quachtailoi.id.vn
+  disableChunkedEncoding: false
+
+ingress:
+  # Route traffic to local frontend or local Nginx gateway
+  - hostname: hihihahagara.quachtailoi.id.vn
+    service: http://localhost:8888
+    originRequest:
+      connectTimeout: 15s
+
+  # Fallback 404 for unmapped subdomains / hosts
+  - service: http_status:404

@@ -1,0 +1,74 @@
+version: '3.8'
+
+# ==============================================================================
+# HIHIHAHA AUTO GARAGE - LOCAL DEVELOPMENT DOCKER COMPOSE
+# Use case:
+#   - Exposes DB ports for GUI tools (Compass, DBeaver, RedisInsight, Neo4j Browser)
+#   - Fast local setup without installing 4 DBs on host OS
+# ==============================================================================
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: hihihaha_mongo_dev
+    restart: unless-stopped
+    ports:
+      - "27017:27017" # Exposed for MongoDB Compass / Studio 3T
+    volumes:
+      - mongo_dev_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: hihihaha_db
+    networks:
+      - hihihaha_dev_net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: hihihaha_postgres_dev
+    restart: unless-stopped
+    ports:
+      - "5432:5432" # Exposed for DBeaver / pgAdmin / TablePlus
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: hihihaha_db
+    volumes:
+      - pg_dev_data:/var/lib/postgresql/data
+    networks:
+      - hihihaha_dev_net
+
+  neo4j:
+    image: neo4j:5-community
+    container_name: hihihaha_neo4j_dev
+    restart: unless-stopped
+    ports:
+      - "7474:7474" # Web Browser UI: http://localhost:7474
+      - "7687:7687" # Bolt protocol
+    environment:
+      NEO4J_AUTH: neo4j/neo4j123456
+    volumes:
+      - neo4j_dev_data:/data
+    networks:
+      - hihihaha_dev_net
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: hihihaha_redis_dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379" # Exposed for RedisInsight
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - hihihaha_dev_net
+
+networks:
+  hihihaha_dev_net:
+    driver: bridge
+    name: hihihaha_dev_net
+
+volumes:
+  mongo_dev_data:
+  pg_dev_data:
+  neo4j_dev_data:
+  redis_dev_data:
