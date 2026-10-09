@@ -61,17 +61,30 @@ const TECHNICIANS = [
  * 2. TORQUE: Cốc lọc nhớt, ốc rốn xả, má phanh, cùm Caliper, bánh xe -> Lực siết N.m theo tiêu chuẩn hãng
  * 3. LABOR / INSPECTION: Công đoạn dịch vụ, vệ sinh, kiểm tra an toàn KCS 4S
  */
+/**
+ * BỘ GIẢI QUYẾT THÔNG SỐ KỸ THUẬT NĂNG ĐỘNG (Dynamic Technical Specification Resolver)
+ * 1. Ưu tiên số 1: Lấy trực tiếp thông số `spec` / `technical_spec` đã được nhập trong CSDL Kho Phụ Tùng (Master Inventory).
+ * 2. Ưu tiên số 2: Ánh xạ theo Nhóm Phụ Tùng chuẩn công nghiệp (`category` trong database):
+ *    - FLUIDS / LUBRICANTS: Định mức châm (Lít), tiêu chuẩn phẩm cấp SAE/API (KHÔNG GHI LỰC SIẾT!)
+ *    - WIPER_SYSTEM: Ngàm khóa gạt mưa (Push-Button/U-Hook), kiểm tra mặt quét kính (KHÔNG GHI LỰC SIẾT!)
+ *    - ELECTRICAL: Điện áp ắc quy, dòng CCA, siết cọc bình 6 N.m
+ *    - IGNITION: Khe hở chấu bugi 1.1mm, siết ren bugi 22 N.m
+ *    - FILTRATION: Chiều mũi tên Air Flow (lọc gió) hoặc Lực siết cốc lọc (lọc nhớt)
+ *    - BRAKE_SYSTEM / SUSPENSION: Lực siết cùm Caliper 34 N.m, ốc lốp 103 N.m, đai ốc gầm 85 N.m
+ * 3. Ưu tiên số 3 (Linh kiện mới chưa có phân loại): Quy chuẩn lắp đặt linh kiện OEM (KHÔNG BỊA LỰC SIẾT N.M).
+ */
 function classifyTaskSpec(item: any, idx: number): TaskItem {
   const rawName = String(item.name || "").trim();
   const lower = rawName.toLowerCase();
   const code = item.part_code || item.code || `TASK-${idx + 1}`;
+  const rawCat = String(item.category || "").toUpperCase();
   const isPart = item.type === "PART";
 
   let displayName = rawName;
-  let detailNote = "";
+  let detailNote = item.detailNote || "";
 
-  // 1. Rút gọn tiêu đề nếu là đoạn mô tả chẩn đoán dài dòng
-  if (rawName.length > 60) {
+  // 1. Nếu tên công việc quá dài (ghi chú chẩn đoán dài dòng), rút gọn tiêu đề hiển thị và đưa vào ghi chú
+  if (rawName.length > 60 && !item.detailNote) {
     detailNote = rawName;
     if (lower.includes("phanh") || lower.includes("cùm") || lower.includes("caliper") || lower.includes("đĩa")) {
       displayName = "Kiểm tra độ dày đĩa phanh & Thay cặp má phanh trước";
@@ -82,18 +95,85 @@ function classifyTaskSpec(item: any, idx: number): TaskItem {
     }
   }
 
-  // 2. CHẤT LỎNG / DẦU NHỚT / NƯỚC LÀM MÁT (FLUID) - Tuyệt đối không ghi lực siết N.m
+  // 2. NẾU TRONG CSDL ĐÃ CÓ SẴN THÔNG SỐ (TECHNICAL SPEC ĐÃ NHẬP SẴN TRONG KHO HOẶC BÁO GIÁ)
+  if (item.spec && !item.spec.includes("Lực siết bu-lông chuẩn hãng: 45 N.m") && !item.spec.includes("Theo dõi rò rỉ")) {
+    // Xác định category nếu chưa có
+    let cat: "TORQUE" | "FLUID" | "LABOR" | "INSPECTION" = "TORQUE";
+    if (rawCat === "FLUIDS" || lower.includes("dầu") || lower.includes("nhớt")) cat = "FLUID";
+    else if (!isPart || rawCat === "LABOR" || lower.includes("công")) cat = "LABOR";
+    else if (rawCat === "INSPECTION" || lower.includes("kcs")) cat = "INSPECTION";
+
+    return {
+      id: item.id || `task-${idx + 1}`,
+      name: displayName,
+      code,
+      category: item.category || cat,
+      categoryLabel: item.categoryLabel || (cat === "FLUID" ? "ĐỊNH MỨC & PHẨM CẤP CHẤT LỎNG" : cat === "TORQUE" ? "TIÊU CHUẨN LỰC SIẾT ĐAI ỐC (N.m)" : "QUY CHUẨN THI CÔNG KỸ THUẬT"),
+      spec: item.spec,
+      detailNote,
+      status: (item.status as any) || "pending",
+      progress: item.progress || 0,
+    };
+  }
+
+  // 3. HỆ THỐNG GẠT MƯA (WIPER_SYSTEM) - Tuyệt đối không siết lực N.m!
+  if (rawCat === "WIPER_SYSTEM" || lower.includes("gạt mưa") || lower.includes("chổi gạt") || lower.includes("lưỡi gạt")) {
+    return {
+      id: item.id || `task-${idx + 1}`,
+      name: displayName,
+      code,
+      category: "LABOR",
+      categoryLabel: "🌧️ QUY CHUẨN LẮP ĐẶT GẠT MƯA",
+      spec: "Lắp đúng chuẩn ngàm khóa (Push-Button/U-Hook) • Tháo vỏ bọc nhựa bảo vệ • Test phun nước quét êm không kêu",
+      detailNote,
+      status: (item.status as any) || "pending",
+      progress: item.progress || 0,
+    };
+  }
+
+  // 4. HỆ THỐNG ĐIỆN & ẮC QUY (ELECTRICAL)
+  if (rawCat === "ELECTRICAL" || lower.includes("ắc quy") || lower.includes("ac quy") || lower.includes("battery") || lower.includes("máy phát") || lower.includes("củ đề")) {
+    return {
+      id: item.id || `task-${idx + 1}`,
+      name: displayName,
+      code,
+      category: "TORQUE",
+      categoryLabel: "⚡ TIÊU CHUẨN ĐIỆN ÁP & SIẾT CỌC BÌNH",
+      spec: "Đo điện áp không tải > 12.6V • Lực siết cọc bình ắc quy: 6 N.m • Bôi mỡ tiếp điểm chống oxy hóa cực",
+      detailNote,
+      status: (item.status as any) || "pending",
+      progress: item.progress || 0,
+    };
+  }
+
+  // 5. HỆ THỐNG ĐÁNH LỬA (IGNITION) - Bugi & Bô-bin
+  if (rawCat === "IGNITION" || lower.includes("bugi") || lower.includes("spark plug") || lower.includes("bô bin") || lower.includes("bobin")) {
+    return {
+      id: item.id || `task-${idx + 1}`,
+      name: displayName,
+      code,
+      category: "TORQUE",
+      categoryLabel: "🔥 LỰC SIẾT REN BUGI & ĐÁNH LỬA",
+      spec: "Lực siết ren bugi: 22 N.m (không bôi dầu ren) • Kiểm tra khe hở chấu điện cực: 1.1mm (chuẩn Iridium)",
+      detailNote,
+      status: (item.status as any) || "pending",
+      progress: item.progress || 0,
+    };
+  }
+
+  // 6. CHẤT LỎNG / DẦU NHỚT / NƯỚC LÀM MÁT (FLUIDS)
   if (
-    (lower.includes("dầu") || lower.includes("nhớt") || lower.includes("castrol") || lower.includes("nước làm mát") || lower.includes("coolant")) &&
-    !lower.includes("lọc") &&
-    !lower.includes("cốc")
+    rawCat === "FLUIDS" ||
+    ((lower.includes("dầu") || lower.includes("nhớt") || lower.includes("castrol") || lower.includes("nước làm mát") || lower.includes("coolant") || lower.includes("nước rửa kính") || lower.includes("dầu phanh")) &&
+      !lower.includes("lọc") &&
+      !lower.includes("cốc"))
   ) {
     return {
       id: item.id || `task-${idx + 1}`,
       name: displayName,
       code,
       category: "FLUID",
-      categoryLabel: "ĐỊNH MỨC & TIÊU CHUẨN PHẨM CẤP DẦU NHỚT",
+      categoryLabel: "💧 ĐỊNH MỨC & PHẨM CẤP DẦU NHỚT",
       spec: "Định mức châm: 4.2 Lít (vạch MAX que thăm) • Tiêu chuẩn SAE 0W-20 API SP • Lau sạch miệng nắp & que thăm",
       detailNote,
       status: (item.status as any) || "pending",
@@ -101,37 +181,43 @@ function classifyTaskSpec(item: any, idx: number): TaskItem {
     };
   }
 
-  // 3. LỌC NHỚT & CỐC LỌC & ỐC RỐN XẢ (FILTER / DRAIN PLUG)
-  if (lower.includes("lọc nhớt") || lower.includes("cốc lọc") || lower.includes("04152")) {
+  // 7. BỘ LỌC (FILTRATION)
+  if (rawCat === "FILTRATION" || lower.includes("lọc nhớt") || lower.includes("cốc lọc") || lower.includes("04152")) {
     return {
       id: item.id || `task-${idx + 1}`,
       name: displayName,
       code,
       category: "TORQUE",
-      categoryLabel: "LỰC SIẾT CỐC LỌC & ỐC RỐN XẢ (N.m)",
+      categoryLabel: "🔧 LỰC SIẾT CỐC LỌC & ỐC RỐN XẢ (N.m)",
       spec: "Lực siết cốc lọc nhớt: 25 N.m • Lực siết ốc rốn xả đáy: 40 N.m (thay long-đền nhôm mới chống rò rỉ)",
       detailNote,
       status: (item.status as any) || "pending",
       progress: item.progress || 0,
     };
   }
+  if (lower.includes("lọc gió") || lower.includes("lọc điều hòa") || lower.includes("cabin filter") || lower.includes("air filter")) {
+    return {
+      id: item.id || `task-${idx + 1}`,
+      name: displayName,
+      code,
+      category: "LABOR",
+      categoryLabel: "🍃 QUY CHUẨN LẮP ĐẶT LỌC GIÓ OEM",
+      spec: "Vệ sinh hút bụi sạch hộp lọc • Lắp đúng chiều mũi tên luồng khí (Air Flow) • Cài kín các ngàm khóa",
+      detailNote,
+      status: (item.status as any) || "pending",
+      progress: item.progress || 0,
+    };
+  }
 
-  // 4. MÁ PHANH / ĐĨA PHANH / CÙM CALIPER / BÁNH XE (BRAKE & WHEEL - TORQUE)
-  if (
-    lower.includes("má phanh") ||
-    lower.includes("đĩa phanh") ||
-    lower.includes("caliper") ||
-    lower.includes("akebono") ||
-    lower.includes("tắc-kê") ||
-    lower.includes("lốp")
-  ) {
+  // 8. HỆ THỐNG PHANH (BRAKE_SYSTEM)
+  if (rawCat === "BRAKE_SYSTEM" || lower.includes("má phanh") || lower.includes("đĩa phanh") || lower.includes("phanh") || lower.includes("caliper") || lower.includes("akebono") || lower.includes("tắc-kê") || lower.includes("lốp")) {
     if (isPart || lower.includes("má") || lower.includes("thay") || lower.includes("lắp")) {
       return {
         id: item.id || `task-${idx + 1}`,
         name: displayName,
         code,
         category: "TORQUE",
-        categoryLabel: "LỰC SIẾT CÙM PHANH & TẮC-KÊ LỐP (N.m)",
+        categoryLabel: "🔧 LỰC SIẾT CÙM PHANH & TẮC-KÊ LỐP (N.m)",
         spec: "Lực siết ốc cùm Caliper: 34 N.m • Lực siết tắc-kê lốp: 103 N.m (cân lực chéo cánh sao) • Bôi mỡ đồng lưng má",
         detailNote,
         status: (item.status as any) || "pending",
@@ -140,23 +226,23 @@ function classifyTaskSpec(item: any, idx: number): TaskItem {
     }
   }
 
-  // 5. GẦM / TREO / CÀNG A / ROTUYN (SUSPENSION - TORQUE)
-  if (lower.includes("gầm") || lower.includes("treo") || lower.includes("càng") || lower.includes("rotuyn")) {
+  // 9. HỆ THỐNG GẦM & TREO (SUSPENSION)
+  if (rawCat === "SUSPENSION" || lower.includes("gầm") || lower.includes("treo") || lower.includes("càng") || lower.includes("rotuyn") || lower.includes("giảm xóc")) {
     return {
       id: item.id || `task-${idx + 1}`,
       name: displayName,
       code,
       category: "TORQUE",
-      categoryLabel: "LỰC SIẾT ĐAI ỐC GẦM & HỆ THỐNG TREO (N.m)",
-      spec: "Lực siết đai ốc càng A & gầm: 85 N.m (±5%) • Cân chỉnh độ chụm Toe: 0°00'",
+      categoryLabel: "🔧 LỰC SIẾT ĐAI ỐC GẦM & HỆ THỐNG TREO (N.m)",
+      spec: "Lực siết đai ốc càng A & gầm: 85 N.m (±5%) • Cân chỉnh góc đặt độ chụm Toe: 0°00'",
       detailNote,
       status: (item.status as any) || "pending",
       progress: item.progress || 0,
     };
   }
 
-  // 6. CÔNG LAO ĐỘNG / QUY TRÌNH THI CÔNG (LABOR)
-  if (!isPart || lower.includes("công") || lower.includes("dịch vụ") || lower.includes("dưỡng")) {
+  // 10. CÔNG LAO ĐỘNG / QUY TRÌNH THI CÔNG (LABOR)
+  if (!isPart || rawCat === "LABOR" || lower.includes("công") || lower.includes("dịch vụ") || lower.includes("dưỡng")) {
     let spec = "Quy chuẩn 4S: Thao tác đúng quy trình hãng • Kiểm tra an toàn trước khi hạ cầu nâng";
     if (lower.includes("dầu") && lower.includes("phanh")) {
       spec = "Quy chuẩn 4S: Xả sạch dầu cũ đáy các-te, vệ sinh ắc trượt cùm Caliper • Nổ máy test rò rỉ 3 phút";
@@ -176,14 +262,14 @@ function classifyTaskSpec(item: any, idx: number): TaskItem {
     };
   }
 
-  // 7. MẶC ĐỊNH CHO LINH KIỆN KHÁC
+  // 11. DỰ PHÒNG AN TOÀN CHO BẤT KỲ LINH KIỆN NÀO KHÁC (TUYỆT ĐỐI KHÔNG BỊA LỰC SIẾT N.M)
   return {
     id: item.id || `task-${idx + 1}`,
     name: displayName,
     code,
-    category: "TORQUE",
-    categoryLabel: "TIÊU CHUẨN LỰC SIẾT KỸ THUẬT (N.m)",
-    spec: "Lực siết bu-lông gá chuẩn: 45 N.m • Linh kiện OEM chính hãng",
+    category: "LABOR",
+    categoryLabel: "📦 QUY CHUẨN LẮP ĐẶT LINH KIỆN OEM",
+    spec: "Kiểm tra tương thích mã phụ tùng OEM • Lắp đặt theo cẩm nang bảo dưỡng tiêu chuẩn của hãng • Kiểm tra độ khít & an toàn khớp gá",
     detailNote,
     status: (item.status as any) || "pending",
     progress: item.progress || 0,
