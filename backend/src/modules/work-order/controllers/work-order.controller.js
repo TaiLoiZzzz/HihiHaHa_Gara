@@ -9,9 +9,9 @@ const { AppError } = require('../../../middlewares/errorHandler');
 
 // map trang thai hop le theo qui trinh gara (step 101 state machine guard)
 const ALLOWED_TRANSITIONS = {
-  DRAFT: ['INSPECTION', 'QUOTE_SENT', 'CANCELLED'],
-  INSPECTION: ['QUOTE_SENT', 'CANCELLED'],
-  QUOTE_SENT: ['QUOTE_APPROVED', 'APPROVED', 'WAITING_PARTS', 'CANCELLED'],
+  DRAFT: ['INSPECTION', 'QUOTE_SENT', 'QUOTE_APPROVED', 'APPROVED', 'WAITING_PARTS', 'CANCELLED'],
+  INSPECTION: ['QUOTE_SENT', 'QUOTE_APPROVED', 'APPROVED', 'WAITING_PARTS', 'IN_PROGRESS', 'CANCELLED'],
+  QUOTE_SENT: ['QUOTE_APPROVED', 'APPROVED', 'WAITING_PARTS', 'IN_PROGRESS', 'CANCELLED'],
   QUOTE_APPROVED: ['WAITING_PARTS', 'IN_PROGRESS', 'CANCELLED'],
   APPROVED: ['WAITING_PARTS', 'IN_PROGRESS', 'CANCELLED'],
   WAITING_PARTS: ['IN_PROGRESS', 'CANCELLED'],
@@ -42,8 +42,9 @@ const createWorkOrderController = async (req, res, next) => {
     const order_code = `WO-${dateStr}-${randomSuffix}`;
 
     const estimateData = calculateEstimateService(items || []);
-    // Quy chuan tiep nhan xe gara 4S: Xe vua vao xuong la INSPECTION (Tiep nhan xe - Cot 1 Kanban)
-    const initialStatus = 'INSPECTION';
+    // Neu khi tao lenh da kem hang muc phu tung/bao gia thi sang QUOTE_SENT (Cot 2: Cho khach duyet bao gia),
+    // neu chua co thi la INSPECTION (Cot 1: Tiep nhan / Kham xe)
+    const initialStatus = (Array.isArray(items) && items.length > 0) ? 'QUOTE_SENT' : 'INSPECTION';
 
     const workOrder = await WorkOrder.create({
       order_code,
@@ -264,14 +265,12 @@ const customerApproveEstimateController = async (req, res, next) => {
 
     const currentStatus = workOrder.current_status;
     const nextStatus = 'WAITING_PARTS';
-    if (
-      !ALLOWED_TRANSITIONS[currentStatus]?.includes(nextStatus) &&
-      !ALLOWED_TRANSITIONS[currentStatus]?.includes('QUOTE_APPROVED') &&
-      !ALLOWED_TRANSITIONS[currentStatus]?.includes('APPROVED')
-    ) {
+    
+    // Khach hang co the phe duyet bao gia o moi trang thai khoi dau (DRAFT, INSPECTION, QUOTE_SENT)
+    if (['COMPLETED', 'PAYMENT_PENDING', 'PAID', 'DELIVERED', 'CANCELLED'].includes(currentStatus)) {
       return next(
         new AppError(
-          `Không thể chuyển trạng thái từ [${currentStatus}] sang [${nextStatus}]`,
+          `Không thể phê duyệt báo giá khi đơn hàng đã ở trạng thái [${currentStatus}]`,
           400,
           'INVALID_STATUS_TRANSITION'
         )
