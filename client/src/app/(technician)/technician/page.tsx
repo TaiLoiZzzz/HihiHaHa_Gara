@@ -580,30 +580,8 @@ function TechnicianTabletContent() {
           </div>
         </div>
 
-        {/* Dropdown Đổi Thợ & Nút Khóa PIN */}
+        {/* Nút thao tác Tablet & Khóa PIN */}
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-2xl border border-slate-200">
-            <span className="text-xs font-bold text-slate-600 pl-1.5 hidden sm:inline">Chuyển Thợ:</span>
-            <select
-              value={selectedTech.id}
-              onChange={(e) => {
-                const target = TECHNICIANS.find((t) => t.id === e.target.value);
-                if (target) handleSelectTech(target);
-              }}
-              className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs max-w-[200px] sm:max-w-sm truncate"
-            >
-              {TECHNICIANS.map((t) => {
-                const wl = workloads.find((w) => w.id === t.id);
-                const plates = wl?.orders?.map((o: any) => o.license_plate).join(", ");
-                const label = plates ? `${t.name} • (${wl.orders.length} xe: ${plates})` : `${t.name} • (Rảnh)`;
-                return (
-                  <option key={t.id} value={t.id}>
-                    {label}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
 
           <button
             type="button"
