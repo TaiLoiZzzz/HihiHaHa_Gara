@@ -120,10 +120,13 @@ export default function CreateOrderPage() {
   // Initial estimate items - Bắt đầu sạch không có dữ liệu mẫu
   const [items, setItems] = useState<OrderItem[]>([]);
 
+  // Chế độ thêm: "labor" (Tiền công / Dịch vụ theo yêu cầu) hoặc "part" (Phụ tùng kho)
+  const [addMode, setAddMode] = useState<"labor" | "part">("labor");
+
   const [newItemName, setNewItemName] = useState("");
   const [newItemCode, setNewItemCode] = useState("");
-  const [newItemType, setNewItemType] = useState<"part" | "labor">("part");
-  const [newItemPrice, setNewItemPrice] = useState(350000);
+  const [newItemType, setNewItemType] = useState<"part" | "labor">("labor");
+  const [newItemPrice, setNewItemPrice] = useState<number>(300000);
 
   // Autocomplete suggestion states
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
@@ -201,23 +204,35 @@ export default function CreateOrderPage() {
   const vat = Math.round(subtotal * 0.08); // VAT 8%
   const grandTotal = subtotal + vat;
 
+  const handleSwitchMode = (mode: "labor" | "part") => {
+    setAddMode(mode);
+    setNewItemType(mode);
+    setNewItemName("");
+    setNewItemCode("");
+    setNewItemPrice(mode === "labor" ? 300000 : 350000);
+    setIsSuggestionsOpen(false);
+  };
+
   const handleAddItem = () => {
     if (!newItemName.trim()) {
-      toast.error("Vui lòng nhập tên hạng mục!");
+      toast.error(addMode === "labor" ? "Vui lòng nhập nội dung tiền công / yêu cầu sửa chữa!" : "Vui lòng nhập tên phụ tùng!");
       return;
     }
+    const finalType = addMode;
     const newItem: OrderItem = {
       id: Date.now().toString(),
-      name: newItemName,
-      code: newItemCode || `CUSTOM-${Date.now().toString().slice(-4)}`,
-      type: newItemType,
+      name: newItemName.trim(),
+      code: newItemCode || (finalType === "labor" ? `LAB-REQ-${Date.now().toString().slice(-4)}` : `PART-${Date.now().toString().slice(-4)}`),
+      type: finalType,
       quantity: 1,
       unitPrice: Number(newItemPrice) || 0,
     };
-    setItems([...items, newItem]);
+    setItems((prev) => [...prev, newItem]);
     setNewItemName("");
     setNewItemCode("");
-    toast.success("Đã thêm hạng mục vào báo giá sơ bộ!");
+    setNewItemPrice(addMode === "labor" ? 300000 : 350000);
+    setIsSuggestionsOpen(false);
+    toast.success(`Đã thêm ${finalType === "labor" ? "tiền công" : "phụ tùng"}: "${newItem.name}" (${formatVND(newItem.unitPrice)})`);
   };
 
   const handleRemoveItem = (id: string) => {
@@ -618,154 +633,260 @@ export default function CreateOrderPage() {
               )}
             </div>
 
-            {/* Quick add item form với Autocomplete Thông Minh */}
-            <div className="p-4 rounded-xl border border-dashed border-amber-300 bg-amber-50/40 space-y-3" ref={suggestionBoxRef}>
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-amber-500" /> Thêm nhanh hạng mục hoặc vật tư (Gợi ý thông minh)
-                </p>
-                <span className="text-[11px] text-slate-500">
-                  Gõ mã hoặc tên (ví dụ: <span className="font-mono text-amber-700 font-bold">Má phanh</span>, <span className="font-mono text-amber-700 font-bold">BRK</span>, <span className="font-mono text-amber-700 font-bold">Lọc</span>, <span className="font-mono text-amber-700 font-bold">Nhớt</span>)
+            {/* Quick add item form với 2 Chế Độ: Tiền Công Theo Yêu Cầu & Phụ Tùng Kho */}
+            <div className="p-4 sm:p-5 rounded-2xl border-2 border-slate-200 bg-slate-50/70 space-y-4 shadow-xs" ref={suggestionBoxRef}>
+              {/* Tab Selector: Tiền công vs Phụ tùng */}
+              <div className="flex items-center justify-between flex-wrap gap-2.5 border-b border-slate-200 pb-3">
+                <div className="flex items-center gap-1.5 p-1 bg-slate-200/80 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchMode("labor")}
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      addMode === "labor"
+                        ? "bg-emerald-600 text-white shadow-xs"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                    }`}
+                  >
+                    <Wrench className="w-3.5 h-3.5" />
+                    Tiền Công & Yêu Cầu Sửa Chữa
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchMode("part")}
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      addMode === "part"
+                        ? "bg-blue-600 text-white shadow-xs"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                    }`}
+                  >
+                    <Package className="w-3.5 h-3.5" />
+                    Phụ Tùng & Vật Tư Kho
+                  </button>
+                </div>
+
+                <span className="text-[11px] text-slate-500 font-medium">
+                  {addMode === "labor" 
+                    ? "Tự do nhập nội dung tiền công và đơn giá thỏa thuận với khách hàng" 
+                    : "Tra cứu theo mã hoặc tên phụ tùng có sẵn trong kho vật tư"}
                 </span>
               </div>
 
-              {/* Form Inputs & Autocomplete Container */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-start">
-                
-                {/* Input Tên Hạng Mục kèm Dropdown Gợi Ý */}
-                <div className="md:col-span-5 relative">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Gõ mã hoặc tên phụ tùng/nhân công..."
-                      value={newItemName}
-                      onFocus={() => setIsSuggestionsOpen(true)}
-                      onChange={(e) => {
-                        setNewItemName(e.target.value);
-                        setIsSuggestionsOpen(true);
-                      }}
-                      className="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-900 text-xs font-medium placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 shadow-xs"
-                    />
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" />
-                  </div>
-
-                  {/* POPUP GỢI Ý DROPDOWN DƯỚI INPUT */}
-                  {isSuggestionsOpen && filteredSuggestions.length > 0 && (
-                    <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden divide-y divide-slate-100 max-h-72 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150">
-                      <div className="px-3 py-1.5 bg-slate-50 flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider sticky top-0 z-10 border-b border-slate-100">
-                        <span className="flex items-center gap-1">
-                          <Package className="w-3 h-3 text-amber-500" />
-                          Kho phụ tùng & Công chuẩn ({filteredSuggestions.length})
-                        </span>
-                        <span className="text-amber-600 font-semibold lowercase">click để điền</span>
-                      </div>
-
-                      {filteredSuggestions.map((it) => (
-                        <div
-                          key={it.code}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            handleSelectSuggestion(it);
-                          }}
-                          className="p-2.5 hover:bg-amber-50/70 transition-colors cursor-pointer flex items-center justify-between gap-2.5 group text-left"
-                        >
-                          <div className="flex-1 min-w-0 space-y-0.5">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span
-                                className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
-                                  it.type === "part"
-                                    ? "bg-blue-100 text-blue-800 border border-blue-200"
-                                    : "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                                }`}
-                              >
-                                {it.type === "part" ? "Phụ tùng" : "Công"}
-                              </span>
-                              <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                                {it.code}
-                              </span>
-                              <span className="text-[10px] text-slate-500">{it.category}</span>
-                            </div>
-                            <p className="text-xs font-bold text-slate-900 group-hover:text-amber-700 truncate">
-                              {it.name}
-                            </p>
-                          </div>
-
-                          <div className="text-right shrink-0">
-                            <p className="text-xs font-black font-mono text-amber-600">
-                              {formatVND(it.price)}
-                            </p>
-                            {it.stock !== undefined && (
-                              <p className="text-[10px] text-emerald-700 font-semibold">
-                                Tồn: {it.stock} {it.unit || "cái"}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+              {/* Form Inputs theo Chế Độ */}
+              {addMode === "labor" ? (
+                /* CHẾ ĐỘ TIỀN CÔNG / DỊCH VỤ THEO YÊU CẦU */
+                <div className="space-y-3">
+                  {/* Gợi ý lấy từ yêu cầu khách hàng đã nhập ở trên */}
+                  {customerRequests.trim() && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Từ yêu cầu khách:</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewItemName(`Công xử lý: ${customerRequests.trim()}`);
+                          setNewItemCode(`LAB-CUST-REQ`);
+                        }}
+                        className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-2.5 py-1 rounded-lg transition flex items-center gap-1 shadow-2xs"
+                      >
+                        <Zap className="w-3 h-3 text-emerald-600" />
+                        Điền nhanh: &quot;{customerRequests.trim().slice(0, 50)}{customerRequests.trim().length > 50 ? "..." : ""}&quot;
+                      </button>
                     </div>
                   )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-end">
+                    {/* Tên tiền công / yêu cầu sửa chữa */}
+                    <div className="md:col-span-7 space-y-1">
+                      <label className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                        <Wrench className="w-3 h-3 text-emerald-600" /> Tên tiền công / Nội dung sửa chữa
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="VD: Công hạ số kiểm tra tiếng gầm, Công súc béc phun xăng, Công gò hàn..."
+                        value={newItemName}
+                        onChange={(e) => setNewItemName(e.target.value)}
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-medium placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 shadow-xs"
+                      />
+                    </div>
+
+                    {/* Đơn giá tiền công */}
+                    <div className="md:col-span-3 space-y-1">
+                      <label className="text-[11px] font-bold text-slate-700">
+                        Đơn giá tiền công (VNĐ)
+                      </label>
+                      <input
+                        type="number"
+                        step={10000}
+                        placeholder="VD: 300000"
+                        value={newItemPrice}
+                        onChange={(e) => setNewItemPrice(Number(e.target.value))}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-mono font-bold placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 shadow-xs"
+                      />
+                    </div>
+
+                    {/* Nút Thêm Tiền Công */}
+                    <div className="md:col-span-2">
+                      <button
+                        type="button"
+                        onClick={handleAddItem}
+                        className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xs transition flex items-center justify-center gap-1.5 active:scale-95"
+                      >
+                        <Plus className="w-4 h-4" /> Thêm Công
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Nhanh mức giá tiền công */}
+                  <div className="flex items-center gap-1.5 flex-wrap pt-0.5 text-xs">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Đơn giá nhanh:</span>
+                    {[150000, 250000, 350000, 450000, 650000, 1000000].map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setNewItemPrice(p)}
+                        className="px-2 py-0.5 rounded-md bg-white border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50 text-[10px] font-mono font-bold text-slate-700 transition"
+                      >
+                        {formatVND(p)}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Gợi ý các hạng mục tiền công chuẩn */}
+                  <div className="pt-1 flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Công chuẩn gara:</span>
+                    {AUTOMOTIVE_CATALOG.filter((it) => it.type === "labor").map((lab) => (
+                      <button
+                        key={lab.code}
+                        type="button"
+                        onClick={() => {
+                          setNewItemName(lab.name);
+                          setNewItemCode(lab.code);
+                          setNewItemPrice(lab.price);
+                        }}
+                        className="px-2 py-1 rounded-lg bg-white border border-emerald-200 hover:border-emerald-500 hover:bg-emerald-50/70 text-[11px] font-medium text-emerald-900 transition shadow-2xs flex items-center gap-1"
+                      >
+                        <span>+ {lab.name}</span>
+                        <span className="font-mono font-bold text-emerald-600 text-[10px]">({formatVND(lab.price)})</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
+              ) : (
+                /* CHẾ ĐỘ PHỤ TÙNG KHO VỚI AUTOCOMPLETE */
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-end">
+                    {/* Input Tên Phụ Tùng kèm Dropdown Gợi Ý */}
+                    <div className="md:col-span-7 space-y-1 relative">
+                      <label className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                        <Package className="w-3 h-3 text-blue-600" /> Tra cứu phụ tùng kho (mã / tên)
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Gõ mã hoặc tên phụ tùng (VD: Má phanh, Lọc nhớt, Dầu Motul...)"
+                          value={newItemName}
+                          onFocus={() => setIsSuggestionsOpen(true)}
+                          onChange={(e) => {
+                            setNewItemName(e.target.value);
+                            setIsSuggestionsOpen(true);
+                          }}
+                          className="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-medium placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-xs"
+                        />
+                        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" />
+                      </div>
 
-                {/* Dropdown Phân Loại */}
-                <div className="md:col-span-2">
-                  <select
-                    value={newItemType}
-                    onChange={(e) => setNewItemType(e.target.value as "part" | "labor")}
-                    className="w-full px-2 py-2 rounded-lg border border-slate-300 bg-white text-slate-900 text-xs font-semibold focus:outline-none focus:border-amber-500 shadow-xs"
-                  >
-                    <option value="part">Phụ tùng</option>
-                    <option value="labor">Nhân công</option>
-                  </select>
+                      {/* Dropdown Gợi Ý Phụ Tùng */}
+                      {isSuggestionsOpen && filteredSuggestions.length > 0 && (
+                        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden divide-y divide-slate-100 max-h-72 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150">
+                          <div className="px-3 py-1.5 bg-slate-50 flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider sticky top-0 z-10 border-b border-slate-100">
+                            <span className="flex items-center gap-1">
+                              <Package className="w-3 h-3 text-blue-500" />
+                              Kho phụ tùng & vật tư ({filteredSuggestions.length})
+                            </span>
+                            <span className="text-blue-600 font-semibold lowercase">click để điền</span>
+                          </div>
+
+                          {filteredSuggestions.map((it) => (
+                            <div
+                              key={it.code}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                handleSelectSuggestion(it);
+                              }}
+                              className="p-2.5 hover:bg-blue-50/70 transition-colors cursor-pointer flex items-center justify-between gap-2.5 group text-left"
+                            >
+                              <div className="flex-1 min-w-0 space-y-0.5">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-200">
+                                    {it.type === "part" ? "Phụ tùng" : "Công"}
+                                  </span>
+                                  <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                    {it.code}
+                                  </span>
+                                  <span className="text-[10px] text-slate-500">{it.category}</span>
+                                </div>
+                                <p className="text-xs font-bold text-slate-900 group-hover:text-blue-700 truncate">
+                                  {it.name}
+                                </p>
+                              </div>
+
+                              <div className="text-right shrink-0">
+                                <p className="text-xs font-black font-mono text-blue-600">
+                                  {formatVND(it.price)}
+                                </p>
+                                {it.stock !== undefined && (
+                                  <p className="text-[10px] text-emerald-700 font-semibold">
+                                    Tồn: {it.stock} {it.unit || "cái"}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Đơn giá phụ tùng */}
+                    <div className="md:col-span-3 space-y-1">
+                      <label className="text-[11px] font-bold text-slate-700">
+                        Đơn giá phụ tùng (VNĐ)
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="Đơn giá (VNĐ)"
+                        value={newItemPrice}
+                        onChange={(e) => setNewItemPrice(Number(e.target.value))}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-mono font-bold placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-xs"
+                      />
+                    </div>
+
+                    {/* Nút Thêm Phụ Tùng */}
+                    <div className="md:col-span-2">
+                      <button
+                        type="button"
+                        onClick={handleAddItem}
+                        className="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-xs transition flex items-center justify-center gap-1.5 active:scale-95"
+                      >
+                        <Plus className="w-4 h-4" /> Thêm Vật Tư
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Chip chọn nhanh các phụ tùng phổ biến */}
+                  <div className="pt-1 flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Phổ biến trong kho:</span>
+                    {AUTOMOTIVE_CATALOG.filter((it) => it.type === "part").slice(0, 6).map((chip) => (
+                      <button
+                        key={chip.code}
+                        type="button"
+                        onClick={() => handleSelectSuggestion(chip)}
+                        className="px-2 py-0.5 rounded-md bg-white border border-slate-200 hover:border-blue-400 hover:bg-blue-50 text-[10px] font-semibold text-slate-700 transition shadow-2xs"
+                      >
+                        + {chip.name.split(" ").slice(0, 4).join(" ")}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-
-                {/* Input Đơn Giá */}
-                <div className="md:col-span-3">
-                  <input
-                    type="number"
-                    placeholder="Đơn giá (VNĐ)"
-                    value={newItemPrice}
-                    onChange={(e) => setNewItemPrice(Number(e.target.value))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-900 text-xs font-mono font-bold placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 shadow-xs"
-                  />
-                </div>
-
-                {/* Nút Thêm */}
-                <div className="md:col-span-2">
-                  <button
-                    type="button"
-                    onClick={handleAddItem}
-                    className="w-full py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-xs transition flex items-center justify-center gap-1 active:scale-95"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Thêm
-                  </button>
-                </div>
-
-              </div>
-
-              {/* Chip chọn nhanh các phụ tùng phổ biến */}
-              <div className="pt-1 flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Phổ biến:</span>
-                {[
-                  { label: "Má phanh Akebono", code: "BRK-PAD-AKE" },
-                  { label: "Dầu Motul 0W-20", code: "ENG-OIL-MOTUL" },
-                  { label: "Lọc nhớt TNGA", code: "ENG-FLT-TNGA" },
-                  { label: "Bugi Laser NGK", code: "IGN-PLUG-NGK" },
-                  { label: "Rotuyn càng A", code: "SUS-BALL-JNT" },
-                  { label: "Công kiểm tra 30 điểm", code: "LAB-INSPECT-30" },
-                ].map((chip) => (
-                  <button
-                    key={chip.code}
-                    type="button"
-                    onClick={() => {
-                      const item = AUTOMOTIVE_CATALOG.find((c) => c.code === chip.code);
-                      if (item) handleSelectSuggestion(item);
-                    }}
-                    className="px-2 py-0.5 rounded-md bg-white border border-slate-200 hover:border-amber-400 hover:bg-amber-100/50 text-[10px] font-semibold text-slate-700 transition shadow-2xs"
-                  >
-                    + {chip.label}
-                  </button>
-                ))}
-              </div>
+              )}
             </div>
           </div>
         </div>
