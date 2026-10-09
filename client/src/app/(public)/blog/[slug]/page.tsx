@@ -24,11 +24,8 @@ export function generateStaticParams() {
 }
 
 export default function BlogDetailPage({ params }: Props) {
-  const post = BLOG_POSTS.find((p) => p.slug === params.slug);
-
-  if (!post) {
-    notFound();
-  }
+  const targetSlug = params?.slug || "phanh-ceramic";
+  const post = BLOG_POSTS.find((p) => p.slug === targetSlug) || BLOG_POSTS[0];
 
   return (
     <article className="min-h-screen py-10 sm:py-16 px-4 sm:px-6 bg-slate-50/40">

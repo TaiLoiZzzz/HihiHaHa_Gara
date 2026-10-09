@@ -7,7 +7,8 @@ import { usePathname } from "next/navigation";
 import { User, Shield, Menu, X, ArrowRight } from "lucide-react";
 
 export function PublicNavbar() {
-  const pathname = usePathname();
+  const rawPathname = usePathname();
+  const pathname = rawPathname || "";
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
