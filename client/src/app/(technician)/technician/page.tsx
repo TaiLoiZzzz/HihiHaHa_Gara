@@ -1589,37 +1589,26 @@ function TechnicianTabletContent() {
               </div>
             </>
           ) : (
-            <div className="p-8 sm:p-12 rounded-3xl border-2 border-dashed border-amber-300 bg-amber-50/40 text-center space-y-4">
-              <div className="w-16 h-16 rounded-3xl bg-amber-500/10 text-amber-600 mx-auto flex items-center justify-center">
+            <div className="p-8 sm:p-12 rounded-3xl border-2 border-dashed border-slate-200 bg-white/70 text-center space-y-4">
+              <div className="w-16 h-16 rounded-3xl bg-slate-100 text-slate-500 mx-auto flex items-center justify-center">
                 <Wrench className="w-8 h-8" />
               </div>
               <div className="max-w-md mx-auto space-y-1">
                 <h3 className="text-base sm:text-lg font-black text-slate-900">
-                  Chưa Chọn Xe Nào Để Thi Công Tại Cầu Nâng
+                  Chưa Chọn Xe Thi Công Tại Khoang Nâng
                 </h3>
-                <p className="text-xs text-slate-600">
-                  Chọn một xe từ thanh điều hướng ở trên, nhận xe từ Hàng Đợi, hoặc bấm nút bên dưới để nạp xe mẫu kiểm thử nghiệp vụ UC-07 (Lực siết N.m & Nghiệm thu KCS).
+                <p className="text-xs text-slate-500">
+                  Chọn xe từ danh sách lệnh đang phụ trách ở thanh điều hướng trên, hoặc nhận xe mới từ Hàng đợi xe chờ tiếp nhận.
                 </p>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={async () => {
-                    await loadOrderDetails("WO-20261001-0089");
-                    setActiveOrderCode("WO-20261001-0089");
-                  }}
-                  className="px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider transition shadow-md shadow-amber-500/20 active:scale-95 flex items-center gap-2"
-                >
-                  <Car className="w-4 h-4" />
-                  <span>👉 Nạp Xe Mẫu [51K-888.88] (Toyota Camry 2.5Q)</span>
-                </button>
-                <button
-                  type="button"
                   onClick={() => setMainTab("waiting")}
-                  className="px-5 py-3 rounded-2xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs transition flex items-center gap-2 shadow-xs"
+                  className="px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition flex items-center gap-2 shadow-md shadow-blue-600/20 active:scale-95"
                 >
-                  <Clock className="w-4 h-4 text-blue-600" />
-                  <span>Xem Hàng Đợi Xe Chờ ({waitingQueue.length})</span>
+                  <Clock className="w-4 h-4" />
+                  <span>Tiếp Nhận Xe Từ Hàng Đợi ({waitingQueue.length})</span>
                 </button>
               </div>
             </div>
