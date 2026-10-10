@@ -13,6 +13,11 @@ const pool = new Pool({
   connectionTimeoutMillis: 2000,
 });
 
+// Lang nghe loi tren idle client de tranh crash process khi mat ket noi
+pool.on('error', (err) => {
+  console.error('⚠️ [PostgreSQL Pool] Unexpected error on idle client:', err.message);
+});
+
 // hàm thuc thi query tien loi
 const query = (text, params) => pool.query(text, params);
 
