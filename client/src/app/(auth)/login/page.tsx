@@ -39,11 +39,15 @@ function CustomerLoginForm() {
   const [otpCode, setOtpCode] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Tự động nhận diện biển số nếu truyền từ trang chủ /services
+  // Tự động nhận diện biển số & số điện thoại nếu truyền từ trang chủ /services
   useEffect(() => {
     const p = searchParams.get("plate");
     if (p) {
       setLicensePlate(p.trim().toUpperCase());
+    }
+    const ph = searchParams.get("phone");
+    if (ph) {
+      setPhone(ph.trim());
     }
   }, [searchParams]);
 

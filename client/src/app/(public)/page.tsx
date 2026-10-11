@@ -17,12 +17,15 @@ import {
   Award,
   Check,
   Search,
-  ExternalLink
+  ExternalLink,
+  Smartphone,
+  Shield
 } from "lucide-react";
 
 export default function HomePage() {
   const [quickSymptom, setQuickSymptom] = useState("");
   const [quickPlate, setQuickPlate] = useState("");
+  const [quickPhone, setQuickPhone] = useState("");
 
   const popularServices = [
     {
@@ -131,80 +134,94 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Cột Phải: Showcase Đội Ngũ Kỹ Thuật Viên & Tra Cứu Tiến Độ */}
-          <div className="lg:col-span-5 relative w-full space-y-3.5">
-            {/* Khung Ảnh Đội Ngũ Kỹ Thuật Viên Chuyên Nghiệp Kèm Badges Nổi */}
-            <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200/90 bg-slate-900 shadow-xl group/img">
-              <div className="relative w-full aspect-[16/10] sm:aspect-[4/3] overflow-hidden">
-                <Image
-                  src="/gara-team.png"
-                  alt="Đội ngũ kỹ thuật viên HiHiHaHa Gara"
-                  fill
-                  className="object-cover object-center group-hover/img:scale-105 transition-transform duration-500"
-                  priority
-                />
-                {/* Subtle dark gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/20 pointer-events-none" />
-              </div>
-
-              {/* Floating Badge Trên Ảnh (Góc Trên Trái) */}
-              <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-slate-900/85 backdrop-blur-md text-[10px] sm:text-xs font-bold text-amber-300 border border-amber-500/30 flex items-center gap-1.5 shadow-sm">
-                <Award className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span>Kỹ Thuật Viên Chứng Chỉ Hãng</span>
-              </div>
-
-              {/* Floating Badge Trên Ảnh (Góc Dưới) */}
-              <div className="absolute bottom-3 inset-x-3 flex items-center justify-between text-[10px] sm:text-xs font-bold text-white gap-2">
-                <div className="px-2.5 py-1 rounded-lg bg-slate-950/85 backdrop-blur-md border border-white/20 flex items-center gap-1">
-                  <span className="text-amber-400">★ 4.9/5</span>
-                  <span className="text-slate-300">• 5.200+ Xe</span>
+          {/* Cột Phải: Khung Tra Cứu Tiến Độ & Vào Cổng Chủ Xe (Biển số + Số điện thoại) */}
+          <div className="lg:col-span-5 relative w-full">
+            <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white/95 backdrop-blur-md p-5 sm:p-7 shadow-xl shadow-slate-200/50 space-y-5">
+              
+              {/* Header của Khung */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                    Cổng Tra Cứu Trực Tuyến
+                  </span>
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                    Tra Cứu Hồ Sơ & Báo Giá Xe
+                  </h3>
                 </div>
-                <div className="px-2.5 py-1 rounded-lg bg-emerald-500/95 text-slate-950 font-black flex items-center gap-1 shadow-xs">
-                  <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                  <span>Cam Kết Minh Bạch</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Ô Tra Cứu Nhanh Hồ Sơ Xe Bằng Biển Số Trực Tiếp */}
-            <div className="p-3 sm:p-3.5 rounded-2xl bg-white border border-slate-200/90 space-y-2 shadow-sm">
-              <div className="flex items-center justify-between text-[11px] sm:text-xs">
-                <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                  <Search className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                  Tra cứu tiến độ trên cầu nâng:
-                </span>
-                <span className="text-[10px] font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md">
+                <div className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Live Realtime
+                </div>
+              </div>
+
+              {/* Form Nhập Biển Số & Số Điện Thoại */}
+              <div className="space-y-3.5">
+                {/* 1. Ô Nhập Biển Số Xe */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <Car className="w-3.5 h-3.5 text-amber-600" />
+                    Biển Số Xe Của Bạn
+                  </label>
+                  <div className="relative flex items-center">
+                    <input
+                      type="text"
+                      placeholder="VD: 51K-888.88 hoặc 30E-999.99"
+                      value={quickPlate}
+                      onChange={(e) => setQuickPlate(e.target.value.toUpperCase())}
+                      className="w-full px-3.5 py-2.5 text-xs font-mono font-bold uppercase tracking-wider rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/20 transition shadow-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* 2. Ô Nhập Số Điện Thoại */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <Smartphone className="w-3.5 h-3.5 text-amber-600" />
+                    Số Điện Thoại Đăng Ký
+                  </label>
+                  <div className="relative flex items-center">
+                    <input
+                      type="tel"
+                      placeholder="VD: 0912345678"
+                      value={quickPhone}
+                      onChange={(e) => setQuickPhone(e.target.value.replace(/[^0-9]/g, ""))}
+                      className="w-full px-3.5 py-2.5 text-xs font-mono font-bold tracking-wider rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/20 transition shadow-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Nút Hành Động Tra Cứu / Vào Cổng */}
+                <div className="pt-2">
+                  <Link
+                    href={`/login${
+                      quickPlate || quickPhone
+                        ? `?${new URLSearchParams({
+                            ...(quickPlate ? { plate: quickPlate } : {}),
+                            ...(quickPhone ? { phone: quickPhone } : {}),
+                          }).toString()}`
+                        : ""
+                    }`}
+                    className="w-full py-3 sm:py-3.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-900 text-amber-400 font-black text-xs uppercase tracking-wider transition shadow-md shadow-slate-950/20 flex items-center justify-center gap-2 group/btn active:scale-98 text-center"
+                  >
+                    <Search className="w-4 h-4 text-amber-400" />
+                    <span>Tra Cứu Hồ Sơ & Duyệt Báo Giá</span>
+                    <ArrowRight className="w-4 h-4 text-amber-400 group-hover/btn:translate-x-1 transition-transform shrink-0" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Cam kết minh bạch bên dưới form */}
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                <span className="flex items-center gap-1 font-medium">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  Bảo mật thông tin chủ xe
+                </span>
+                <span className="font-semibold text-slate-600">
+                  Xác thực OTP tức thì
                 </span>
               </div>
 
-              <div className="relative flex items-center">
-                <Car className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="Nhập biển số (VD: 51K-999.99)..."
-                  value={quickPlate}
-                  onChange={(e) => setQuickPlate(e.target.value.toUpperCase())}
-                  className="w-full pl-9 pr-22 sm:pr-24 py-2 sm:py-2.5 text-xs font-mono font-bold uppercase tracking-wider rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/20 transition shadow-xs"
-                />
-                <Link
-                  href={`/login${quickPlate ? `?plate=${encodeURIComponent(quickPlate)}` : ""}`}
-                  className="absolute right-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition shadow-xs flex items-center gap-1 active:scale-95 shrink-0"
-                >
-                  <span>Tra Cứu</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
             </div>
-
-            {/* Nút Vào Cổng Khách Hàng */}
-            <Link
-              href="/login"
-              className="w-full py-3 sm:py-3.5 px-3 sm:px-4 rounded-xl bg-slate-950 hover:bg-slate-900 text-amber-400 font-black text-xs uppercase tracking-wider transition shadow-md shadow-slate-950/15 flex items-center justify-center gap-2 group/btn active:scale-98 text-center"
-            >
-              <span>Vào Cổng Chủ Xe Tra Cứu & Duyệt Báo Giá</span>
-              <ArrowRight className="w-4 h-4 text-amber-400 group-hover/btn:translate-x-1 transition-transform shrink-0" />
-            </Link>
           </div>
 
         </div>
