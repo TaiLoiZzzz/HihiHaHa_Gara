@@ -291,7 +291,7 @@ function TechnicianTabletContent() {
     }
     return TECHNICIANS[0];
   });
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -767,18 +767,12 @@ function TechnicianTabletContent() {
             </button>
             <button
               type="button"
-              onClick={() => {
-                setPin(selectedTech.pin);
-                setIsAuthenticated(true);
-                toast.success(`Đã mở khóa ca máy [${selectedTech.name}]`);
-              }}
-              className="h-14 rounded-2xl border bg-amber-500/20 text-amber-600 hover:bg-amber-500/30 font-bold text-[11px] active:scale-95 transition-all"
+              onClick={() => setPin((prev) => prev.slice(0, -1))}
+              className="h-14 rounded-2xl border bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs active:scale-95 transition-all"
             >
-              PIN NHANH
+              ⌫ LÙI
             </button>
           </div>
-
-          <p className="text-[11px] text-muted-foreground">Mã PIN mặc định: {selectedTech.pin}</p>
         </div>
       </div>
     );
@@ -786,38 +780,6 @@ function TechnicianTabletContent() {
 
   return (
     <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 space-y-4 sm:space-y-6 pb-16 font-sans">
-      {/* Banner Nghiệp Vụ UC-07: Chuẩn Lực Siết N.m & Nghiệm Thu KCS FSM */}
-      <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-slate-50 border-2 border-amber-400/70 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-start sm:items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500 text-slate-950 flex flex-col items-center justify-center font-black shrink-0 shadow-sm">
-            <span className="text-[10px] leading-none uppercase font-mono">USE CASE</span>
-            <span className="text-base leading-none font-mono">07</span>
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-sm sm:text-base font-black text-slate-950 uppercase tracking-tight">
-                Nghiệp Vụ Kỹ Thuật Viên Tại Cầu Nâng (Giao Diện Tablet)
-              </h2>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-400 text-slate-950 border border-amber-500 shadow-2xs">
-                ⚡ Chuẩn Lực Siết N.m & Nghiệm Thu KCS
-              </span>
-            </div>
-            <p className="text-xs text-slate-700 mt-1 leading-relaxed">
-              Thợ máy nhận xe theo lệnh điều phối &bull; Tick checklist thi công có <strong>thông số lực siết N.m</strong> chuẩn kỹ thuật của hãng &bull; Chụp ảnh cận cảnh nghiệm thu KCS &bull; Xác nhận hoàn tất 100% để <strong>máy trạng thái FSM tự động chuyển sang COMPLETED</strong> mở cổng thanh toán cho khách hàng.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0 self-stretch md:self-auto justify-end">
-          <Link
-            href="/manager/kanban"
-            className="px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
-          >
-            <span>Bảng Kanban Quản Đốc</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      </div>
 
       {/* Header Điều Khiển Tablet & Đổi Thợ */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-3.5 sm:p-5 rounded-3xl border border-slate-200 bg-white shadow-xs">

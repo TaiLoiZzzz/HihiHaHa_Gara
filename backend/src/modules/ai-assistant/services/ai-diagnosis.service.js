@@ -227,8 +227,8 @@ async function diagnoseVehicleSymptomsService({ vehicle_model, symptoms, max_rec
     let estimatedLabor = 450000;
 
     if (genAI) {
-      // Danh sách các model theo thứ tự ưu tiên (gemini-3.5-flash phản hồi cực nhanh và ổn định)
-      const candidateModels = ['gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-flash-latest'];
+      // Danh sách các model theo thứ tự ưu tiên (Gemini 2.5/1.5 Flash phản hồi nhanh)
+      const candidateModels = ['gemini-2.5-flash', 'gemini-1.5-flash'];
       let modelSuccess = false;
 
       const partsContextStr = recommendations.map(p => 
@@ -261,7 +261,7 @@ QUY TẮC BẮT BUỘC (ZERO-HALLUCINATION):
         if (modelSuccess) break;
         try {
           const model = genAI.getGenerativeModel({ model: modelName });
-          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('AI generation timed out')), 8000));
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('AI generation timed out')), 3000));
           const result = await Promise.race([model.generateContent(prompt), timeoutPromise]);
           const rawText = result.response.text();
           

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Sparkles, Bot, AlertTriangle, CheckCircle2, Wrench, X, RefreshCw, Layers, PlusCircle, CheckCheck } from "lucide-react";
+import { Sparkles, Bot, AlertTriangle, CheckCircle2, Wrench, X, RefreshCw, Layers, PlusCircle, CheckCheck, Share2, Network } from "lucide-react";
 import { LiquidGlassButton } from "@/components/ui/liquid-glass-button";
 import { formatCurrencyVND } from "@/lib/utils";
 import { fetchApi } from "@/lib/api";
@@ -265,11 +265,30 @@ export function GraphRagAiModal({
               </div>
             )}
 
+            {/* Banner Đồ thị Tri thức Neo4j */}
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 border border-purple-200/80 flex items-start gap-3 text-xs text-indigo-950 shadow-xs">
+              <div className="p-2 rounded-xl bg-purple-600 text-white shrink-0 mt-0.5 shadow-xs">
+                <Network className="w-4 h-4" />
+              </div>
+              <div className="space-y-1">
+                <div className="font-extrabold flex items-center gap-2 text-purple-950 flex-wrap">
+                  <span className="text-xs">Đồ Thị Tri Thức Neo4j (Platform-Sharing Knowledge Graph)</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-200/80 text-purple-900 font-bold border border-purple-300">
+                    Truy vết N-hops: Xe → Khung gầm → Cụm linh kiện → Phụ tùng
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                  Hệ thống tự động duyệt đồ thị để truy xuất các phụ tùng OEM dùng chung nền tảng khung gầm (Platform-sharing). 
+                  Ví dụ: <strong className="text-slate-900">Toyota Camry 2.5Q</strong> dùng chung khung gầm <strong className="text-purple-700 font-bold">TNGA-K</strong> với <strong className="text-slate-900">Lexus ES250</strong> & <strong className="text-slate-900">RAV4</strong>, cho phép thay thế tương thích hoàn toàn khi kho hết hàng nguyên bản.
+                </p>
+              </div>
+            </div>
+
             {/* Danh sách phụ tùng gợi ý */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                  Phụ tùng tương thích trong kho ({result.recommended_parts.length})
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-amber-600" /> Phụ tùng tương thích trong kho ({result.recommended_parts.length})
                 </h4>
                 <span className="text-[11px] text-slate-500 font-medium">Bấm chọn từng món nếu chỉ muốn bổ sung lẻ</span>
               </div>
@@ -280,8 +299,8 @@ export function GraphRagAiModal({
                     key={part.part_code}
                     className="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-amber-400 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs"
                   >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 font-bold border border-slate-200">
                           {part.part_code}
                         </span>
@@ -289,9 +308,18 @@ export function GraphRagAiModal({
                           {part.part_name}
                         </span>
                       </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-                        <span>Hệ thống: <strong className="text-slate-700">{part.subsystem}</strong></span>
-                        <span>Kệ kho: <strong className="text-slate-700 font-mono">{part.location_rack}</strong></span>
+                      <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                        {part.shared_platform && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-100/90 text-purple-800 border border-purple-200 text-[10px] font-bold">
+                            <Share2 className="w-3 h-3 text-purple-600" /> Khung gầm: {part.shared_platform}
+                          </span>
+                        )}
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200 text-[10px] font-semibold">
+                          Cụm: {part.subsystem}
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-mono">
+                          Kệ kho: {part.location_rack}
+                        </span>
                       </div>
                     </div>
 

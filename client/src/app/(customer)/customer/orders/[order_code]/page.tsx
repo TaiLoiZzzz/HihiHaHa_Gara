@@ -23,6 +23,7 @@ import { formatCurrencyVND } from "@/lib/utils";
 import { LiquidGlassButton } from "@/components/ui/liquid-glass-button";
 import { api, fetchApi } from "@/lib/api";
 import { toast } from "sonner";
+import { io, Socket } from "socket.io-client";
 
 interface Props {
   params: {
@@ -67,6 +68,7 @@ export default function WorkOrderDetailPage({ params }: Props) {
   const [isRejecting, setIsRejecting] = useState(false);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
 
   // Tải dữ liệu thật từ Backend API
   useEffect(() => {
@@ -120,6 +122,61 @@ export default function WorkOrderDetailPage({ params }: Props) {
       }
     }
     loadData();
+  }, [orderCode]);
+
+  // Kết nối Socket.io Realtime để lắng nghe tiến độ thi công từ xưởng
+  useEffect(() => {
+    const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace("/api/v1", "") || "http://localhost:5000";
+    const socket: Socket = io(socketUrl, {
+      transports: ["websocket", "polling"],
+      reconnectionAttempts: 10,
+    });
+
+    socket.on("connect", () => {
+      setIsSocketConnected(true);
+      socket.emit("join_order", { order_code: orderCode });
+    });
+
+    socket.on("disconnect", () => {
+      setIsSocketConnected(false);
+    });
+
+    socket.on("PROGRESS_UPDATED", (payload: any) => {
+      if (!payload || payload.order_code !== orderCode) return;
+      toast.info(`🔔 Tiến độ vừa cập nhật: ${payload.status || "Đang thi công"}`, {
+        description: payload.note || "Kỹ thuật viên tại khoang nâng vừa cập nhật nhật ký xưởng.",
+      });
+
+      // Cập nhật lại trạng thái & timeline tức thì không cần F5
+      if (payload.status) {
+        setOrderData((prev: any) => prev ? {
+          ...prev,
+          current_status: payload.status,
+          progress_percent: payload.progress_percent ?? prev.progress_percent,
+        } : prev);
+
+        if (payload.status === "PAID") {
+          setApproved(true);
+        }
+      }
+
+      if (payload.timeline_item) {
+        setTimeline((prev) => [payload.timeline_item, ...prev.filter(t => t.note !== payload.timeline_item.note)]);
+      } else {
+        // Tự động kéo lại thông tin mới nhất
+        api.getWorkOrder(orderCode).then((res) => {
+          if (res.success && res.data) {
+            setOrderData(res.data);
+            if (res.data.workflow_timeline) setTimeline(res.data.workflow_timeline);
+            if (res.data.inspection_photos) setPhotos(res.data.inspection_photos);
+          }
+        }).catch(() => {});
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, [orderCode]);
 
   // Toggle chọn từng hạng mục báo giá
@@ -462,9 +519,19 @@ export default function WorkOrderDetailPage({ params }: Props) {
               <Clock className="w-4 h-4 text-amber-500" />
               Tiến Độ Thi Công Realtime (Socket.io)
             </h3>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-              Live Cầu Nâng #02
-            </span>
+            <div className="flex items-center gap-2">
+              <span className={`inline-flex items-center gap-1.5 text-[10px] font-mono px-2.5 py-1 rounded-full font-bold border ${
+                isSocketConnected
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
+                  : "bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800"
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${isSocketConnected ? "bg-emerald-500 animate-ping" : "bg-amber-500"}`} />
+                {isSocketConnected ? "Live Socket.io Connected" : "Connecting..."}
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                Live Cầu Nâng #01
+              </span>
+            </div>
           </div>
 
           <div className="space-y-4">

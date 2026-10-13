@@ -435,14 +435,6 @@ export default function WorkshopKanbanPage() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <Link
-            href="/technician"
-            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-md shadow-amber-500/20 active:scale-95"
-            title="Mở giao diện Tablet Kỹ thuật viên tại cầu nâng (UC-07: Siết Lực N.m & Nghiệm Thu KCS)"
-          >
-            <Wrench className="w-4 h-4 text-slate-950" />
-            <span>Tablet Thợ Máy (UC-07)</span>
-          </Link>
           <button
             type="button"
             onClick={() => syncRealOrder(true)}
@@ -781,27 +773,19 @@ export default function WorkshopKanbanPage() {
                           );
                         }
 
-                        // BƯỚC 4: Đang thi công -> Cho phép điều phối đổi thợ & Mở nhanh Tablet
+                        // BƯỚC 4: Đang thi công -> Cho phép điều phối đổi thợ
                         if (card.stage === "in_progress") {
                           return (
-                            <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                            <div className="pt-0.5">
                               <button
                                 type="button"
                                 onClick={() => openAssignModal(card)}
-                                className="py-1.5 px-1.5 rounded-lg border border-dashed border-amber-300 hover:border-amber-500 bg-amber-50/70 hover:bg-amber-100/90 text-amber-900 font-bold text-[10px] transition-all flex items-center justify-center gap-1 active:scale-95 group shadow-xs"
+                                className="w-full py-1.5 px-2 rounded-lg border border-dashed border-amber-300 hover:border-amber-500 bg-amber-50/70 hover:bg-amber-100/90 text-amber-900 font-bold text-[10px] transition-all flex items-center justify-center gap-1 active:scale-95 group shadow-xs"
                                 title="Đổi thợ hoặc khoang nếu cần"
                               >
                                 <UserCheck className="w-3 h-3 text-amber-600 group-hover:scale-110 transition-transform" />
-                                <span className="truncate">Đổi Thợ/Khoang</span>
+                                <span className="truncate">Đổi Thợ/Khoang Thi Công</span>
                               </button>
-                              <Link
-                                href={`/technician?order=${card.orderCode}${techQuery}`}
-                                className="py-1.5 px-1.5 rounded-lg border border-slate-200 hover:border-slate-800 bg-slate-900 hover:bg-slate-800 text-white font-bold text-[10px] transition-all flex items-center justify-center gap-1 active:scale-95 shadow-xs text-center"
-                                title="Mở trực tiếp trên Tablet Khoang Kỹ Thuật Viên"
-                              >
-                                <Wrench className="w-3 h-3 text-amber-400 shrink-0" />
-                                <span className="truncate">Tablet Thợ →</span>
-                              </Link>
                             </div>
                           );
                         }

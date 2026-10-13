@@ -32,6 +32,15 @@ export function CustomerNavbar() {
         if (firstOrder.license_plate) {
           setPlateNumber(firstOrder.license_plate);
         }
+        // Đồng bộ họ tên chủ xe thật từ đơn sửa chữa nếu user session bị lệch
+        if (firstOrder.customer_name) {
+          setUser((prev) => prev ? { ...prev, full_name: firstOrder.customer_name } : {
+            id: firstOrder.customer_phone || "cust",
+            full_name: firstOrder.customer_name,
+            phone_number: firstOrder.customer_phone,
+            role: "CUSTOMER",
+          });
+        }
       }
     }).catch(() => {});
   }, []);

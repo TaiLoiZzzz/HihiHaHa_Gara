@@ -1,0 +1,111 @@
+================================================================================
+           HIHIHAHA AUTO - SMART GARAGE PLATFORM
+       DANH SÁCH TÀI KHOẢN VÀ DỮ LIỆU KIỂM THỬ / THUYẾT TRÌNH DEMO
+================================================================================
+
+Tên miền Website Production: https://hihihahagara.quachtailoi.id.vn/
+Môi trường Localhost:
+- Frontend Client:    http://localhost:8888
+- Backend API Core:   http://localhost:5000
+
+Mật khẩu dùng chung cho tất cả tài khoản Staff: 123456
+Mã OTP Bypass / Mặc định (nếu kiểm thử nhanh không chờ Email): 123456
+Danh sách 3 Gmail nhận OTP chính thức:
+1. tailoi1606@gmail.com
+2. quachtailoi999@gmail.com
+3. 24110276@student.hcmute.edu.vn
+
+--------------------------------------------------------------------------------
+1. TÀI KHOẢN NHÂN SỰ & QUẢN TRỊ NỘI BỘ (STAFF / BACKOFFICE)
+   Đường dẫn đăng nhập: /staff/login
+--------------------------------------------------------------------------------
+
+[TÀI KHOẢN 1] CHỦ GARA / GIÁM ĐỐC ĐIỀU HÀNH (OWNER)
+- Họ và tên:      Nguyễn Tài Lợi
+- Số điện thoại:  0797526990
+- Mật khẩu:       123456
+- Email:          tailoi1606@gmail.com
+- Quyền hạn (RBAC): Toàn quyền hệ thống, xem Dashboard Doanh thu, Báo cáo lợi nhuận, Quản trị nhân sự & Cấu hình xưởng.
+
+[TÀI KHOẢN 2] CỐ VẤN DỊCH VỤ (SERVICE ADVISOR)
+- Họ và tên:      Vũ Quang Tùng
+- Số điện thoại:  0988888801
+- Mật khẩu:       123456
+- Email:          covan@hihihaha.vn
+- Quyền hạn (RBAC): Tiếp nhận xe (Quét VIN / Check-in 360), Lập Báo giá dự toán vật tư, Tư vấn khách hàng, Kích hoạt lệnh sửa chữa.
+
+[TÀI KHOẢN 3] QUẢN ĐỐC XƯỞNG / THỦ KHO (WORKSHOP MANAGER & WAREHOUSE)
+- Họ và tên:      Lê Quản Đốc
+- Số điện thoại:  0988888802
+- Mật khẩu:       123456
+- Email:          quandoc@hihihaha.vn
+- Quyền hạn (RBAC): Điều phối bảng Kanban 6 trạng thái, Phân công thợ máy, Duyệt lệnh xuất kho vật tư (Redlock Mutex), Ký biên bản nghiệm thu KCS chất lượng.
+
+[TÀI KHOẢN 4] KỸ THUẬT VIÊN / THỢ MÁY CẦU NÂNG (TECHNICIAN)
+- Họ và tên:      Phạm Thợ Xưởng
+- Số điện thoại:  0988888803
+- Mật khẩu:       123456
+- Email:          thoxuong@hihihaha.vn
+- Giao diện:      Industrial Tablet Mode (Dành riêng cho máy tính bảng tại cầu nâng)
+- Quyền hạn (ABAC): Nhận lệnh điều phối theo khoang, Bấm giờ thi công theo tiêu chuẩn FRT, Thực hiện checklist kiểm tra lực siết bu-lông N.m.
+
+--------------------------------------------------------------------------------
+2. CỔNG KHÁCH HÀNG & TRA CỨU TIẾN ĐỘ SỐ (CUSTOMER PORTAL)
+   Đường dẫn: / (Trang chủ) hoặc /customer/login
+   Hình thức đăng nhập: Passwordless (Nhập Biển số xe + Số điện thoại)
+--------------------------------------------------------------------------------
+
+[KHÁCH HÀNG 1] KHÁCH HÀNG VIP - TOYOTA CAMRY 2.5Q (XE TRỌNG TÂM DEMO LIVE SOCKET)
+- Khách hàng:     Minh Thảo (Hạng: GOLD)
+- Số điện thoại:  0912345678
+- Biển số xe:     51K-888.88
+- Email nhận OTP: tailoi1606@gmail.com
+- Mã phiếu lệnh:  WO-20261001-0089 (Đang thi công tại Cầu nâng 01 - Thợ: Phạm Thợ Xưởng)
+- Mục đích demo:  Mô phỏng thợ máy siết ốc trên Tablet <---> Khách hàng thấy Live Socket.io nhảy tiến độ realtime không cần F5.
+
+[KHÁCH HÀNG 2] KHÁCH HÀNG CHỜ DUYỆT BÁO GIÁ - MERCEDES-BENZ E300 (TEST KÝ DUYỆT 1-CLICK)
+- Khách hàng:     Lê Hoàng Cường (Hạng: SILVER)
+- Số điện thoại:  0907654321
+- Biển số xe:     30E-999.99
+- Email nhận OTP: quachtailoi999@gmail.com
+- Mã phiếu lệnh:  WO-20261001-0088 (Trạng thái: QUOTE_SENT - Chờ khách duyệt)
+- Mục đích demo:  Thử nghiệm tính năng "Ký duyệt điện tử 1-Click" trên điện thoại để kích hoạt kho Redlock.
+
+[KHÁCH HÀNG 3] KHÁCH HÀNG CHỜ VẬT TƯ - HONDA CR-V 1.5 TURBO
+- Khách hàng:     Phạm Văn Dũng (Hạng: SILVER)
+- Số điện thoại:  0903333333
+- Biển số xe:     60A-777.77
+- Email nhận OTP: quachtailoi999@gmail.com
+- Mã phiếu lệnh:  WO-20260930-0085 (Trạng thái: WAITING_PARTS - Chờ vật tư)
+
+[KHÁCH HÀNG 4] KHÁCH HÀNG XE TIẾP NHẬN MỚI - MAZDA CX-5 2.0
+- Khách hàng:     Trần Thị Bích (Hạng: STANDARD)
+- Số điện thoại:  0901234567
+- Biển số xe:     51F-123.45
+- Email nhận OTP: 24110276@student.hcmute.edu.vn
+- Mã phiếu lệnh:  WO-20261001-0090 (Trạng thái: DRAFT - Đang khám xe & chụp hình 360)
+
+[KHÁCH HÀNG 5] KHÁCH HÀNG ĐÃ NGHIỆM THU KCS CHỜ THANH TOÁN - HYUNDAI TUCSON 2.0
+- Khách hàng:     Hoàng Đình Giang (Hạng: GOLD)
+- Số điện thoại:  0905555555
+- Biển số xe:     51A-111.11
+- Email nhận OTP: 24110276@student.hcmute.edu.vn
+- Mã phiếu lệnh:  WO-20260929-0078 (Trạng thái: COMPLETED - KCS đạt chuẩn, sẵn sàng thanh toán)
+
+[KHÁCH HÀNG 6] KHÁCH HÀNG VIP ĐÃ HOÀN TẤT & ĐÃ THANH TOÁN - MERCEDES-BENZ C200
+- Khách hàng:     Trần Quốc Toản (Hạng: DIAMOND)
+- Số điện thoại:  0797526990
+- Biển số xe:     51H-999.88
+- Email nhận OTP: tailoi1606@gmail.com
+- Mã phiếu lệnh:  WO-20260928-0065 (Trạng thái: PAID - Đã xuất hóa đơn VAT điện tử)
+- Mục đích demo:  Kiểm tra sổ bảo dưỡng điện tử, tra cứu hóa đơn VAT lưu trữ bất biến.
+
+--------------------------------------------------------------------------------
+3. TÀI KHOẢN & THẺ TEST CỔNG THANH TOÁN VNPAY SANDBOX
+--------------------------------------------------------------------------------
+- Ngân hàng hỗ trợ test: NCB
+- Số thẻ test:           9704198526191432198
+- Tên chủ thẻ:           NGUYEN VAN A
+- Ngày phát hành:        07/15
+- Mật khẩu OTP:          123456
+================================================================================

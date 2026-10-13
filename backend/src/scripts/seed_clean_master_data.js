@@ -169,6 +169,54 @@ function generateCleanInventory() {
       location_rack: 'KHO-A1-K03',
       compatible_vehicles: ['Toyota Camry 2.5Q'],
     },
+    {
+      part_code: '04465-33480',
+      part_name: 'Bộ má phanh trước Lexus ES250 OEM (Khung gầm TNGA-K)',
+      category: 'BRAKE_SYSTEM',
+      unit: 'BỘ',
+      cost_price: 2100000,
+      retail_price: 2950000,
+      stock_quantity: 18,
+      allocated_quantity: 0,
+      location_rack: 'KHO-A1-K04',
+      compatible_vehicles: ['Lexus ES250', 'Toyota Camry 2.5Q', 'Toyota RAV4 2.5'],
+    },
+    {
+      part_code: '04465-YZZD1',
+      part_name: 'Bộ má phanh trước Akebono OEM High-Perf (Khung gầm TNGA-K)',
+      category: 'BRAKE_SYSTEM',
+      unit: 'BỘ',
+      cost_price: 1150000,
+      retail_price: 1650000,
+      stock_quantity: 24,
+      allocated_quantity: 0,
+      location_rack: 'KHO-A1-K05',
+      compatible_vehicles: ['Toyota Camry 2.5Q', 'Lexus ES250', 'Toyota RAV4 2.5'],
+    },
+    {
+      part_code: '17801-0H050',
+      part_name: 'Lọc gió động cơ Camry 2.5 / Lexus ES250',
+      category: 'FILTRATION',
+      unit: 'CÁI',
+      cost_price: 180000,
+      retail_price: 280000,
+      stock_quantity: 35,
+      allocated_quantity: 0,
+      location_rack: 'KHO-A2-K01',
+      compatible_vehicles: ['Toyota Camry 2.5Q', 'Lexus ES250'],
+    },
+    {
+      part_code: 'BUGI-IRIDIUM',
+      part_name: 'Bugi Iridium Denso FK20HR11',
+      category: 'ELECTRICAL_IGNITION',
+      unit: 'CÁI',
+      cost_price: 220000,
+      retail_price: 350000,
+      stock_quantity: 40,
+      allocated_quantity: 0,
+      location_rack: 'KHO-A3-K02',
+      compatible_vehicles: ['Toyota Camry 2.5Q', 'Lexus ES250'],
+    },
   ];
 
   items.push(...specificParts);
@@ -251,7 +299,7 @@ async function seedCleanMasterData() {
     await User.insertMany(users);
     console.log(`   ✓ Đã nạp thành công ${users.length} tài khoản người dùng.`);
 
-    // 3. Nạp danh mục khách hàng & xe sở hữu
+    // 3. Nạp danh mục khách hàng VIP và phương tiện (Dùng chính xác 3 email kiểm thử: tailoi1606@gmail.com, quachtailoi999@gmail.com, 24110276@student.hcmute.edu.vn)
     console.log('🚗 [4/6] Nạp danh mục khách hàng VIP và phương tiện...');
     const customersData = [
       {
@@ -287,7 +335,7 @@ async function seedCleanMasterData() {
       {
         full_name: 'Lê Hoàng Cường',
         phone_number: '0907654321',
-        email: 'cuong.le@gmail.com',
+        email: 'quachtailoi999@gmail.com',
         address: '120 Nguyễn Văn Cừ, Quận 5, TP.HCM',
         vip_rank: 'SILVER',
         total_spent: 8500000,
@@ -302,7 +350,7 @@ async function seedCleanMasterData() {
       {
         full_name: 'Trần Thị Bích',
         phone_number: '0901234567',
-        email: 'bich.tran@gmail.com',
+        email: '24110276@student.hcmute.edu.vn',
         address: '45 Lê Văn Việt, TP. Thủ Đức, TP.HCM',
         vip_rank: 'STANDARD',
         total_spent: 2400000,
@@ -317,7 +365,7 @@ async function seedCleanMasterData() {
       {
         full_name: 'Phạm Văn Dũng',
         phone_number: '0903333333',
-        email: 'dung.pham@gmail.com',
+        email: 'quachtailoi999@gmail.com',
         address: '88 Xa Lộ Hà Nội, TP. Thủ Đức, TP.HCM',
         vip_rank: 'SILVER',
         total_spent: 9800000,
@@ -332,7 +380,7 @@ async function seedCleanMasterData() {
       {
         full_name: 'Hoàng Đình Giang',
         phone_number: '0905555555',
-        email: 'giang.hoang@gmail.com',
+        email: '24110276@student.hcmute.edu.vn',
         address: '15 Điện Biên Phủ, Bình Thạnh, TP.HCM',
         vip_rank: 'GOLD',
         total_spent: 18500000,

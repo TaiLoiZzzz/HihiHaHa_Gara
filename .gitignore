@@ -6,4 +6,5 @@ coverage/
 *.log
 .vscode/
 devops/backups/
-
+lt_web/
+LT_WEB/
